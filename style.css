@@ -1,0 +1,13 @@
+/* Estilos Customizados do Dashboard RCA 61 */
+body {
+    background-color: #f3f4f6;
+    color: #1f2937;
+}
+
+table th {
+    background-color: #f9fafb !important;
+}
+
+canvas {
+    max-height: 250px;
+}
