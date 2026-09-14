@@ -81,7 +81,7 @@ selectAno.addEventListener('change', renderDashboard);
 selectMes.addEventListener('change', renderDashboard);
 document.getElementById('searchClientInput').addEventListener('input', renderVendasClienteTable);
 
-// Função auxiliar flexível para localizar abas independente de espaços no final ou maiúsculas/minúsculas
+// Auxiliar para localizar aba sem sofrer com espaços ou maiúsculas/minúsculas
 function getSheetData(dataObject, targetName) {
   if (!dataObject) return [];
   const normalizedTarget = targetName.trim().toLowerCase();
@@ -91,6 +91,40 @@ function getSheetData(dataObject, targetName) {
   );
   
   return key ? dataObject[key] : [];
+}
+
+// Função para filtrar qualquer lista por Mês e Ano selecionados
+function filterDataByPeriod(rows) {
+  if (!rows || rows.length === 0) return [];
+
+  const anoSel = selectAno ? selectAno.value : 'ALL';
+  const mesSel = selectMes ? selectMes.value : 'ALL';
+
+  return rows.filter(r => {
+    let matchAno = true;
+    let matchMes = true;
+
+    // Busca dinamica da coluna de Ano/Data
+    if (anoSel !== 'ALL') {
+      const anoKey = Object.keys(r).find(k => k.toLowerCase().includes('ano') || k.toLowerCase().includes('year') || k.toLowerCase().includes('data'));
+      if (anoKey && r[anoKey]) {
+        const valAno = String(r[anoKey]);
+        matchAno = valAno.includes(anoSel);
+      }
+    }
+
+    // Busca dinamica da coluna de Mês
+    if (mesSel !== 'ALL') {
+      const mesKey = Object.keys(r).find(k => k.toLowerCase().includes('mês') || k.toLowerCase().includes('mes') || k.toLowerCase().includes('month'));
+      if (mesKey && r[mesKey] !== undefined && r[mesKey] !== "") {
+        const valMes = String(r[mesKey]).trim();
+        // Compara ignorando zeros a esquerda ("05" vs "5")
+        matchMes = parseInt(valMes, 10) === parseInt(mesSel, 10) || valMes.toLowerCase().includes(mesSel.toLowerCase());
+      }
+    }
+
+    return matchAno && matchMes;
+  });
 }
 
 // Função Mestra de Renderização
@@ -107,7 +141,7 @@ function renderDashboard() {
 // 1. Renderização dos Cards KPIs
 function renderKPIs() {
   // KPI 1: Faturamento Mensal Carteira
-  const sheetVendaMensal = getSheetData(dataStore.reportSection, 'Venda mensal em reais da');
+  const sheetVendaMensal = filterDataByPeriod(getSheetData(dataStore.reportSection, 'Venda mensal em reais da'));
   let totalVenda = 0;
   sheetVendaMensal.forEach(r => {
     const valKey = Object.keys(r).find(k => k.toLowerCase().includes('after_tax') || k.toLowerCase().includes('valor') || k.toLowerCase().includes('venda'));
@@ -116,18 +150,10 @@ function renderKPIs() {
   document.getElementById('kpiValorMensal').textContent = formatBRL(totalVenda);
 
   // KPI 2: Atingimento do Budget
-  const sheetBudget = getSheetData(dataStore.reportSection, '% do Budget atingida por');
-  const selectedMes = selectMes.value;
-  let rows = sheetBudget;
-  if (selectedMes && selectedMes !== 'ALL') {
-    rows = sheetBudget.filter(r => {
-      const mesVal = Object.keys(r).find(k => k.toLowerCase().includes('mês') || k.toLowerCase().includes('mes'));
-      return mesVal ? String(r[mesVal]) === String(selectedMes) : true;
-    });
-  }
+  const sheetBudget = filterDataByPeriod(getSheetData(dataStore.reportSection, '% do Budget atingida por'));
   let pctBudgetAvg = 0;
-  if (rows.length > 0) {
-    const validPcts = rows.map(r => {
+  if (sheetBudget.length > 0) {
+    const validPcts = sheetBudget.map(r => {
       const pctKey = Object.keys(r).find(k => k.includes('%') || k.toLowerCase().includes('budget'));
       return pctKey ? parsePct(r[pctKey]) : 0;
     }).filter(v => !isNaN(v) && v > 0);
@@ -139,7 +165,7 @@ function renderKPIs() {
   document.getElementById('kpiBudgetAtingido').textContent = `${pctBudgetAvg.toFixed(1)}%`;
 
   // KPI 3: % Encomendas Gravadas
-  const sheetGravadas = getSheetData(dataStore.analiseCarteira, '% de encomendas gravadas');
+  const sheetGravadas = filterDataByPeriod(getSheetData(dataStore.analiseCarteira, '% de encomendas gravadas'));
   let pctGrav = 0;
   const gravadoRow = sheetGravadas.find(r => {
     const tipoVal = Object.values(r).join(' ').toLowerCase();
@@ -152,7 +178,7 @@ function renderKPIs() {
   document.getElementById('kpiPctGravadas').textContent = `${pctGrav.toFixed(1)}%`;
 
   // KPI 4: Positivação da Carteira
-  const sheetPosit = getSheetData(dataStore.analiseCarteira, 'Ultima fatura');
+  const sheetPosit = filterDataByPeriod(getSheetData(dataStore.analiseCarteira, 'Ultima fatura'));
   if (sheetPosit.length > 0) {
     const r = sheetPosit[0];
     const keyPos = Object.keys(r).find(k => k.toLowerCase().includes('positivad')) || 'Qtd_Positivados';
@@ -170,7 +196,7 @@ function renderKPIs() {
 // 2. Gráfico: % Budget Atingido por Mês
 function renderChartBudget() {
   const ctx = document.getElementById('chartBudget').getContext('2d');
-  const sheet = getSheetData(dataStore.reportSection, '% do Budget atingida por');
+  const sheet = filterDataByPeriod(getSheetData(dataStore.reportSection, '% do Budget atingida por'));
 
   const labels = sheet.map(r => {
     const mesKey = Object.keys(r).find(k => k.toLowerCase().includes('mês') || k.toLowerCase().includes('mes'));
@@ -206,7 +232,7 @@ function renderChartBudget() {
 // 3. Gráfico: Volume de Encomendas (Gravado vs Normal)
 function renderChartTipoEncomenda() {
   const ctx = document.getElementById('chartTipoEncomenda').getContext('2d');
-  const sheet = getSheetData(dataStore.analiseCarteira, 'Clientes recentes que já');
+  const sheet = filterDataByPeriod(getSheetData(dataStore.analiseCarteira, 'Clientes recentes que já'));
 
   let gravado = 0;
   let normal = 0;
@@ -245,7 +271,7 @@ function renderChartTipoEncomenda() {
 // 4. Gráfico: Top 20 Produtos Mais Pedidos
 function renderChartTopProdutos() {
   const ctx = document.getElementById('chartTopProdutos').getContext('2d');
-  const sheet = getSheetData(dataStore.reportSection, 'Image-7');
+  const sheet = filterDataByPeriod(getSheetData(dataStore.reportSection, 'Image-7'));
 
   const top20 = sheet.slice(0, 20);
   const labels = top20.map(r => {
@@ -279,7 +305,7 @@ function renderChartTopProdutos() {
 // 5. Gráfico: Vendas (R$) por Classe / Segmento
 function renderChartSegmentos() {
   const ctx = document.getElementById('chartSegmentos').getContext('2d');
-  const sheet = getSheetData(dataStore.reportSection, 'Vendas (R$) por Cliente');
+  const sheet = filterDataByPeriod(getSheetData(dataStore.reportSection, 'Vendas (R$) por Cliente'));
 
   let classeMap = {};
   sheet.forEach(r => {
@@ -311,7 +337,7 @@ function renderChartSegmentos() {
 // 6. Tabela: Vendas por Cliente
 function renderVendasClienteTable() {
   const tbody = document.getElementById('tbVendasCliente');
-  const sheet = getSheetData(dataStore.reportSection, 'Vendas (R$) por Cliente');
+  const sheet = filterDataByPeriod(getSheetData(dataStore.reportSection, 'Vendas (R$) por Cliente'));
   const query = document.getElementById('searchClientInput').value.toLowerCase().trim();
 
   tbody.innerHTML = '';
@@ -353,7 +379,7 @@ function renderVendasClienteTable() {
 // 7. Tabela: Recência de Compra e Dias até 1ª Fatura
 function renderInatividadeTable() {
   const tbody = document.getElementById('tbInatividade');
-  const sheetDias = getSheetData(dataStore.analiseCarteira, '#Dias até primeira fatura');
+  const sheetDias = filterDataByPeriod(getSheetData(dataStore.analiseCarteira, '#Dias até primeira fatura'));
 
   tbody.innerHTML = '';
 
