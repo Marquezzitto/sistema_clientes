@@ -1,15 +1,16 @@
+// Inicializa ícones do Lucide
 lucide.createIcons();
 
-// Estruturas de Dados Internos
+// Repositório global das planilhas importadas
 let dataStore = {
   reportSection: {},
   analiseCarteira: {}
 };
 
-// Instâncias dos Gráficos Chart.js
+// Guarda as instâncias dos gráficos Chart.js para destruição/redesenho
 let charts = {};
 
-// Elementos DOM
+// Elementos do DOM
 const fileInput1 = document.getElementById('fileInput1');
 const fileInput2 = document.getElementById('fileInput2');
 const dropZone1 = document.getElementById('dropZone1');
@@ -22,22 +23,22 @@ const badgeText = document.getElementById('badgeText');
 const selectAno = document.getElementById('selectAno');
 const selectMes = document.getElementById('selectMes');
 
-// Handlers de Upload File 1
+// Event Listeners de Carga de Arquivos
 fileInput1.addEventListener('change', (e) => {
   if (e.target.files.length > 0) readExcelFile(e.target.files[0], 1);
 });
 
-// Handlers de Upload File 2
 fileInput2.addEventListener('change', (e) => {
   if (e.target.files.length > 0) readExcelFile(e.target.files[0], 2);
 });
 
+// Leitura de Arquivo via SheetJS
 function readExcelFile(file, fileNum) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
       const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
       
       let parsedSheets = {};
       workbook.SheetNames.forEach(sheetName => {
@@ -57,8 +58,8 @@ function readExcelFile(file, fileNum) {
 
       checkAndRenderBI();
     } catch (err) {
-      console.error(err);
-      alert(`Erro ao ler o Arquivo ${fileNum}.`);
+      console.error("Erro ao ler o Excel:", err);
+      alert(`Erro ao processar o Arquivo ${fileNum}. Verifique o formato do arquivo.`);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -75,11 +76,12 @@ function checkAndRenderBI() {
   }
 }
 
-// Eventos dos Filtros
+// Event Listeners de Filtros
 selectAno.addEventListener('change', renderDashboard);
 selectMes.addEventListener('change', renderDashboard);
 document.getElementById('searchClientInput').addEventListener('input', renderVendasClienteTable);
 
+// Função Mestra de Renderização
 function renderDashboard() {
   renderKPIs();
   renderChartBudget();
@@ -90,28 +92,29 @@ function renderDashboard() {
   renderInatividadeTable();
 }
 
-// 1. Renderização de KPIs
+// 1. Renderização dos Cards KPIs
 function renderKPIs() {
-  // KPI 1: Valor Mensal da Carteira
+  // KPI 1: Faturamento Mensal Carteira
   const sheetVendaMensal = dataStore.reportSection['Venda mensal em reais da '] || [];
   let totalVenda = 0;
   sheetVendaMensal.forEach(r => {
-    const val = parseCurrency(r['After_Tax_Amount']);
-    totalVenda += val;
+    totalVenda += parseCurrency(r['After_Tax_Amount']);
   });
   document.getElementById('kpiValorMensal').textContent = formatBRL(totalVenda);
 
-  // KPI 2: Budget Atingido
+  // KPI 2: Atingimento do Budget
   const sheetBudget = dataStore.reportSection['% do Budget atingida por '] || [];
   const selectedMes = selectMes.value;
-  let targetRow = sheetBudget;
+  let rows = sheetBudget;
   if (selectedMes !== 'ALL') {
-    targetRow = sheetBudget.filter(r => String(r['Mês']) === selectedMes);
+    rows = sheetBudget.filter(r => String(r['Mês']) === selectedMes);
   }
   let pctBudgetAvg = 0;
-  if (targetRow.length > 0) {
-    const sumPct = targetRow.reduce((acc, c) => acc + parsePct(c['% do Budget']), 0);
-    pctBudgetAvg = sumPct / targetRow.length;
+  if (rows.length > 0) {
+    const validPcts = rows.map(r => parsePct(r['% do Budget'])).filter(v => !isNaN(v) && v > 0);
+    if (validPcts.length > 0) {
+      pctBudgetAvg = validPcts.reduce((a, b) => a + b, 0) / validPcts.length;
+    }
   }
   document.getElementById('kpiBudgetAtingido').textContent = `${pctBudgetAvg.toFixed(1)}%`;
 
@@ -121,7 +124,7 @@ function renderKPIs() {
   const pctGrav = gravadoRow ? parsePct(gravadoRow['% gravação']) : 0;
   document.getElementById('kpiPctGravadas').textContent = `${pctGrav.toFixed(1)}%`;
 
-  // KPI 4: Positivação de Carteira
+  // KPI 4: Positivação da Carteira
   const sheetPosit = dataStore.analiseCarteira['Ultima fatura'] || [];
   if (sheetPosit.length > 0) {
     const r = sheetPosit[0];
@@ -133,12 +136,12 @@ function renderKPIs() {
   }
 }
 
-// 2. Gráfico: % Budget Atingido por Mês (2026)
+// 2. Gráfico: % Budget Atingido por Mês
 function renderChartBudget() {
   const ctx = document.getElementById('chartBudget').getContext('2d');
   const sheet = dataStore.reportSection['% do Budget atingida por '] || [];
 
-  const labels = sheet.map(r => r['Mês'] || '');
+  const labels = sheet.map(r => `Mês ${r['Mês'] || ''}`);
   const dataVals = sheet.map(r => parsePct(r['% do Budget']));
 
   destroyChart('chartBudget');
@@ -154,7 +157,8 @@ function renderChartBudget() {
         backgroundColor: 'rgba(99, 102, 241, 0.15)',
         fill: true,
         tension: 0.3,
-        pointBackgroundColor: '#6366f1'
+        pointBackgroundColor: '#6366f1',
+        pointRadius: 4
       }]
     },
     options: getCommonChartOptions('%')
@@ -204,7 +208,7 @@ function renderChartTopProdutos() {
   const sheet = dataStore.reportSection['Image-7'] || [];
 
   const top20 = sheet.slice(0, 20);
-  const labels = top20.map(r => String(r['Produto'] || '').substring(0, 20) + '...');
+  const labels = top20.map(r => String(r['Produto'] || '').substring(0, 18) + '...');
   const dataVals = top20.map(r => parseFloat(r['Quantidade']) || 0);
 
   destroyChart('chartTopProdutos');
@@ -224,7 +228,7 @@ function renderChartTopProdutos() {
   });
 }
 
-// 5. Gráfico: Vendas por Segmento / Classe
+// 5. Gráfico: Vendas (R$) por Classe / Segmento
 function renderChartSegmentos() {
   const ctx = document.getElementById('chartSegmentos').getContext('2d');
   const sheet = dataStore.reportSection['Vendas (R$) por Cliente'] || [];
@@ -245,7 +249,7 @@ function renderChartSegmentos() {
       datasets: [{
         label: 'Vendas (R$)',
         data: Object.values(classeMap),
-        backgroundColor: ['#10b981', '#6366f1', '#f59e0b'],
+        backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#3b82f6'],
         borderRadius: 6
       }]
     },
@@ -288,7 +292,7 @@ function renderVendasClienteTable() {
   });
 }
 
-// 7. Tabela: Inatividade e Dias para 1ª Fatura
+// 7. Tabela: Recência de Compra e Dias até 1ª Fatura
 function renderInatividadeTable() {
   const tbody = document.getElementById('tbInatividade');
   const sheetDias = dataStore.analiseCarteira['#Dias até primeira fatura'] || [];
@@ -304,8 +308,15 @@ function renderInatividadeTable() {
     const tr = document.createElement('tr');
     const classe = r['Classe'] || 'Pontual';
     const cliente = r['Cliente_Pai'] || '-';
-    const ultFat = r['Ultima fat'] ? String(r['Ultima fat']).substring(0, 10) : '-';
-    const dias = r['#dias desde a ultima fat'] || 0;
+    
+    // Tratamento seguro de objeto de Data do Excel
+    let ultFat = '-';
+    if (r['Ultima fat']) {
+      const d = new Date(r['Ultima fat']);
+      ultFat = !isNaN(d.getTime()) ? d.toLocaleDateString('pt-BR') : String(r['Ultima fat']);
+    }
+
+    const dias = parseInt(r['#dias desde a ultima fat']) || 0;
 
     tr.innerHTML = `
       <td><span class="class-tag ${classe.toLowerCase()}">${classe}</span></td>
@@ -317,19 +328,25 @@ function renderInatividadeTable() {
   });
 }
 
-// Funções Auxiliares
+// Functions Auxiliares Truncadas e Seguras
+
 function parseCurrency(val) {
   if (typeof val === 'number') return val;
   if (!val) return 0;
-  const clean = String(val).replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
-  return parseFloat(clean) || 0;
+  let str = String(val).replace('R$', '').trim();
+  if (str.includes(',')) {
+    str = str.replace(/\./g, '').replace(',', '.');
+  }
+  const num = parseFloat(str);
+  return isNaN(num) ? 0 : num;
 }
 
 function parsePct(val) {
+  if (val === null || val === undefined || val === '') return 0;
   if (typeof val === 'number') return val > 1 ? val : val * 100;
-  if (!val) return 0;
   const clean = String(val).replace('%', '').replace(',', '.').trim();
-  const num = parseFloat(clean) || 0;
+  const num = parseFloat(clean);
+  if (isNaN(num)) return 0;
   return num > 1 ? num : num * 100;
 }
 
@@ -360,7 +377,7 @@ function getCommonChartOptions(unit) {
         ticks: {
           color: '#64748b',
           font: { family: 'Plus Jakarta Sans' },
-          callback: function(value) { return value + ' ' + unit; }
+          callback: function(value) { return unit === 'R$' ? 'R$ ' + value.toLocaleString('pt-BR') : value + ' ' + unit; }
         }
       }
     }
