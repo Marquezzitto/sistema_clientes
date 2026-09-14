@@ -1,96 +1,240 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Positivação e Gravação - RCA 61</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SheetJS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- CSS Customizado -->
-    <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executive BI Analytics - Carteira & Vendas</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+<body>
 
-    <div class="container mx-auto p-6">
-        <!-- Cabeçalho -->
-        <header class="bg-white shadow-md rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">📊 Gestão de Metas: Positivação & Gravação</h1>
-                <p class="text-gray-600 text-sm">Campanha Trimestral Stricker - Carteira RCA 61</p>
-            </div>
-            <div class="mt-4 md:mt-0">
-                <label class="block text-xs font-semibold text-gray-500 mb-1">Carregar Planilha (Excel / CSV):</label>
-                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-            </div>
-        </header>
+  <div class="app-layout">
+    
+    <!-- Topbar / Header Executive -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i data-lucide="bar-chart-3"></i>
+        </div>
+        <div>
+          <h2>Executive BI <span class="accent-text">Analytics</span></h2>
+          <span class="subbrand">Métricas de Carteira & Faturamento 2026</span>
+        </div>
+      </div>
 
-        <!-- Indicadores (KPIs) -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-                <h3 class="text-gray-500 text-sm font-semibold">Clientes Positivados (1º Pedido)</h3>
-                <p id="kpiPositivados" class="text-3xl font-bold text-gray-800 mt-2">0 / 162</p>
-                <span class="text-xs text-blue-600 font-medium">Meta: 60% da base (270)</span>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
-                <h3 class="text-gray-500 text-sm font-semibold">% Positivação Atingida</h3>
-                <p id="kpiPctPositivacao" class="text-3xl font-bold text-gray-800 mt-2">0.0%</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
-                <h3 class="text-gray-500 text-sm font-semibold">Pedidos com Gravação</h3>
-                <p id="kpiGravados" class="text-3xl font-bold text-gray-800 mt-2">0 / 0</p>
-                <span class="text-xs text-yellow-600 font-medium">Meta da Campanha: 40%</span>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
-                <h3 class="text-gray-500 text-sm font-semibold">% de Gravação nos Pedidos</h3>
-                <p id="kpiPctGravacao" class="text-3xl font-bold text-gray-800 mt-2">0.0%</p>
-            </div>
+      <!-- Control Bar & Slicers -->
+      <div class="header-controls">
+        <div class="filter-group">
+          <i data-lucide="calendar" class="filter-icon"></i>
+          <select id="selectAno">
+            <option value="ALL">Ano: Todos</option>
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+          </select>
         </div>
 
-        <!-- Seção de Gráficos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Progresso da Positivação</h3>
-                <div class="relative h-64 flex justify-center items-center">
-                    <canvas id="chartPositivacao"></canvas>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Proporção de Gravação</h3>
-                <div class="relative h-64 flex justify-center items-center">
-                    <canvas id="chartGravacao"></canvas>
-                </div>
-            </div>
+        <div class="filter-group">
+          <i data-lucide="filter" class="filter-icon"></i>
+          <select id="selectMes">
+            <option value="ALL">Mês: Todos</option>
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
         </div>
 
-        <!-- Tabela de Clientes Faltantes -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">📋 Clientes da Carteira que AINDA NÃO compraram</h3>
-                <span id="totalFaltantes" class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">0 pendentes</span>
-            </div>
-            <div class="overflow-x-auto max-h-96">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50 sticky top-0">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cidade / UF</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelaFaltantesBody" class="bg-white divide-y divide-gray-200 text-sm">
-                        <!-- Preenchido via JavaScript -->
-                    </tbody>
-                </table>
-            </div>
+        <div class="badge" id="statusBadge">
+          <span class="dot"></span>
+          <span id="badgeText">Aguardando Importação</span>
         </div>
-    </div>
+      </div>
+    </header>
 
-    <!-- Script Externo -->
-    <script src="./script.js"></script>
+    <!-- Zone de Carga dos 2 Arquivos Excel -->
+    <section class="upload-zone-container">
+      <div class="upload-box" id="dropZone1">
+        <input type="file" id="fileInput1" accept=".xlsx, .xls">
+        <div class="upload-inner">
+          <i data-lucide="file-spreadsheet" class="up-icon"></i>
+          <div>
+            <p class="up-title">1ª Planilha (Report Section)</p>
+            <p class="up-sub" id="labelFile1">Arraste ou clique para carregar</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="upload-box" id="dropZone2">
+        <input type="file" id="fileInput2" accept=".xlsx, .xls">
+        <div class="upload-inner">
+          <i data-lucide="file-spreadsheet" class="up-icon"></i>
+          <div>
+            <p class="up-title">2ª Planilha (Análise de Carteira)</p>
+            <p class="up-sub" id="labelFile2">Arraste ou clique para carregar</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard Content (Cards & Gráficos) -->
+    <main class="dashboard-body" id="dashboardBody">
+
+      <!-- KPI Summary Cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-head">
+            <span>Faturamento Carteira</span>
+            <i data-lucide="dollar-sign" class="kpi-icon primary"></i>
+          </div>
+          <h3 id="kpiValorMensal">R$ 0,00</h3>
+          <span class="kpi-sub">Valor Total em Reais</span>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-head">
+            <span>Atingimento de Budget</span>
+            <i data-lucide="target" class="kpi-icon success"></i>
+          </div>
+          <h3 id="kpiBudgetAtingido">0,0%</h3>
+          <span class="kpi-sub" id="kpiBudgetSub">Realizado vs Meta</span>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-head">
+            <span>Encomendas Gravadas</span>
+            <i data-lucide="percent" class="kpi-icon warning"></i>
+          </div>
+          <h3 id="kpiPctGravadas">0,0%</h3>
+          <span class="kpi-sub">Último Semestre</span>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-head">
+            <span>Positivação de Carteira</span>
+            <i data-lucide="users" class="kpi-icon info"></i>
+          </div>
+          <h3 id="kpiPositivacao">0 / 0</h3>
+          <span class="kpi-sub" id="kpiPositivacaoSub">0% Clientes Ativos</span>
+        </div>
+      </section>
+
+      <!-- Charts Row 1: Budget & Tipo de Encomenda -->
+      <section class="charts-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h4><i data-lucide="trending-up"></i> % Budget Atingido por Mês (2026)</h4>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartBudget"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h4><i data-lucide="pie-chart"></i> Volume de Encomendas: Gravado vs Normal</h4>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartTipoEncomenda"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Charts Row 2: Top Produtos & Vendas por Segmento/Classe -->
+      <section class="charts-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h4><i data-lucide="package-check"></i> Top 20 Produtos Mais Pedidos</h4>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartTopProdutos"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h4><i data-lucide="layers"></i> Vendas (R$) por Classe / Segmento</h4>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartSegmentos"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Tables Section -->
+      <section class="tables-grid-2">
+        <!-- Tabela 1: Vendas por Cliente -->
+        <div class="table-card">
+          <div class="table-header">
+            <h4><i data-lucide="award"></i> Vendas (R$) por Cliente</h4>
+            <div class="search-mini">
+              <i data-lucide="search"></i>
+              <input type="text" id="searchClientInput" placeholder="Filtrar cliente...">
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Classe</th>
+                  <th>Cliente</th>
+                  <th>Valor Venda (R$)</th>
+                  <th>% Total</th>
+                </tr>
+              </thead>
+              <tbody id="tbVendasCliente">
+                <tr><td colspan="4" class="empty">Nenhum dado carregado.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tabela 2: Inatividade e Dias para 1ª Fatura -->
+        <div class="table-card">
+          <div class="table-header">
+            <h4><i data-lucide="clock"></i> Recência de Compra e Dias até 1ª Fatura</h4>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Classe</th>
+                  <th>Cliente</th>
+                  <th>Última Fatura / Cadastro</th>
+                  <th>Dias Sem Comprar / 1º Fatura</th>
+                </tr>
+              </thead>
+              <tbody id="tbInatividade">
+                <tr><td colspan="4" class="empty">Nenhum dado carregado.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
