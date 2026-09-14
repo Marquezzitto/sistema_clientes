@@ -52,7 +52,6 @@ body {
   gap: 20px;
 }
 
-/* Header & Navbar */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -169,7 +168,6 @@ body {
   box-shadow: 0 0 8px var(--success);
 }
 
-/* Upload Section */
 .upload-zone-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -235,14 +233,12 @@ body {
   color: var(--text-dim);
 }
 
-/* Dashboard Body & Layout */
 .dashboard-body {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* KPI Cards */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -297,7 +293,6 @@ body {
   font-weight: 600;
 }
 
-/* Gráficos Grid */
 .charts-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -340,7 +335,6 @@ body {
   width: 100%;
 }
 
-/* Data Tables Grid */
 .tables-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -450,7 +444,6 @@ td.empty {
   padding: 40px !important;
 }
 
-/* Badges de Classe */
 .class-tag {
   padding: 3px 8px;
   border-radius: 4px;
