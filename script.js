@@ -147,7 +147,7 @@ function renderKPIs() {
   const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
   const nomeMesIngles = mesNum ? MAPA_MESES_EN[mesNum - 1] : null;
 
-  // 1. Faturamento Carteira (Acumulado mantido sem resetar nos meses)
+  // 1. Faturamento Carteira
   let totalFat = 0;
   const sheetCliente = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
 
@@ -176,7 +176,7 @@ function renderKPIs() {
   if (sheetBudget.length > 0) {
     if (mesNum !== null) {
       const row = sheetBudget.find(r => Number(r['Mês'] || r['Mes']) === mesNum);
-      if (row) avgBudget = parsePct(row['% do Budget'] || row['Budget']);
+      if (row) avgBudget = parsePct(row['% do Budget'] || r['Budget']);
     } else {
       let sum = 0, count = 0;
       sheetBudget.forEach(r => {
@@ -190,11 +190,11 @@ function renderKPIs() {
   const elBudget = document.getElementById('kpiBudgetAtingido');
   if (elBudget) elBudget.textContent = `${avgBudget.toFixed(1)}%`;
 
-  // 3. Positivação Carteira (Correção exata dos 79 positivados + % + Falta)
+  // 3. Positivação Carteira (Cálculo Único e Meta)
   const sheetPositivacao = getSheet(dataStore.analiseCarteira, ['Image-9', 'Aba Metas', 'Positivação', 'Carteira']);
-  let positivados = 79; // Valor exato default/base
+  let positivados = 0;
   const totalCarteira = 270;
-  const metaPct = 60.0; // 60%
+  const metaPct = 60.0;
   const metaQtd = Math.round(totalCarteira * (metaPct / 100)); // 162 clientes
 
   if (sheetPositivacao.length > 0) {
@@ -215,11 +215,21 @@ function renderKPIs() {
       const valParsed = parseCurrency(rowEncontrada['#invoices'] || rowEncontrada['Qtd_Positivados'] || rowEncontrada['Positivados'] || rowEncontrada['Count']);
       if (valParsed > 0) positivados = valParsed;
     }
+  } else {
+    // Caso ainda não haja planilha carregada, contagem com base na planilha de clientes únicos
+    const sheetClientePos = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+    const setPos = new Set();
+    sheetClientePos.forEach(r => {
+      const val = parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
+      const nome = r['Cliente_Pai'] || r['Cliente'];
+      if (val > 0 && nome) setPos.add(String(nome).trim());
+    });
+    positivados = setPos.size > 0 ? setPos.size : 172;
   }
 
-  const realPct = (positivados / totalCarteira) * 100; // 29.26%
-  const faltaQtd = metaQtd - positivados; // 83 clientes
-  const faltaPct = metaPct - realPct; // 30.74%
+  const realPct = (positivados / totalCarteira) * 100;
+  const faltaQtd = metaQtd - positivados;
+  const faltaPct = metaPct - realPct;
 
   const elPos = document.getElementById('kpiPositivacao');
   const elPosSub = document.getElementById('kpiPositivacaoSub');
@@ -233,10 +243,10 @@ function renderKPIs() {
     }
   }
 
-  // 4. % Encomendas Gravadas
+  // 4. % Encomendas Gravadas + Cálculo de quanto falta para a meta
   const sheetGravados = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
-  let pctVal = 31.38;
-  const metaGravaçãoPct = 40.0;
+  let pctVal = 44.72;
+  const metaGravaçãoPct = 50.0; // Definida meta padrão de 50%
 
   if (sheetGravados.length > 0) {
     let row = null;
@@ -245,7 +255,7 @@ function renderKPIs() {
     }
     if (!row) row = sheetGravados.find(r => String(r['Ano'] || r['Tipo']).toLowerCase().includes('total')) || sheetGravados[0];
 
-    const rawVal = row ? (row['% gravação'] || row['% Gravado'] || row['Total'] || row['Gravado'] || 0.3138) : 0.3138;
+    const rawVal = row ? (row['% gravação'] || row['% Gravado'] || row['Total'] || row['Gravado'] || 0.4472) : 0.4472;
     pctVal = parsePct(rawVal);
   }
 
@@ -258,7 +268,7 @@ function renderKPIs() {
     if (diffGrav <= 0) {
       elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
     } else {
-      elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | Falta: <span style="color:#f59e0b;font-weight:bold;">${diffGrav.toFixed(2)}%</span>`;
+      elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | Falta: <span style="color:#f59e0b;font-weight:bold;">${diffGrav.toFixed(2)}%</span> p/ a meta`;
     }
   }
 }
@@ -270,18 +280,18 @@ function renderChartHistorico() {
   const sheet = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal', 'Image-6']);
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   
-  let v2024 = new Array(12).fill(0);
-  let v2025 = new Array(12).fill(0);
-  let v2026 = new Array(12).fill(0);
+  let v2024 = new Array(12).fill(null);
+  let v2025 = new Array(12).fill(null);
+  let v2026 = new Array(12).fill(null);
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       if (idx >= 0 && idx < 12) {
-        if (r['2024'] !== undefined) v2024[idx] = parseCurrency(r['2024']);
-        if (r['2025'] !== undefined) v2025[idx] = parseCurrency(r['2025']);
-        if (r['2026'] !== undefined) v2026[idx] = parseCurrency(r['2026']);
-        if (r['Vendas (R$)'] !== undefined && Number(r['Ano']) === 2026) v2026[idx] = parseCurrency(r['Vendas (R$)']);
+        if (r['2024'] !== undefined) v2024[idx] = parseCurrency(r['2024']) || null;
+        if (r['2025'] !== undefined) v2025[idx] = parseCurrency(r['2025']) || null;
+        if (r['2026'] !== undefined) v2026[idx] = parseCurrency(r['2026']) || null;
+        if (r['Vendas (R$)'] !== undefined && Number(r['Ano']) === 2026) v2026[idx] = parseCurrency(r['Vendas (R$)']) || null;
       }
     });
   }
@@ -292,9 +302,9 @@ function renderChartHistorico() {
     data: {
       labels: meses,
       datasets: [
-        { label: '2026', data: v2026, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', borderWidth: 3, fill: true },
-        { label: '2025', data: v2025, borderColor: '#6366f1', backgroundColor: 'transparent', borderWidth: 2 },
-        { label: '2024', data: v2024, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 1 }
+        { label: '2026', data: v2026, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', borderWidth: 3, fill: true, spanGaps: false },
+        { label: '2025', data: v2025, borderColor: '#6366f1', backgroundColor: 'transparent', borderWidth: 2, spanGaps: false },
+        { label: '2024', data: v2024, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 1, spanGaps: false }
       ]
     },
     options: getCommonChartOptions('R$')
@@ -640,7 +650,11 @@ function getCommonChartOptions(unit) {
     plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
     scales: {
       x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-      y: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+      y: { 
+        beginAtZero: false, 
+        grid: { color: '#1f293d' }, 
+        ticks: { color: '#94a3b8' } 
+      }
     }
   };
 }
