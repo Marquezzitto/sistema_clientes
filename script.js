@@ -7,7 +7,7 @@ let dataStore = {
 
 let charts = {};
 
-// Referências da Interface
+// Leitura de Arquivos Excel
 const fileInput1 = document.getElementById('fileInput1');
 const fileInput2 = document.getElementById('fileInput2');
 const dropZone1 = document.getElementById('dropZone1');
@@ -21,26 +21,8 @@ const selectAno = document.getElementById('selectAno');
 const selectMes = document.getElementById('selectMes');
 const searchInput = document.getElementById('searchClientInput');
 
-const clientModal = document.getElementById('clientModal');
-const btnCloseModal = document.getElementById('btnCloseModal');
-
 if (fileInput1) fileInput1.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 1));
 if (fileInput2) fileInput2.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 2));
-
-if (btnCloseModal) btnCloseModal.addEventListener('click', () => clientModal.classList.remove('active'));
-if (clientModal) {
-  clientModal.addEventListener('click', (e) => {
-    if (e.target === clientModal) clientModal.classList.remove('active');
-  });
-}
-
-function normalizeStr(str) {
-  return String(str || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
-}
 
 function readExcelFile(file, fileNum) {
   const reader = new FileReader();
@@ -69,7 +51,7 @@ function readExcelFile(file, fileNum) {
 
       renderDashboard();
     } catch (err) {
-      console.error("Erro na leitura do arquivo Excel:", err);
+      console.error("Erro ao ler planilha:", err);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -79,28 +61,18 @@ if (selectAno) selectAno.addEventListener('change', renderDashboard);
 if (selectMes) selectMes.addEventListener('change', renderDashboard);
 if (searchInput) searchInput.addEventListener('input', renderVendasClienteTable);
 
-// Localiza abas por palavra-chave flexível
-function getSheetData(dataObject, keywords) {
-  if (!dataObject) return [];
-  const keys = Object.keys(dataObject);
-  const targets = keywords.map(normalizeStr);
-
-  const foundKey = keys.find(k => {
-    const normK = normalizeStr(k);
-    return targets.some(target => normK.includes(target));
-  });
-
-  return foundKey ? dataObject[foundKey] : [];
+// Busca exata/normalizada de Abas
+function getSheet(dataObj, keywords) {
+  if (!dataObj) return [];
+  const sheetNames = Object.keys(dataObj);
+  for (let kw of keywords) {
+    const found = sheetNames.find(s => s.toLowerCase().includes(kw.toLowerCase()));
+    if (found) return dataObj[found];
+  }
+  return [];
 }
 
-// Extrai valor de qualquer propriedade que combine com a busca
-function getRowValue(row, possibleKeys) {
-  if (!row) return "";
-  const targets = possibleKeys.map(normalizeStr);
-  const matchedKey = Object.keys(row).find(k => targets.some(t => normalizeStr(k).includes(t)));
-  return matchedKey ? row[matchedKey] : "";
-}
-
+// Renderização Geral
 function renderDashboard() {
   renderYTDBanner();
   renderKPIs();
@@ -114,12 +86,12 @@ function renderDashboard() {
 }
 
 function renderYTDBanner() {
-  const sheet = getSheetData(dataStore.reportSection, ['venda mensal', 'reais', 'faturamento']);
+  const sheet = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal', 'Geral']);
   let lytd = 0, ytd = 0;
 
   sheet.forEach(r => {
-    lytd += parseCurrency(getRowValue(r, ['2025']));
-    ytd += parseCurrency(getRowValue(r, ['2026']));
+    lytd += parseCurrency(r['2025']);
+    ytd += parseCurrency(r['2026']);
   });
 
   const variacao = ytd - lytd;
@@ -130,42 +102,68 @@ function renderYTDBanner() {
 }
 
 function renderKPIs() {
-  // Faturamento Carteira
-  const sheetVenda = getSheetData(dataStore.reportSection, ['venda mensal', 'reais']);
-  let totalVenda = 0;
+  const mesSel = selectMes ? selectMes.value : 'ALL';
+  const anoSel = selectAno ? selectAno.value : '2026';
 
-  sheetVenda.forEach(r => {
-    totalVenda += parseCurrency(getRowValue(r, ['2026', 'valor']));
-  });
-  
-  if (totalVenda === 0) {
-    const sheetCliente = getSheetData(dataStore.reportSection, ['vendas (r$)', 'cliente']);
-    sheetCliente.forEach(r => totalVenda += parseCurrency(getRowValue(r, ['valor', 'venda'])));
+  // 1. Faturamento Carteira
+  const sheetVenda = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal']);
+  let totalFat = 0;
+
+  if (sheetVenda.length > 0) {
+    if (mesSel !== 'ALL') {
+      const idx = parseInt(mesSel, 10) - 1;
+      if (sheetVenda[idx]) totalFat = parseCurrency(sheetVenda[idx][anoSel]);
+    } else {
+      sheetVenda.forEach(r => totalFat += parseCurrency(r[anoSel]));
+    }
   }
 
-  document.getElementById('kpiValorMensal').textContent = formatBRL(totalVenda || 32766640.70);
+  if (totalFat === 0 && mesSel === 'ALL') {
+    const sheetCliente = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+    sheetCliente.forEach(r => totalFat += parseCurrency(r['Valor de venda (R$)']));
+  }
 
-  // Positivação de Carteira (Correção Específica)
-  const sheetPositivacao = getSheetData(dataStore.analiseCarteira, ['positividade', 'positivad', 'aba metas', 'carteira']);
+  document.getElementById('kpiValorMensal').textContent = formatBRL(totalFat);
+
+  // 2. % Budget Atingido
+  const sheetBudget = getSheet(dataStore.reportSection, ['% Budget Atingida', 'Budget']);
+  let avgBudget = 0;
+
+  if (sheetBudget.length > 0) {
+    if (mesSel !== 'ALL') {
+      const idx = parseInt(mesSel, 10) - 1;
+      if (sheetBudget[idx]) avgBudget = parsePct(sheetBudget[idx]['% do Budget']);
+    } else {
+      let sum = 0, count = 0;
+      sheetBudget.forEach(r => {
+        const val = parsePct(r['% do Budget']);
+        if (val > 0) { sum += val; count++; }
+      });
+      avgBudget = count > 0 ? (sum / count) : 0;
+    }
+  }
+
+  document.getElementById('kpiBudgetAtingido').textContent = `${avgBudget.toFixed(1)}%`;
+
+  // 3. Positivação Carteira
+  const sheetPositivacao = getSheet(dataStore.analiseCarteira, ['Aba Metas', 'Positivação', 'Carteira']);
   if (sheetPositivacao.length > 0) {
     const row = sheetPositivacao[0];
-    const carteira = getRowValue(row, ['carteira', 'total', 'qtd']) || 270;
-    const positivados = getRowValue(row, ['positivado', 'real', 'atingido']) || 79;
-    const pct = getRowValue(row, ['%', 'pct', 'meta']) || '29.26%';
-    
+    const carteira = row['Carteira'] || row['Total_Carteira'] || 270;
+    const positivados = row['Qtd_Positivados'] || row['Positivados'] || 79;
+    const realPct = parsePct(row['%Positivad'] || row['% Positivado'] || 0.2926);
+
     document.getElementById('kpiPositivacao').textContent = `${positivados} / ${carteira}`;
-    document.getElementById('kpiPositivacaoSub').textContent = `Meta: 60% | Real: ${pct}`;
-  } else {
-    document.getElementById('kpiPositivacao').textContent = "79 / 270";
-    document.getElementById('kpiPositivacaoSub').textContent = "Meta: 60% | Real: 29.26%";
+    document.getElementById('kpiPositivacaoSub').textContent = `Meta: 60% | Real: ${realPct.toFixed(2)}%`;
   }
 
-  // Encomendas Gravadas
-  const sheetGravados = getSheetData(dataStore.analiseCarteira, ['encomendas gravadas', 'gravada', 'tipo']);
+  // 4. % Encomendas Gravadas
+  const sheetGravados = getSheet(dataStore.analiseCarteira, ['Encomendas Gravadas', 'Gravado']);
   if (sheetGravados.length > 0) {
-    const row = sheetGravados[0];
-    const val = getRowValue(row, ['total', '%', 'gravada']) || '34.99%';
-    document.getElementById('kpiPctGravadas').textContent = typeof val === 'number' ? `${(val * 100).toFixed(2)}%` : val;
+    const row = sheetGravados.find(r => String(r['Ano'] || r['Tipo']).toLowerCase().includes('total')) || sheetGravados[0];
+    const rawVal = row['% Gravado'] || row['Total'] || row['Gravado'] || 0.3499;
+    const pctVal = parsePct(rawVal);
+    document.getElementById('kpiPctGravadas').textContent = `${pctVal.toFixed(2)}%`;
   }
 }
 
@@ -173,16 +171,16 @@ function renderChartHistorico() {
   const ctx = document.getElementById('chartHistoricoFaturamento');
   if (!ctx) return;
 
-  const sheet = getSheetData(dataStore.reportSection, ['venda mensal', 'reais']);
+  const sheet = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal']);
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   
   let v2024 = [], v2025 = [], v2026 = [];
-  
+
   if (sheet.length > 0) {
     sheet.slice(0, 12).forEach(r => {
-      v2024.push(parseCurrency(getRowValue(r, ['2024'])));
-      v2025.push(parseCurrency(getRowValue(r, ['2025'])));
-      v2026.push(parseCurrency(getRowValue(r, ['2026'])));
+      v2024.push(parseCurrency(r['2024']));
+      v2025.push(parseCurrency(r['2025']));
+      v2026.push(parseCurrency(r['2026']));
     });
   }
 
@@ -205,18 +203,22 @@ function renderChartBudget() {
   const ctx = document.getElementById('chartBudget');
   if (!ctx) return;
 
-  const sheet = getSheetData(dataStore.reportSection, ['budget', 'atingida']);
-  const labels = sheet.map(r => `Mês ${getRowValue(r, ['mes', 'mês'])}`);
-  const dataVals = sheet.map(r => parsePct(getRowValue(r, ['budget', '%'])));
+  const sheet = getSheet(dataStore.reportSection, ['% Budget Atingida', 'Budget']);
+  const labels = mesesArray();
+  let dataVals = [];
+
+  if (sheet.length > 0) {
+    dataVals = sheet.slice(0, 12).map(r => parsePct(r['% do Budget']));
+  }
 
   destroyChart('chartBudget');
   charts['chartBudget'] = new Chart(ctx.getContext('2d'), {
     type: 'bar',
     data: {
-      labels: labels.length ? labels : ['Mês 1', 'Mês 2', 'Mês 3', 'Mês 4', 'Mês 5', 'Mês 6', 'Mês 7'],
+      labels: labels,
       datasets: [{
         label: '% Budget Atingido',
-        data: dataVals.length ? dataVals : [0, 0, 0, 0, 0, 68, 85],
+        data: dataVals,
         backgroundColor: '#6366f1',
         borderRadius: 4
       }]
@@ -229,15 +231,13 @@ function renderChartTipoEncomenda() {
   const ctx = document.getElementById('chartTipoEncomenda');
   if (!ctx) return;
 
-  const sheet = getSheetData(dataStore.analiseCarteira, ['encomenda por tipo', 'encomenda', 'gravado']);
-  let gravado = 662, normal = 1230;
+  const sheet = getSheet(dataStore.analiseCarteira, ['Encomenda por Tipo', 'Gravado vs Normal']);
+  let gravado = 0, normal = 0;
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
-      const g = parseFloat(getRowValue(r, ['gravado']));
-      const n = parseFloat(getRowValue(r, ['normal']));
-      if (!isNaN(g)) gravado += g;
-      if (!isNaN(n)) normal += n;
+      gravado += parseCurrency(r['Gravado']);
+      normal += parseCurrency(r['Normal']);
     });
   }
 
@@ -247,7 +247,7 @@ function renderChartTipoEncomenda() {
     data: {
       labels: ['Gravado', 'Normal'],
       datasets: [{
-        data: [gravado, normal],
+        data: [gravado || 662, normal || 1230],
         backgroundColor: ['#10b981', '#ef4444'],
         borderWidth: 0
       }]
@@ -260,9 +260,9 @@ function renderChartSegmentos() {
   const ctx = document.getElementById('chartSegmentos');
   if (!ctx) return;
 
-  const sheet = getSheetData(dataStore.reportSection, ['segmento', 'separador']);
-  const labels = sheet.map(r => getRowValue(r, ['separador', 'segmento']) || 'Outros').slice(0, 8);
-  const dataVals = sheet.map(r => parseCurrency(getRowValue(r, ['amount', 'valor', 'tax']))).slice(0, 8);
+  const sheet = getSheet(dataStore.reportSection, ['Separador Segmento', 'Segmento']);
+  const labels = sheet.map(r => r['Separador'] || r['Segmento'] || 'Outros').slice(0, 8);
+  const dataVals = sheet.map(r => parseCurrency(r['After_Tax_Amount'] || r['Valor'])).slice(0, 8);
 
   destroyChart('chartSegmentos');
   charts['chartSegmentos'] = new Chart(ctx.getContext('2d'), {
@@ -284,9 +284,9 @@ function renderChartTopProdutos() {
   const ctx = document.getElementById('chartTopProdutos');
   if (!ctx) return;
 
-  const sheet = getSheetData(dataStore.reportSection, ['produtos mais vendidos', '20 produtos', 'top']).slice(0, 20);
-  const labels = sheet.map(r => `Prod ${getRowValue(r, ['produto', 'cod', 'item'])}`);
-  const dataVals = sheet.map(r => parseCurrency(getRowValue(r, ['valor', 'venda'])));
+  const sheet = getSheet(dataStore.reportSection, ['Top 20 Produtos Mais Vendidos', 'Top 20']).slice(0, 20);
+  const labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
+  const dataVals = sheet.map(r => parseCurrency(r['Valor de Venda (R$)'] || r['Valor de Venda']));
 
   destroyChart('chartTopProdutos');
   charts['chartTopProdutos'] = new Chart(ctx.getContext('2d'), {
@@ -308,11 +308,11 @@ function renderVendasClienteTable() {
   const tbody = document.getElementById('tbVendasCliente');
   if (!tbody) return;
 
-  const sheet = getSheetData(dataStore.reportSection, ['vendas (r$) por cliente', 'cliente', 'vendas']);
+  const sheet = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
   const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
   tbody.innerHTML = '';
-  const filtered = sheet.filter(r => String(getRowValue(r, ['cliente_pai', 'cliente', 'nome'])).toLowerCase().includes(query));
+  const filtered = sheet.filter(r => String(r['Cliente_Pai'] || r['Cliente'] || '').toLowerCase().includes(query));
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
@@ -320,133 +320,81 @@ function renderVendasClienteTable() {
   }
 
   filtered.forEach(r => {
-    const clientName = getRowValue(r, ['cliente_pai', 'cliente', 'nome']) || '-';
+    const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
     const tr = document.createElement('tr');
     tr.className = 'clickable-row';
     tr.innerHTML = `
-      <td>${getRowValue(r, ['classe', 'tipo']) || 'Geral'}</td>
+      <td>${r['Classe'] || 'Fiel'}</td>
       <td><strong>${clientName}</strong></td>
-      <td>${formatBRL(parseCurrency(getRowValue(r, ['valor', 'venda'])))}</td>
-      <td>${getRowValue(r, ['%', 'total']) || '-'}</td>
+      <td>${formatBRL(parseCurrency(r['Valor de venda (R$)'] || r['Valor']))}</td>
+      <td>${r['% do Total'] || '-'}</td>
     `;
-    
-    tr.addEventListener('click', () => openClientModal(clientName, r));
     tbody.appendChild(tr);
   });
 }
 
-// Correção do Grid "Recência de Compras por Cliente"
 function renderInatividadeTable() {
   const tbody = document.getElementById('tbInatividade');
   if (!tbody) return;
 
-  const sheet = getSheetData(dataStore.analiseCarteira, ['clientes com ultima fatura', 'ultima fatura', 'recencia', 'fatura', 'aba metas']);
+  const sheet = getSheet(dataStore.analiseCarteira, ['Clientes com ultima fatura', 'Ultima Fatura', 'Recência']);
   tbody.innerHTML = '';
 
   if (sheet.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum dado encontrado na aba de Recência/Última Fatura.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Aguardando dados da planilha...</td></tr>';
     return;
   }
 
-  sheet.slice(0, 15).forEach(r => {
-    const clientName = getRowValue(r, ['cliente_pai', 'cliente', 'nome']) || '-';
-    const ultimaFat = getRowValue(r, ['ultima', 'fat', 'data']) || '-';
-    const dias = parseInt(getRowValue(r, ['dias', 'inativo'])) || 0;
-    const classe = getRowValue(r, ['classe', 'grupo']) || 'Pontual';
-
+  sheet.forEach(r => {
+    const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
     const tr = document.createElement('tr');
     tr.className = 'clickable-row';
+    const dias = parseInt(r['Dias Inativo'] || r['Dias'] || 0, 10);
+    const dataFat = formatDate(r['Ultima fat'] || r['Última Fatura']);
+    
     tr.innerHTML = `
-      <td>${classe}</td>
+      <td>${r['Classe'] || 'Pontual'}</td>
       <td><strong>${clientName}</strong></td>
-      <td>${ultimaFat}</td>
+      <td>${dataFat}</td>
       <td><span style="color: ${dias >= 60 ? '#ef4444' : '#10b981'}; font-weight: 700;">${dias} dias</span></td>
     `;
-    
-    tr.addEventListener('click', () => openClientModal(clientName, r));
     tbody.appendChild(tr);
   });
 }
 
-function openClientModal(clientName, clientData) {
-  document.getElementById('modalClientName').textContent = clientName;
-  document.getElementById('modalClientClass').textContent = `Classe: ${getRowValue(clientData, ['classe', 'grupo']) || 'Geral'}`;
-  document.getElementById('modalTotalSpent').textContent = formatBRL(parseCurrency(getRowValue(clientData, ['valor', 'venda']) || 0));
-
-  const sheetInatividade = getSheetData(dataStore.analiseCarteira, ['clientes com ultima fatura', 'ultima fatura', 'aba metas']);
-  const recordInatividade = sheetInatividade.find(r => 
-    normalizeStr(getRowValue(r, ['cliente_pai', 'cliente'])).includes(normalizeStr(clientName))
-  );
-
-  let diasInativo = 0;
-  let ultimaData = 'Sem registro';
-
-  if (recordInatividade) {
-    diasInativo = parseInt(getRowValue(recordInatividade, ['dias', 'inativo'])) || 0;
-    ultimaData = getRowValue(recordInatividade, ['ultima', 'fat', 'data']) || 'Sem registro';
-  }
-
-  document.getElementById('modalLastPurchase').textContent = ultimaData;
-  document.getElementById('modalDaysInactive').textContent = `${diasInativo} dias`;
-
-  const statusEl = document.getElementById('modalContactStatus');
-  if (diasInativo >= 60) {
-    statusEl.textContent = "⚠️ ENTRAR EM CONTATO";
-    statusEl.style.color = "#ef4444";
-  } else {
-    statusEl.textContent = "✔ EM DIA";
-    statusEl.style.color = "#10b981";
-  }
-
-  renderClientOrders(clientName);
-  clientModal.classList.add('active');
-}
-
-function renderClientOrders(clientName) {
-  const tbody = document.getElementById('tbModalOrders');
-  tbody.innerHTML = '';
-
-  const sheetOrders = getSheetData(dataStore.analiseCarteira, ['primeira fatura', 'ultima fatura', 'faturas']);
-  const orders = sheetOrders.filter(r => 
-    normalizeStr(getRowValue(r, ['cliente_pai', 'cliente'])).includes(normalizeStr(clientName))
-  );
-
-  if (orders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum pedido detalhado localizado para este cliente.</td></tr>';
-    return;
-  }
-
-  orders.forEach((o, index) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>#${getRowValue(o, ['fatura', 'pedido']) || (1000 + index)}</td>
-      <td>${getRowValue(o, ['desde', 'fat', 'data']) || '-'}</td>
-      <td>${getRowValue(o, ['classe']) || 'Normal'}</td>
-      <td>${formatBRL(parseCurrency(getRowValue(o, ['valor']) || 0))}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
+// Funções Auxiliares de Tratamento de Dados
 function parseCurrency(val) {
   if (typeof val === 'number') return val;
   if (!val) return 0;
-  let str = String(val).replace('R$', '').trim();
+  let str = String(val).replace('R$', '').replace(/\s/g, '').trim();
   if (str.includes(',')) str = str.replace(/\./g, '').replace(',', '.');
   const num = parseFloat(str);
   return isNaN(num) ? 0 : num;
 }
 
 function parsePct(val) {
-  if (!val) return 0;
-  if (typeof val === 'number') return val > 1 ? val : val * 100;
-  const clean = String(val).replace('%', '').replace(',', '.').trim();
-  const num = parseFloat(clean);
-  return isNaN(num) ? 0 : (num > 1 ? num : num * 100);
+  if (val === undefined || val === null || val === '') return 0;
+  if (typeof val === 'number') {
+    return val <= 1 ? val * 100 : val;
+  }
+  let str = String(val).replace('%', '').replace(',', '.').trim();
+  let num = parseFloat(str);
+  if (isNaN(num)) return 0;
+  return num <= 1 && str.indexOf('.') !== -1 ? num * 100 : num;
+}
+
+function formatDate(val) {
+  if (!val) return '-';
+  if (val instanceof Date) return val.toISOString().split('T')[0];
+  return String(val).split('T')[0];
 }
 
 function formatBRL(val) {
   return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function mesesArray() {
+  return ['Mês 1', 'Mês 2', 'Mês 3', 'Mês 4', 'Mês 5', 'Mês 6', 'Mês 7', 'Mês 8', 'Mês 9', 'Mês 10', 'Mês 11', 'Mês 12'];
 }
 
 function destroyChart(chartId) {
