@@ -29,26 +29,26 @@
           <i data-lucide="bar-chart-3"></i>
         </div>
         <div>
-          <h2>Executive BI <span class="accent-text">Analytics</span></h2>
-          <span class="subbrand">Métricas de Carteira & Faturamento 2026</span>
+          <h1>Executive Analytics</h1>
+          <span class="sub-title">Gestão de Carteira & Inatividade</span>
         </div>
       </div>
 
-      <!-- Control Bar & Slicers -->
-      <div class="header-controls">
+      <!-- Filtros de Período -->
+      <div class="filters-container">
         <div class="filter-group">
-          <i data-lucide="calendar" class="filter-icon"></i>
+          <i data-lucide="calendar"></i>
           <select id="selectAno">
-            <option value="ALL">Ano: Todos</option>
+            <option value="ALL">Todos os Anos</option>
             <option value="2026" selected>2026</option>
             <option value="2025">2025</option>
           </select>
         </div>
 
         <div class="filter-group">
-          <i data-lucide="filter" class="filter-icon"></i>
+          <i data-lucide="filter"></i>
           <select id="selectMes">
-            <option value="ALL">Mês: Todos</option>
+            <option value="ALL">Todos os Meses</option>
             <option value="1">Janeiro</option>
             <option value="2">Fevereiro</option>
             <option value="3">Março</option>
@@ -63,176 +63,184 @@
             <option value="12">Dezembro</option>
           </select>
         </div>
+      </div>
 
-        <div class="badge" id="statusBadge">
-          <span class="dot"></span>
-          <span id="badgeText">Aguardando Importação</span>
-        </div>
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot"></span>
+        <span id="badgeText">Aguardando Planilhas / BI</span>
       </div>
     </header>
 
-    <!-- Zone de Carga dos 2 Arquivos Excel -->
-    <section class="upload-zone-container">
-      <div class="upload-box" id="dropZone1">
-        <input type="file" id="fileInput1" accept=".xlsx, .xls">
-        <div class="upload-inner">
-          <i data-lucide="file-spreadsheet" class="up-icon"></i>
-          <div>
-            <p class="up-title">1ª Planilha (Report Section)</p>
-            <p class="up-sub" id="labelFile1">Arraste ou clique para carregar</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="upload-box" id="dropZone2">
-        <input type="file" id="fileInput2" accept=".xlsx, .xls">
-        <div class="upload-inner">
-          <i data-lucide="file-spreadsheet" class="up-icon"></i>
-          <div>
-            <p class="up-title">2ª Planilha (Análise de Carteira)</p>
-            <p class="up-sub" id="labelFile2">Arraste ou clique para carregar</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Dashboard Content -->
-    <main class="dashboard-body" id="dashboardBody">
-
-      <!-- KPI Summary Cards -->
-      <section class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span>Faturamento Carteira</span>
-            <i data-lucide="dollar-sign" class="kpi-icon primary"></i>
-          </div>
-          <h3 id="kpiValorMensal">R$ 0,00</h3>
-          <span class="kpi-sub">Valor Total em Reais</span>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span>Atingimento de Budget</span>
-            <i data-lucide="target" class="kpi-icon success"></i>
-          </div>
-          <h3 id="kpiBudgetAtingido">0,0%</h3>
-          <span class="kpi-sub" id="kpiBudgetSub">Realizado vs Meta</span>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span>Encomendas Gravadas</span>
-            <i data-lucide="percent" class="kpi-icon warning"></i>
-          </div>
-          <h3 id="kpiPctGravadas">0,0%</h3>
-          <span class="kpi-sub">Último Semestre</span>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span>Positivação de Carteira</span>
-            <i data-lucide="users" class="kpi-icon info"></i>
-          </div>
-          <h3 id="kpiPositivacao">0 / 0</h3>
-          <span class="kpi-sub" id="kpiPositivacaoSub">0% Clientes Ativos</span>
+    <div class="main-content">
+      
+      <!-- Seção do Power BI Embarcado -->
+      <section class="bi-section" style="margin-bottom: 1.5rem;">
+        <div class="bi-wrapper" style="position: relative; width: 100%; height: 600px; background: var(--card-bg, #111827); border: 1px solid var(--card-border, #1f293d); border-radius: 12px; overflow: hidden;">
+          <iframe 
+            id="powerbiFrame"
+            src="https://app.powerbiportal.com/report-view/?id=41686&groupId=3591" 
+            title="Relatório Power BI" 
+            style="width: 100%; height: 100%; border: none;"
+            allowFullScreen="true">
+          </iframe>
         </div>
       </section>
 
-      <!-- Charts Row 1 -->
-      <section class="charts-grid-2">
-        <div class="chart-card">
-          <div class="chart-header">
-            <h4><i data-lucide="trending-up"></i> % Budget Atingido por Mês (2026)</h4>
+      <!-- Painel Duplo de Drag & Drop -->
+      <section class="upload-section">
+        <div class="drop-card" id="dropZone1">
+          <input type="file" id="fileInput1" accept=".xlsx, .xls">
+          <div class="drop-icon">
+            <i data-lucide="file-spreadsheet"></i>
           </div>
-          <div class="chart-wrapper">
+          <div class="drop-info">
+            <span class="drop-title">ReportSection (Visão Macro & Budget)</span>
+            <span class="drop-sub" id="labelFile1">Arraste a planilha ou clique para selecionar</span>
+          </div>
+          <div class="check-icon" id="check1"><i data-lucide="check-circle-2"></i></div>
+        </div>
+
+        <div class="drop-card" id="dropZone2">
+          <input type="file" id="fileInput2" accept=".xlsx, .xls">
+          <div class="drop-icon">
+            <i data-lucide="layers"></i>
+          </div>
+          <div class="drop-info">
+            <span class="drop-title">Análise de Carteira (Recência & Detalhe)</span>
+            <span class="drop-sub" id="labelFile2">Arraste a planilha ou clique para selecionar</span>
+          </div>
+          <div class="check-icon" id="check2"><i data-lucide="check-circle-2"></i></div>
+        </div>
+      </section>
+
+      <!-- Grid de KPIs (Executive Scorecard) -->
+      <section class="kpis-grid">
+        <div class="kpi-card accent-border">
+          <div class="kpi-icon"><i data-lucide="dollar-sign"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Faturamento Carteira</span>
+            <div class="kpi-value" id="kpiValorMensal">R$ 0,00</div>
+            <span class="kpi-trend" id="kpiTrendMensal"><i data-lucide="clock"></i> Mês Selecionado</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon"><i data-lucide="target"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">% Budget Atingido</span>
+            <div class="kpi-value" id="kpiBudgetAtingido">0.0%</div>
+            <span class="kpi-trend" id="kpiBudgetSub">Média do Período</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon"><i data-lucide="percent"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">% Encomendas Gravadas</span>
+            <div class="kpi-value" id="kpiPctGravadas">0.0%</div>
+            <span class="kpi-trend">Últimos 6 meses</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon"><i data-lucide="users"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Positivação de Carteira</span>
+            <div class="kpi-value" id="kpiPositivacao">0 / 0</div>
+            <span class="kpi-trend" id="kpiPositivacaoSub">0.0% de clientes ativos</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Charts Grid Dual Column -->
+      <section class="charts-grid">
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="trending-up"></i> % Budget Atingido por Mês</h3>
+          </div>
+          <div class="chart-container">
             <canvas id="chartBudget"></canvas>
           </div>
         </div>
 
         <div class="chart-card">
-          <div class="chart-header">
-            <h4><i data-lucide="pie-chart"></i> Volume de Encomendas: Gravado vs Normal</h4>
+          <div class="card-header">
+            <h3><i data-lucide="pie-chart"></i> Volume de Encomendas: Gravado vs Normal</h3>
           </div>
-          <div class="chart-wrapper">
+          <div class="chart-container">
             <canvas id="chartTipoEncomenda"></canvas>
           </div>
         </div>
-      </section>
 
-      <!-- Charts Row 2 -->
-      <section class="charts-grid-2">
         <div class="chart-card">
-          <div class="chart-header">
-            <h4><i data-lucide="package-check"></i> Top 20 Produtos Mais Pedidos</h4>
+          <div class="card-header">
+            <h3><i data-lucide="package"></i> Top 20 Produtos Mais Vendidos</h3>
           </div>
-          <div class="chart-wrapper">
+          <div class="chart-container">
             <canvas id="chartTopProdutos"></canvas>
           </div>
         </div>
 
         <div class="chart-card">
-          <div class="chart-header">
-            <h4><i data-lucide="layers"></i> Vendas (R$) por Classe / Segmento</h4>
+          <div class="card-header">
+            <h3><i data-lucide="building-2"></i> Vendas (R$) por Classe / Segmento</h3>
           </div>
-          <div class="chart-wrapper">
+          <div class="chart-container">
             <canvas id="chartSegmentos"></canvas>
           </div>
         </div>
       </section>
 
-      <!-- Tables Section -->
-      <section class="tables-grid-2">
-        <!-- Tabela 1: Vendas por Cliente -->
+      <!-- Tables Grid (Vendas por Cliente & Inatividade) -->
+      <section class="tables-grid">
         <div class="table-card">
           <div class="table-header">
-            <h4><i data-lucide="award"></i> Vendas (R$) por Cliente</h4>
-            <div class="search-mini">
+            <h3><i data-lucide="users"></i> Vendas (R$) por Cliente</h3>
+            <div class="search-box">
               <i data-lucide="search"></i>
-              <input type="text" id="searchClientInput" placeholder="Filtrar cliente...">
+              <input type="text" id="searchClientInput" placeholder="Buscar cliente...">
             </div>
           </div>
-          <div class="table-container">
+          <div class="table-responsive">
             <table>
               <thead>
                 <tr>
                   <th>Classe</th>
-                  <th>Cliente</th>
-                  <th>Valor Venda (R$)</th>
-                  <th>% Total</th>
+                  <th>Cliente (Pai)</th>
+                  <th>Valor de Venda (R$)</th>
+                  <th>% do Total</th>
                 </tr>
               </thead>
               <tbody id="tbVendasCliente">
-                <tr><td colspan="4" class="empty">Nenhum dado carregado.</td></tr>
+                <tr><td colspan="4" class="empty-state">Carregue a planilha 'ReportSection' para visualizar.</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- Tabela 2: Inatividade e Dias para 1ª Fatura -->
         <div class="table-card">
           <div class="table-header">
-            <h4><i data-lucide="clock"></i> Recência de Compra e Dias até 1ª Fatura</h4>
+            <h3><i data-lucide="alert-circle"></i> Recência & Dias sem Faturar</h3>
           </div>
-          <div class="table-container">
+          <div class="table-responsive">
             <table>
               <thead>
                 <tr>
                   <th>Classe</th>
-                  <th>Cliente</th>
-                  <th>Última Fatura / Cadastro</th>
-                  <th>Dias Sem Comprar / 1º Fatura</th>
+                  <th>Cliente (Pai)</th>
+                  <th>Última Fatura</th>
+                  <th>Dias Inativo</th>
                 </tr>
               </thead>
               <tbody id="tbInatividade">
-                <tr><td colspan="4" class="empty">Nenhum dado carregado.</td></tr>
+                <tr><td colspan="4" class="empty-state">Carregue a planilha 'Análise de Carteira' para visualizar.</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-    </main>
-
+    </div>
   </div>
 
   <script src="script.js"></script>
