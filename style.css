@@ -1,316 +1,248 @@
-:root {
-  --bg-dark: #090d16;
-  --card-bg: #111827;
-  --card-border: #1f293d;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --accent: #6366f1;
-  --green: #10b981;
-  --red: #ef4444;
-}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executive BI Analytics - Carteira & Vendas</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background-color: var(--bg-dark);
-  color: var(--text-main);
-  min-height: 100vh;
-}
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-/* Header */
-header {
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--card-border);
-  padding: 0.85rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
+  <div class="app-layout">
+    
+    <!-- Topbar / Header Executive -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i data-lucide="bar-chart-3"></i>
+        </div>
+        <div>
+          <h1>Executive Analytics</h1>
+          <span class="sub-title">Gestão de Carteira & Inatividade</span>
+        </div>
+      </div>
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+      <!-- Filtros de Período -->
+      <div class="filters-container">
+        <div class="filter-group">
+          <i data-lucide="calendar"></i>
+          <select id="selectAno">
+            <option value="ALL">Todos os Anos</option>
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+          </select>
+        </div>
 
-.brand-icon {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--accent);
-  padding: 0.5rem;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-}
+        <div class="filter-group">
+          <i data-lucide="filter"></i>
+          <select id="selectMes">
+            <option value="ALL">Todos os Meses</option>
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+        </div>
+      </div>
 
-.brand h1 {
-  font-size: 1.1rem;
-  font-weight: 700;
-}
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot"></span>
+        <span id="badgeText">Aguardando Planilhas / BI</span>
+      </div>
+    </header>
 
-.filters-container {
-  display: flex;
-  gap: 0.75rem;
-}
+    <div class="main-content">
+      
+      <!-- Seção do Power BI Embarcado -->
+      <section class="bi-section" style="margin-bottom: 1.5rem;">
+        <div class="bi-wrapper" style="position: relative; width: 100%; height: 600px; background: var(--card-bg, #111827); border: 1px solid var(--card-border, #1f293d); border-radius: 12px; overflow: hidden;">
+          <iframe 
+            id="powerbiFrame"
+            src="https://app.powerbiportal.com/report-view/?id=41686&groupId=3591" 
+            title="Relatório Power BI" 
+            style="width: 100%; height: 100%; border: none;"
+            allowFullScreen="true">
+          </iframe>
+        </div>
+      </section>
 
-.filters-container select {
-  background: #1e293b;
-  color: var(--text-main);
-  border: 1px solid var(--card-border);
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  outline: none;
-}
+      <!-- Painel Duplo de Drag & Drop -->
+      <section class="upload-section">
+        <div class="drop-card" id="dropZone1">
+          <input type="file" id="fileInput1" accept=".xlsx, .xls">
+          <div class="drop-icon">
+            <i data-lucide="file-spreadsheet"></i>
+          </div>
+          <div class="drop-info">
+            <span class="drop-title">ReportSection (Visão Macro & Budget)</span>
+            <span class="drop-sub" id="labelFile1">Arraste a planilha ou clique para selecionar</span>
+          </div>
+          <div class="check-icon" id="check1"><i data-lucide="check-circle-2"></i></div>
+        </div>
 
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  color: var(--green);
-  padding: 0.3rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
+        <div class="drop-card" id="dropZone2">
+          <input type="file" id="fileInput2" accept=".xlsx, .xls">
+          <div class="drop-icon">
+            <i data-lucide="layers"></i>
+          </div>
+          <div class="drop-info">
+            <span class="drop-title">Análise de Carteira (Recência & Detalhe)</span>
+            <span class="drop-sub" id="labelFile2">Arraste a planilha ou clique para selecionar</span>
+          </div>
+          <div class="check-icon" id="check2"><i data-lucide="check-circle-2"></i></div>
+        </div>
+      </section>
 
-.status-dot {
-  width: 8px;
-  height: 8px;
-  background-color: var(--green);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--green);
-}
+      <!-- Grid de KPIs (Executive Scorecard) -->
+      <section class="kpis-grid">
+        <div class="kpi-card accent-border">
+          <div class="kpi-icon"><i data-lucide="dollar-sign"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Faturamento Carteira</span>
+            <div class="kpi-value" id="kpiValorMensal">R$ 0,00</div>
+            <span class="kpi-trend" id="kpiTrendMensal"><i data-lucide="clock"></i> Mês Selecionado</span>
+          </div>
+        </div>
 
-/* Main */
-main {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
+        <div class="kpi-card">
+          <div class="kpi-icon"><i data-lucide="target"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">% Budget Atingido</span>
+            <div class="kpi-value" id="kpiBudgetAtingido">0.0%</div>
+            <span class="kpi-trend" id="kpiBudgetSub">Média do Período</span>
+          </div>
+        </div>
 
-/* Power BI Section */
-.bi-wrapper {
-  position: relative;
-  width: 100%;
-  height: 600px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 10px;
-  overflow: hidden;
-}
+        <div class="kpi-card">
+          <div class="kpi-icon"><i data-lucide="percent"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">% Encomendas Gravadas</span>
+            <div class="kpi-value" id="kpiPctGravadas">0.0%</div>
+            <span class="kpi-trend">Últimos 6 meses</span>
+          </div>
+        </div>
 
-.bi-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
+        <div class="kpi-card">
+          <div class="kpi-icon"><i data-lucide="users"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Positivação de Carteira</span>
+            <div class="kpi-value" id="kpiPositivacao">0 / 0</div>
+            <span class="kpi-trend" id="kpiPositivacaoSub">0.0% de clientes ativos</span>
+          </div>
+        </div>
+      </section>
 
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--card-bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  z-index: 10;
-  transition: opacity 0.3s ease;
-}
+      <!-- Charts Grid Dual Column -->
+      <section class="charts-grid">
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="trending-up"></i> % Budget Atingido por Mês</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartBudget"></canvas>
+          </div>
+        </div>
 
-.loading-overlay.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="pie-chart"></i> Volume de Encomendas: Gravado vs Normal</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTipoEncomenda"></canvas>
+          </div>
+        </div>
 
-.spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid rgba(99, 102, 241, 0.2);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s infinite linear;
-}
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="package"></i> Top 20 Produtos Mais Vendidos</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTopProdutos"></canvas>
+          </div>
+        </div>
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+        <div class="chart-card">
+          <div class="card-header">
+            <h3><i data-lucide="building-2"></i> Vendas (R$) por Classe / Segmento</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartSegmentos"></canvas>
+          </div>
+        </div>
+      </section>
 
-/* Upload Section */
-.upload-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
+      <!-- Tables Grid (Vendas por Cliente & Inatividade) -->
+      <section class="tables-grid">
+        <div class="table-card">
+          <div class="table-header">
+            <h3><i data-lucide="users"></i> Vendas (R$) por Cliente</h3>
+            <div class="search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="searchClientInput" placeholder="Buscar cliente...">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Classe</th>
+                  <th>Cliente (Pai)</th>
+                  <th>Valor de Venda (R$)</th>
+                  <th>% do Total</th>
+                </tr>
+              </thead>
+              <tbody id="tbVendasCliente">
+                <tr><td colspan="4" class="empty-state">Carregue a planilha 'ReportSection' para visualizar.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-.drop-zone {
-  position: relative;
-  background: var(--card-bg);
-  border: 2px dashed var(--card-border);
-  border-radius: 8px;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s;
-}
+        <div class="table-card">
+          <div class="table-header">
+            <h3><i data-lucide="alert-circle"></i> Recência & Dias sem Faturar</h3>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Classe</th>
+                  <th>Cliente (Pai)</th>
+                  <th>Última Fatura</th>
+                  <th>Dias Inativo</th>
+                </tr>
+              </thead>
+              <tbody id="tbInatividade">
+                <tr><td colspan="4" class="empty-state">Carregue a planilha 'Análise de Carteira' para visualizar.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-.drop-zone.loaded {
-  border-color: var(--green);
-  color: var(--green);
-  background: rgba(16, 185, 129, 0.05);
-}
+    </div>
+  </div>
 
-.drop-zone input {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
-/* KPI Cards */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-.kpi-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  padding: 1.25rem;
-  border-radius: 10px;
-}
-
-.kpi-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.kpi-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 0.25rem;
-}
-
-.kpi-sub {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-/* Charts Grid */
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-  gap: 1.5rem;
-}
-
-.chart-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 1.25rem;
-}
-
-.chart-card h3 {
-  font-size: 0.95rem;
-  margin-bottom: 1rem;
-  color: var(--text-main);
-}
-
-.chart-container {
-  position: relative;
-  height: 280px;
-  width: 100%;
-}
-
-/* Tables Grid */
-.tables-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-  gap: 1.5rem;
-}
-
-.table-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 1.25rem;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.table-header input {
-  background: #1e293b;
-  border: 1px solid var(--card-border);
-  color: var(--text-main);
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  outline: none;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  max-height: 300px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 0.85rem;
-}
-
-th, td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--card-border);
-}
-
-th {
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.class-tag {
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: #1e293b;
-}
-
-.empty {
-  text-align: center;
-  color: var(--text-muted);
-}
+  <script src="script.js"></script>
+</body>
+</html>
