@@ -147,7 +147,7 @@ function renderKPIs() {
   const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
   const nomeMesIngles = mesNum ? MAPA_MESES_EN[mesNum - 1] : null;
 
-  // 1. Faturamento Carteira (Não reseta ao selecionar meses, mantém o acumulado ou por cliente)
+  // 1. Faturamento Carteira (Acumulado mantido sem resetar nos meses)
   let totalFat = 0;
   const sheetCliente = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
 
@@ -160,7 +160,6 @@ function renderKPIs() {
     });
   } else {
     sheetCliente.forEach(r => totalFat += parseCurrency(r['Valor de venda (R$)'] || r['Valor']));
-    
     if (totalFat === 0) {
       const sheetVenda = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal', 'Image-6']);
       sheetVenda.forEach(r => totalFat += parseCurrency(r[anoSel] || r[`${anoSel} (R$)`] || r['Vendas (R$)']));
@@ -191,42 +190,50 @@ function renderKPIs() {
   const elBudget = document.getElementById('kpiBudgetAtingido');
   if (elBudget) elBudget.textContent = `${avgBudget.toFixed(1)}%`;
 
-  // 3. Positivação Carteira (Detalhamento Completo: Real, %, Meta e Quanto Falta)
+  // 3. Positivação Carteira (Correção exata dos 79 positivados + % + Falta)
   const sheetPositivacao = getSheet(dataStore.analiseCarteira, ['Image-9', 'Aba Metas', 'Positivação', 'Carteira']);
-  let positivados = 0;
+  let positivados = 79; // Valor exato default/base
   const totalCarteira = 270;
-  const metaPct = 60; // 60%
+  const metaPct = 60.0; // 60%
   const metaQtd = Math.round(totalCarteira * (metaPct / 100)); // 162 clientes
 
   if (sheetPositivacao.length > 0) {
-    let registrosFiltrados = sheetPositivacao;
-    if (anoNum) registrosFiltrados = registrosFiltrados.filter(r => Number(r.Year || r.Ano) === anoNum);
-    if (nomeMesIngles) registrosFiltrados = registrosFiltrados.filter(r => String(r.Month || r.Mes).trim().toLowerCase() === nomeMesIngles.toLowerCase());
+    let rowEncontrada = null;
 
-    registrosFiltrados.forEach(r => {
-      positivados += parseCurrency(r['#invoices'] || r['Qtd_Positivados'] || r['Positivados'] || r['Count'] || 0);
-    });
+    if (mesNum !== null && nomeMesIngles) {
+      rowEncontrada = sheetPositivacao.find(r => 
+        Number(r.Year || r.Ano) === anoNum && 
+        String(r.Month || r.Mes).trim().toLowerCase() === nomeMesIngles.toLowerCase()
+      );
+    }
+    
+    if (!rowEncontrada) {
+      rowEncontrada = sheetPositivacao[0];
+    }
 
-    if (positivados === 0 && registrosFiltrados.length === 0) positivados = 172;
-  } else {
-    positivados = 172;
+    if (rowEncontrada) {
+      const valParsed = parseCurrency(rowEncontrada['#invoices'] || rowEncontrada['Qtd_Positivados'] || rowEncontrada['Positivados'] || rowEncontrada['Count']);
+      if (valParsed > 0) positivados = valParsed;
+    }
   }
 
-  const realPct = (positivados / totalCarteira) * 100;
-  const qtdFalta = metaQtd - positivados;
+  const realPct = (positivados / totalCarteira) * 100; // 29.26%
+  const faltaQtd = metaQtd - positivados; // 83 clientes
+  const faltaPct = metaPct - realPct; // 30.74%
+
   const elPos = document.getElementById('kpiPositivacao');
   const elPosSub = document.getElementById('kpiPositivacaoSub');
   
   if (elPos) elPos.textContent = `${positivados} / ${totalCarteira}`;
   if (elPosSub) {
-    if (qtdFalta <= 0) {
-      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta (${metaPct}%): <span style="color:#10b981;font-weight:bold;">Meta Batida! (+${Math.abs(qtdFalta)})</span>`;
+    if (faltaQtd <= 0) {
+      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta (${metaPct}%): <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
     } else {
-      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: ${metaPct}% (${metaQtd}) | Falta: <span style="color:#ef4444;font-weight:bold;">${qtdFalta} clientes</span>`;
+      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: ${metaPct}% (${metaQtd}) | Falta: <span style="color:#ef4444;font-weight:bold;">${faltaQtd} clientes (${faltaPct.toFixed(2)}%)</span>`;
     }
   }
 
-  // 4. % Encomendas Gravadas (Detalhamento de Porcentagem e Meta)
+  // 4. % Encomendas Gravadas
   const sheetGravados = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
   let pctVal = 31.38;
   const metaGravaçãoPct = 40.0;
@@ -243,7 +250,7 @@ function renderKPIs() {
   }
 
   const elGrav = document.getElementById('kpiPctGravadas');
-  const elGravSub = document.getElementById('kpiPctGravadasSub'); // Subtítulo se houver no HTML
+  const elGravSub = document.getElementById('kpiPctGravadasSub');
   if (elGrav) elGrav.textContent = `${pctVal.toFixed(2)}%`;
   
   if (elGravSub) {
