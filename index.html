@@ -3,27 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Executive BI Analytics</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Lucide Icons & Chart.js & SheetJS -->
+  <title>Dashboard de Vendas & Carteira</title>
+  
+  <!-- Fontes & Ícones -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js & SheetJS (XLSX) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="app-layout">
-    <!-- Navbar / Header -->
-    <header class="navbar">
-      <div class="brand">
-        <div class="brand-icon"><i data-lucide="bar-chart-3"></i></div>
-        <div>
-          <h2>Executive BI <span class="accent-text">Analytics</span></h2>
-          <span class="subbrand">Customer 360 BR - Métricas de Carteira & Faturamento</span>
-        </div>
+  <div class="app-container">
+    
+    <!-- Cabeçalho Principal -->
+    <header class="main-header">
+      <div class="header-title">
+        <h1>Dashboard de Performance</h1>
+        <p>Análise Integrada de Vendas, Carteira e Metas</p>
       </div>
 
       <div class="header-controls">
+        <div class="filter-group">
+          <i data-lucide="user" class="filter-icon"></i>
+          <select id="selectCliente">
+            <option value="ALL" selected>Todos os Clientes</option>
+          </select>
+        </div>
+
         <div class="filter-group">
           <i data-lucide="calendar" class="filter-icon"></i>
           <select id="selectAno">
@@ -60,220 +72,230 @@
       </div>
     </header>
 
-    <!-- Upload Zone -->
-    <section class="upload-zone-container">
-      <div class="upload-box" id="dropZone1">
+    <!-- Área de Upload de Planilhas -->
+    <section class="upload-section">
+      <div class="upload-card" id="dropZone1">
+        <i data-lucide="file-spreadsheet" class="upload-icon"></i>
+        <div class="upload-info">
+          <h3>Relatório Geral (Report Section)</h3>
+          <p>Importe a planilha de Vendas e Faturamento</p>
+          <span class="file-label" id="labelFile1">Nenhum arquivo selecionado</span>
+        </div>
         <input type="file" id="fileInput1" accept=".xlsx, .xls">
-        <div class="upload-inner">
-          <i data-lucide="file-spreadsheet" class="up-icon"></i>
-          <div>
-            <div class="up-title" id="labelFile1">1ª Planilha (Report Section - Aba Geral)</div>
-            <div class="up-sub">Arraste ou clique para selecionar</div>
-          </div>
+        <label for="fileInput1" class="btn-upload">Carregar</label>
+      </div>
+
+      <div class="upload-card" id="dropZone2">
+        <i data-lucide="pie-chart" class="upload-icon"></i>
+        <div class="upload-info">
+          <h3>Análise de Carteira & Metas</h3>
+          <p>Importe a planilha de Positivação e Recência</p>
+          <span class="file-label" id="labelFile2">Nenhum arquivo selecionado</span>
+        </div>
+        <input type="file" id="fileInput2" accept=".xlsx, .xls">
+        <label for="fileInput2" class="btn-upload">Carregar</label>
+      </div>
+    </section>
+
+    <!-- Banner Comparativo YTD -->
+    <section class="ytd-banner">
+      <div class="ytd-item">
+        <span class="ytd-label">LYTD (Ano Anterior)</span>
+        <h2 id="kpiLytd">R$ 0,00</h2>
+      </div>
+      <div class="ytd-divider"></div>
+      <div class="ytd-item">
+        <span class="ytd-label">YTD (Ano Atual)</span>
+        <h2 id="kpiYtd">R$ 0,00</h2>
+      </div>
+      <div class="ytd-divider"></div>
+      <div class="ytd-item">
+        <span class="ytd-label">Variação Absoluta</span>
+        <h2 id="kpiVariacao" class="highlight">R$ 0,00</h2>
+      </div>
+    </section>
+
+    <!-- Cards de KPIs Principais -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>Faturamento Carteira</span>
+          <i data-lucide="dollar-sign"></i>
+        </div>
+        <h3 id="kpiValorMensal">R$ 0,00</h3>
+        <p class="kpi-sub">Total Acumulado</p>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>% Budget Atingido</span>
+          <i data-lucide="target"></i>
+        </div>
+        <h3 id="kpiBudgetAtingido">0,0%</h3>
+        <p class="kpi-sub">Média do Período</p>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>Positivação Carteira</span>
+          <i data-lucide="users"></i>
+        </div>
+        <h3 id="kpiPositivacao">0 / 0</h3>
+        <p class="kpi-sub" id="kpiPositivacaoSub">Meta: 60% | Real: 0%</p>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>% Encomendas Gravadas</span>
+          <i data-lucide="package-check"></i>
+        </div>
+        <h3 id="kpiPctGravadas">0,0%</h3>
+        <p class="kpi-sub">Participação em Vendas</p>
+      </div>
+    </section>
+
+    <!-- Seção de Gráficos Principais -->
+    <section class="charts-grid">
+      <div class="chart-card wide">
+        <div class="card-header">
+          <h3>Histórico de Faturamento (2024 - 2026)</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartHistoricoFaturamento"></canvas>
         </div>
       </div>
 
-      <div class="upload-box" id="dropZone2">
-        <input type="file" id="fileInput2" accept=".xlsx, .xls">
-        <div class="upload-inner">
-          <i data-lucide="file-spreadsheet" class="up-icon"></i>
-          <div>
-            <div class="up-title" id="labelFile2">2ª Planilha (Análise de Carteira - Aba Metas)</div>
-            <div class="up-sub">Arraste ou clique para selecionar</div>
-          </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <h3>Atingimento de Budget (%)</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartBudget"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-header">
+          <h3>Tipo de Encomenda</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartTipoEncomenda"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-header">
+          <h3>Vendas por Segmento</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartSegmentos"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-header">
+          <h3>Top 20 Produtos Mais Vendidos</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartTopProdutos"></canvas>
         </div>
       </div>
     </section>
 
-    <!-- Dashboard Main Body -->
-    <main class="dashboard-body">
-      
-      <!-- Banner YTD -->
-      <section class="kpi-ytd-banner">
-        <div class="ytd-card">
-          <span>Vendas LYTD (Ano Anterior)</span>
-          <h3 id="kpiLytd">R$ 0,00</h3>
+    <!-- Tabelas Detalhadas -->
+    <section class="tables-grid">
+      <div class="table-card">
+        <div class="card-header space-between">
+          <h3>Vendas por Cliente</h3>
+          <input type="text" id="searchClientInput" placeholder="Buscar cliente..." class="table-search">
         </div>
-        <div class="ytd-card">
-          <span>Vendas YTD (Ano Atual)</span>
-          <h3 id="kpiYtd">R$ 0,00</h3>
-        </div>
-        <div class="ytd-card">
-          <span>Variação R$</span>
-          <h3 id="kpiVariacao">R$ 0,00</h3>
-        </div>
-      </section>
-
-      <!-- KPI Cards Horizon -->
-      <section class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span>Faturamento Carteira</span>
-            <i data-lucide="dollar-sign"></i>
-          </div>
-          <div class="kpi-val" id="kpiValorMensal">R$ 0,00</div>
-          <div class="kpi-sub">Mês Selecionado</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span>% Budget Atingido</span>
-            <i data-lucide="target"></i>
-          </div>
-          <div class="kpi-val" id="kpiBudgetAtingido">0%</div>
-          <div class="kpi-sub">Meta vs Realizado</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span>% Encomendas Gravadas</span>
-            <i data-lucide="percent"></i>
-          </div>
-          <div class="kpi-val" id="kpiPctGravadas">0%</div>
-          <div class="kpi-sub">Últimos 6 meses</div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span>Positivação Carteira</span>
-            <i data-lucide="users"></i>
-          </div>
-          <div class="kpi-val" id="kpiPositivacao">0 / 0</div>
-          <div class="kpi-sub" id="kpiPositivacaoSub">Meta: 60% | Real: 0.0%</div>
-        </div>
-      </section>
-
-      <!-- Charts Section -->
-      <section class="charts-grid">
-        <div class="chart-card">
-          <h3><i data-lucide="line-chart"></i> Histórico Faturamento Mensal</h3>
-          <div class="chart-wrapper">
-            <canvas id="chartHistoricoFaturamento"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3><i data-lucide="bar-chart-2"></i> % Budget Atingida por Mês</h3>
-          <div class="chart-wrapper">
-            <canvas id="chartBudget"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3><i data-lucide="pie-chart"></i> Volume Encomendas: Gravado vs Normal</h3>
-          <div class="chart-wrapper">
-            <canvas id="chartTipoEncomenda"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3><i data-lucide="building-2"></i> Vendas (R$) por Segmento</h3>
-          <div class="chart-wrapper">
-            <canvas id="chartSegmentos"></canvas>
-          </div>
-        </div>
-
-        <!-- Card de Largura Total (Corrigido no CSS para ocupação inteira) -->
-        <div class="chart-card full-width">
-          <h3><i data-lucide="shopping-bag"></i> Top 20 Produtos Mais Vendidos</h3>
-          <div class="chart-wrapper">
-            <canvas id="chartTopProdutos"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- Tables Section -->
-      <section class="tables-grid">
-        <div class="table-card">
-          <div class="table-head">
-            <h3><i data-lucide="user-check"></i> Vendas (R$) por Cliente <small>(Clique para ver detalhes)</small></h3>
-            <input type="text" id="searchClientInput" placeholder="Buscar cliente..." class="table-search">
-          </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Classe</th>
-                  <th>Cliente (Pai)</th>
-                  <th>Valor de Venda (R$)</th>
-                  <th>% do Total</th>
-                </tr>
-              </thead>
-              <tbody id="tbVendasCliente">
-                <!-- Preenchido via script.js -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="table-card">
-          <div class="table-head">
-            <h3><i data-lucide="user-minus"></i> Recência de Compras por Cliente</h3>
-          </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Classe</th>
-                  <th>Cliente (Pai)</th>
-                  <th>Última Fatura</th>
-                  <th>Dias Inativo</th>
-                </tr>
-              </thead>
-              <tbody id="tbInatividade">
-                <!-- Preenchido via script.js -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-    </main>
-  </div>
-
-  <!-- Modal Detalhes do Cliente -->
-  <div class="modal-overlay" id="clientModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h3 id="modalClientName">Nome do Cliente</h3>
-          <span class="modal-subtitle" id="modalClientClass">Classe: -</span>
-        </div>
-        <button class="modal-close" id="btnCloseModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-kpi-grid">
-          <div class="modal-kpi-card">
-            <span class="m-kpi-title">Total Faturado</span>
-            <span class="m-kpi-val" id="modalTotalSpent">R$ 0,00</span>
-          </div>
-          <div class="modal-kpi-card">
-            <span class="m-kpi-title">Última Fatura</span>
-            <span class="m-kpi-val" id="modalLastPurchase">-</span>
-          </div>
-          <div class="modal-kpi-card">
-            <span class="m-kpi-title">Dias Inativo</span>
-            <span class="m-kpi-val" id="modalDaysInactive">0 dias</span>
-          </div>
-          <div class="modal-kpi-card">
-            <span class="m-kpi-title">Status Ação</span>
-            <span class="m-kpi-val" id="modalContactStatus">-</span>
-          </div>
-        </div>
-
-        <h4 class="modal-section-title">Histórico de Pedidos / Faturas</h4>
-        <div class="table-container">
+        <div class="table-wrapper">
           <table>
             <thead>
               <tr>
-                <th>Fatura / Pedido</th>
-                <th>Data</th>
                 <th>Classe</th>
-                <th>Valor (R$)</th>
+                <th>Cliente</th>
+                <th>Valor Venda</th>
+                <th>% Total</th>
+              </tr>
+            </thead>
+            <tbody id="tbVendasCliente">
+              <tr>
+                <td colspan="4" class="empty-row">Aguardando dados da planilha...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="card-header">
+          <h3>Inatividade & Recência de Carteira</h3>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Classe</th>
+                <th>Cliente</th>
+                <th>Última Fatura</th>
+                <th>Dias Inativo</th>
+              </tr>
+            </thead>
+            <tbody id="tbInatividade">
+              <tr>
+                <td colspan="4" class="empty-row">Aguardando dados da planilha...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Modal de Detalhes do Cliente -->
+  <div class="modal-overlay" id="clientModal">
+    <div class="modal-card">
+      <button class="modal-close" id="btnCloseModal">&times;</button>
+      <div class="modal-header">
+        <h2 id="modalClientName">Nome do Cliente</h2>
+        <span class="badge" id="modalClientClass">Classe: -</span>
+      </div>
+      <div class="modal-body">
+        <div class="modal-kpi-row">
+          <div>
+            <span>Total Comprado</span>
+            <strong id="modalTotalSpent">R$ 0,00</strong>
+          </div>
+          <div>
+            <span>Última Compra</span>
+            <strong id="modalLastPurchase">-</strong>
+          </div>
+          <div>
+            <span>Dias sem Comprar</span>
+            <strong id="modalDaysInactive">0 dias</strong>
+          </div>
+          <div>
+            <span>Status</span>
+            <strong id="modalContactStatus">-</strong>
+          </div>
+        </div>
+        <h4>Histórico Recente de Pedidos</h4>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Fatura</th>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Valor</th>
               </tr>
             </thead>
             <tbody id="tbModalOrders">
-              <!-- Preenchido via JS -->
+              <tr>
+                <td colspan="4" class="empty-row">Sem histórico carregado.</td>
+              </tr>
             </tbody>
           </table>
         </div>
