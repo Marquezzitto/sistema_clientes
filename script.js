@@ -1,17 +1,7 @@
-// Inicializa ícones do Lucide
+// Inicialização do Lucide Icons
 lucide.createIcons();
 
-// Oculta a tela de carregamento do Power BI quando o Iframe carrega
-const iframe = document.getElementById('powerbiFrame');
-const overlay = document.getElementById('loadingOverlay');
-
-if (iframe && overlay) {
-  iframe.addEventListener('load', () => {
-    overlay.classList.add('hidden');
-  });
-}
-
-// Repositório global de planilhas locais (se houver upload)
+// Repositório de planilhas carregadas
 let dataStore = {
   reportSection: {},
   analiseCarteira: {}
@@ -26,6 +16,8 @@ const dropZone1 = document.getElementById('dropZone1');
 const dropZone2 = document.getElementById('dropZone2');
 const labelFile1 = document.getElementById('labelFile1');
 const labelFile2 = document.getElementById('labelFile2');
+const statusBadge = document.getElementById('statusBadge');
+const badgeText = document.getElementById('badgeText');
 
 const selectAno = document.getElementById('selectAno');
 const selectMes = document.getElementById('selectMes');
@@ -55,9 +47,12 @@ function readExcelFile(file, fileNum) {
         if (labelFile2) labelFile2.textContent = `✔ ${file.name}`;
       }
 
+      if (statusBadge) statusBadge.classList.add('active');
+      if (badgeText) badgeText.textContent = "BI / Dados Ativos";
+
       renderDashboard();
     } catch (err) {
-      console.error("Erro ao ler Excel:", err);
+      console.error("Erro ao processar planilha:", err);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -65,6 +60,16 @@ function readExcelFile(file, fileNum) {
 
 if (selectAno) selectAno.addEventListener('change', renderDashboard);
 if (selectMes) selectMes.addEventListener('change', renderDashboard);
+
+function renderDashboard() {
+  renderKPIs();
+  renderChartBudget();
+  renderChartTipoEncomenda();
+  renderChartTopProdutos();
+  renderChartSegmentos();
+  renderVendasClienteTable();
+  renderInatividadeTable();
+}
 
 function getSheetData(dataObject, targetName) {
   if (!dataObject) return [];
@@ -99,16 +104,6 @@ function filterDataByPeriod(rows) {
 
     return matchAno && matchMes;
   });
-}
-
-function renderDashboard() {
-  renderKPIs();
-  renderChartBudget();
-  renderChartTipoEncomenda();
-  renderChartTopProdutos();
-  renderChartSegmentos();
-  renderVendasClienteTable();
-  renderInatividadeTable();
 }
 
 function renderKPIs() {
@@ -246,14 +241,14 @@ function renderVendasClienteTable() {
   const filtered = sheet.filter(r => String(r['Cliente_Pai'] || '').toLowerCase().includes(query));
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhum registro localizado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
     return;
   }
 
   filtered.forEach(r => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><span class="class-tag">${r['Classe'] || 'Geral'}</span></td>
+      <td>${r['Classe'] || 'Geral'}</td>
       <td><strong>${r['Cliente_Pai'] || '-'}</strong></td>
       <td>${formatBRL(parseCurrency(r['Valor de venda (R$)']))}</td>
       <td>${r['% do Total'] || '-'}</td>
@@ -270,7 +265,7 @@ function renderInatividadeTable() {
   tbody.innerHTML = '';
 
   if (sheet.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhum dado carregado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum dado carregado.</td></tr>';
     return;
   }
 
@@ -278,7 +273,7 @@ function renderInatividadeTable() {
     const tr = document.createElement('tr');
     const dias = parseInt(r['#dias desde a ultima fat']) || 0;
     tr.innerHTML = `
-      <td><span class="class-tag">${r['Classe'] || 'Pontual'}</span></td>
+      <td>${r['Classe'] || 'Pontual'}</td>
       <td><strong>${r['Cliente_Pai'] || '-'}</strong></td>
       <td>${r['Ultima fat'] || '-'}</td>
       <td><span style="color: ${dias > 60 ? '#ef4444' : '#10b981'}; font-weight: 700;">${dias} dias</span></td>
@@ -318,8 +313,8 @@ function getCommonChartOptions(unit) {
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
-      x: { grid: { color: '#1a1e2c' }, ticks: { color: '#64748b' } },
-      y: { grid: { color: '#1a1e2c' }, ticks: { color: '#64748b' } }
+      x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
+      y: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
     }
   };
 }
