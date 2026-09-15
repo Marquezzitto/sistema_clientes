@@ -229,7 +229,7 @@ body {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
 }
 
@@ -260,13 +260,14 @@ body {
   color: var(--text-secondary);
 }
 
-.charts-grid, .tables-grid {
+/* Reorganização Responsiva dos Gráficos */
+.charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
 }
 
-.chart-card, .table-card {
+.chart-card {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: 12px;
@@ -285,16 +286,23 @@ body {
   gap: 0.5rem;
 }
 
-.table-head small {
-  font-size: 0.75rem;
-  color: var(--accent-blue);
-  font-weight: 400;
-}
-
 .chart-wrapper {
   position: relative;
   height: 280px;
   width: 100%;
+}
+
+.tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 1.25rem;
 }
 
 .table-head {
@@ -302,6 +310,12 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+.table-head small {
+  font-size: 0.75rem;
+  color: var(--accent-blue);
+  font-weight: 400;
 }
 
 .table-search {
@@ -316,7 +330,7 @@ body {
 
 .table-container {
   overflow-x: auto;
-  max-height: 320px;
+  max-height: 340px;
 }
 
 table {
@@ -449,4 +463,10 @@ th {
   font-size: 0.9rem;
   font-weight: 600;
   margin-top: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .charts-grid, .tables-grid, .upload-zone-container, .kpi-grid {
+    grid-template-columns: 1fr;
+  }
 }
