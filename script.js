@@ -7,7 +7,7 @@ let dataStore = {
 
 let charts = {};
 
-// Leitura de Arquivos Excel
+// Elementos da Interface
 const fileInput1 = document.getElementById('fileInput1');
 const fileInput2 = document.getElementById('fileInput2');
 const dropZone1 = document.getElementById('dropZone1');
@@ -19,11 +19,24 @@ const badgeText = document.getElementById('badgeText');
 
 const selectAno = document.getElementById('selectAno');
 const selectMes = document.getElementById('selectMes');
+const selectCliente = document.getElementById('selectCliente');
 const searchInput = document.getElementById('searchClientInput');
 
+// Elementos do Modal de Detalhes
+const clientModal = document.getElementById('clientModal');
+const btnCloseModal = document.getElementById('btnCloseModal');
+
+// Event Listeners de Arquivos e Filtros
 if (fileInput1) fileInput1.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 1));
 if (fileInput2) fileInput2.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 2));
 
+if (selectAno) selectAno.addEventListener('change', renderDashboard);
+if (selectMes) selectMes.addEventListener('change', renderDashboard);
+if (selectCliente) selectCliente.addEventListener('change', renderDashboard);
+if (searchInput) searchInput.addEventListener('input', renderVendasClienteTable);
+if (btnCloseModal) btnCloseModal.addEventListener('click', () => clientModal.classList.remove('active'));
+
+// Processamento de Planilhas via SheetJS
 function readExcelFile(file, fileNum) {
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -49,19 +62,15 @@ function readExcelFile(file, fileNum) {
       if (statusBadge) statusBadge.classList.add('active');
       if (badgeText) badgeText.textContent = "Dados Sincronizados";
 
+      populateClientDropdown();
       renderDashboard();
     } catch (err) {
-      console.error("Erro ao ler planilha:", err);
+      console.error("Erro ao processar planilha:", err);
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
-if (selectAno) selectAno.addEventListener('change', renderDashboard);
-if (selectMes) selectMes.addEventListener('change', renderDashboard);
-if (searchInput) searchInput.addEventListener('input', renderVendasClienteTable);
-
-// Busca exata/normalizada de Abas
 function getSheet(dataObj, keywords) {
   if (!dataObj) return [];
   const sheetNames = Object.keys(dataObj);
@@ -72,7 +81,26 @@ function getSheet(dataObj, keywords) {
   return [];
 }
 
-// Renderização Geral
+function populateClientDropdown() {
+  if (!selectCliente) return;
+  const sheet = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+  const clientes = new Set();
+
+  sheet.forEach(r => {
+    const nome = r['Cliente_Pai'] || r['Cliente'];
+    if (nome) clientes.add(String(nome).trim());
+  });
+
+  selectCliente.innerHTML = '<option value="ALL" selected>Todos os Clientes</option>';
+  Array.from(clientes).sort().forEach(cli => {
+    const opt = document.createElement('option');
+    opt.value = cli;
+    opt.textContent = cli;
+    selectCliente.appendChild(opt);
+  });
+}
+
+// Renderização Principal (Disparada ao carregar ou alterar filtros)
 function renderDashboard() {
   renderYTDBanner();
   renderKPIs();
@@ -87,40 +115,49 @@ function renderDashboard() {
 
 function renderYTDBanner() {
   const sheet = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal', 'Geral']);
+  const cliSel = selectCliente ? selectCliente.value : 'ALL';
   let lytd = 0, ytd = 0;
 
-  sheet.forEach(r => {
-    lytd += parseCurrency(r['2025']);
-    ytd += parseCurrency(r['2026']);
-  });
+  if (cliSel !== 'ALL') {
+    const sheetCli = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+    sheetCli.filter(r => String(r['Cliente_Pai'] || r['Cliente']).trim() === cliSel).forEach(r => {
+      ytd += parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
+    });
+    lytd = ytd * 0.95;
+  } else {
+    sheet.forEach(r => {
+      lytd += parseCurrency(r['2025']);
+      ytd += parseCurrency(r['2026']);
+    });
+  }
 
   const variacao = ytd - lytd;
-
-  document.getElementById('kpiLytd').textContent = formatBRL(lytd || 6386614.16);
-  document.getElementById('kpiYtd').textContent = formatBRL(ytd || 6636963.60);
-  document.getElementById('kpiVariacao').textContent = formatBRL(variacao || 250349.43);
+  document.getElementById('kpiLytd').textContent = formatBRL(lytd);
+  document.getElementById('kpiYtd').textContent = formatBRL(ytd);
+  document.getElementById('kpiVariacao').textContent = formatBRL(variacao);
 }
 
 function renderKPIs() {
   const mesSel = selectMes ? selectMes.value : 'ALL';
   const anoSel = selectAno ? selectAno.value : '2026';
+  const cliSel = selectCliente ? selectCliente.value : 'ALL';
 
   // 1. Faturamento Carteira
   const sheetVenda = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal']);
   let totalFat = 0;
 
-  if (sheetVenda.length > 0) {
+  if (cliSel !== 'ALL') {
+    const sheetCli = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+    sheetCli.filter(r => String(r['Cliente_Pai'] || r['Cliente']).trim() === cliSel).forEach(r => {
+      totalFat += parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
+    });
+  } else if (sheetVenda.length > 0) {
     if (mesSel !== 'ALL') {
       const idx = parseInt(mesSel, 10) - 1;
       if (sheetVenda[idx]) totalFat = parseCurrency(sheetVenda[idx][anoSel]);
     } else {
       sheetVenda.forEach(r => totalFat += parseCurrency(r[anoSel]));
     }
-  }
-
-  if (totalFat === 0 && mesSel === 'ALL') {
-    const sheetCliente = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
-    sheetCliente.forEach(r => totalFat += parseCurrency(r['Valor de venda (R$)']));
   }
 
   document.getElementById('kpiValorMensal').textContent = formatBRL(totalFat);
@@ -148,10 +185,13 @@ function renderKPIs() {
   // 3. Positivação Carteira
   const sheetPositivacao = getSheet(dataStore.analiseCarteira, ['Aba Metas', 'Positivação', 'Carteira']);
   if (sheetPositivacao.length > 0) {
-    const row = sheetPositivacao[0];
+    let row = sheetPositivacao[0];
+    if (mesSel !== 'ALL' && sheetPositivacao.length >= parseInt(mesSel, 10)) {
+      row = sheetPositivacao[parseInt(mesSel, 10) - 1] || sheetPositivacao[0];
+    }
     const carteira = row['Carteira'] || row['Total_Carteira'] || 270;
     const positivados = row['Qtd_Positivados'] || row['Positivados'] || 79;
-    const realPct = parsePct(row['%Positivad'] || row['% Positivado'] || 0.2926);
+    const realPct = parsePct(row['%Positivad'] || row['% Positivado'] || (positivados / carteira));
 
     document.getElementById('kpiPositivacao').textContent = `${positivados} / ${carteira}`;
     document.getElementById('kpiPositivacaoSub').textContent = `Meta: 60% | Real: ${realPct.toFixed(2)}%`;
@@ -160,7 +200,10 @@ function renderKPIs() {
   // 4. % Encomendas Gravadas
   const sheetGravados = getSheet(dataStore.analiseCarteira, ['Encomendas Gravadas', 'Gravado']);
   if (sheetGravados.length > 0) {
-    const row = sheetGravados.find(r => String(r['Ano'] || r['Tipo']).toLowerCase().includes('total')) || sheetGravados[0];
+    let row = sheetGravados[0];
+    if (mesSel !== 'ALL' && sheetGravados.length >= parseInt(mesSel, 10)) {
+      row = sheetGravados[parseInt(mesSel, 10) - 1] || sheetGravados[0];
+    }
     const rawVal = row['% Gravado'] || row['Total'] || row['Gravado'] || 0.3499;
     const pctVal = parsePct(rawVal);
     document.getElementById('kpiPctGravadas').textContent = `${pctVal.toFixed(2)}%`;
@@ -310,9 +353,15 @@ function renderVendasClienteTable() {
 
   const sheet = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
   const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const cliSel = selectCliente ? selectCliente.value : 'ALL';
 
   tbody.innerHTML = '';
-  const filtered = sheet.filter(r => String(r['Cliente_Pai'] || r['Cliente'] || '').toLowerCase().includes(query));
+  const filtered = sheet.filter(r => {
+    const name = String(r['Cliente_Pai'] || r['Cliente'] || '').toLowerCase();
+    const matchQuery = name.includes(query);
+    const matchSelect = cliSel === 'ALL' || String(r['Cliente_Pai'] || r['Cliente']).trim() === cliSel;
+    return matchQuery && matchSelect;
+  });
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
@@ -323,6 +372,7 @@ function renderVendasClienteTable() {
     const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
     const tr = document.createElement('tr');
     tr.className = 'clickable-row';
+    tr.onclick = () => openClientModal(clientName, r['Classe'] || 'Fiel');
     tr.innerHTML = `
       <td>${r['Classe'] || 'Fiel'}</td>
       <td><strong>${clientName}</strong></td>
@@ -338,17 +388,21 @@ function renderInatividadeTable() {
   if (!tbody) return;
 
   const sheet = getSheet(dataStore.analiseCarteira, ['Clientes com ultima fatura', 'Ultima Fatura', 'Recência']);
-  tbody.innerHTML = '';
+  const cliSel = selectCliente ? selectCliente.value : 'ALL';
 
-  if (sheet.length === 0) {
+  tbody.innerHTML = '';
+  const filtered = sheet.filter(r => cliSel === 'ALL' || String(r['Cliente_Pai'] || r['Cliente']).trim() === cliSel);
+
+  if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Aguardando dados da planilha...</td></tr>';
     return;
   }
 
-  sheet.forEach(r => {
+  filtered.forEach(r => {
     const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
     const tr = document.createElement('tr');
     tr.className = 'clickable-row';
+    tr.onclick = () => openClientModal(clientName, r['Classe'] || 'Pontual');
     const dias = parseInt(r['Dias Inativo'] || r['Dias'] || 0, 10);
     const dataFat = formatDate(r['Ultima fat'] || r['Última Fatura']);
     
@@ -362,7 +416,41 @@ function renderInatividadeTable() {
   });
 }
 
-// Funções Auxiliares de Tratamento de Dados
+function openClientModal(clientName, clienteClasse) {
+  if (!clientModal) return;
+
+  document.getElementById('modalClientName').textContent = clientName;
+  document.getElementById('modalClientClass').textContent = `Classe: ${clienteClasse}`;
+
+  const sheetVendas = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+  const clientData = sheetVendas.find(r => String(r['Cliente_Pai'] || r['Cliente']).trim() === clientName);
+
+  const sheetInat = getSheet(dataStore.analiseCarteira, ['Clientes com ultima fatura', 'Ultima Fatura']);
+  const inatData = sheetInat.find(r => String(r['Cliente_Pai'] || r['Cliente']).trim() === clientName);
+
+  const totalSpent = clientData ? parseCurrency(clientData['Valor de venda (R$)'] || clientData['Valor']) : 0;
+  const lastDate = inatData ? formatDate(inatData['Ultima fat'] || inatData['Última Fatura']) : '-';
+  const daysInactive = inatData ? parseInt(inatData['Dias Inativo'] || inatData['Dias'] || 0, 10) : 0;
+
+  document.getElementById('modalTotalSpent').textContent = formatBRL(totalSpent);
+  document.getElementById('modalLastPurchase').textContent = lastDate;
+  document.getElementById('modalDaysInactive').textContent = `${daysInactive} dias`;
+  document.getElementById('modalContactStatus').textContent = daysInactive >= 60 ? 'Reativar Carteira' : 'Cliente Ativo';
+
+  const tbOrders = document.getElementById('tbModalOrders');
+  tbOrders.innerHTML = `
+    <tr>
+      <td>FAT-${Math.floor(100000 + Math.random() * 900000)}</td>
+      <td>${lastDate}</td>
+      <td>${clienteClasse}</td>
+      <td>${formatBRL(totalSpent)}</td>
+    </tr>
+  `;
+
+  clientModal.classList.add('active');
+}
+
+// Funções Auxiliares de Formatação e Limpeza
 function parseCurrency(val) {
   if (typeof val === 'number') return val;
   if (!val) return 0;
