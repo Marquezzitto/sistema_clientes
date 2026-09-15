@@ -3,28 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Executive BI Analytics - Customer 360 BR</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <title>Executive BI Analytics</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Lucide Icons & Chart.js & SheetJS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
   <div class="app-layout">
-    
-    <!-- Topbar / Header Executive -->
+    <!-- Navbar / Header -->
     <header class="navbar">
       <div class="brand">
-        <div class="brand-icon">
-          <i data-lucide="bar-chart-3"></i>
-        </div>
+        <div class="brand-icon"><i data-lucide="bar-chart-3"></i></div>
         <div>
           <h2>Executive BI <span class="accent-text">Analytics</span></h2>
           <span class="subbrand">Customer 360 BR - Métricas de Carteira & Faturamento</span>
@@ -35,18 +27,17 @@
         <div class="filter-group">
           <i data-lucide="calendar" class="filter-icon"></i>
           <select id="selectAno">
-            <option value="ALL">Ano: Todos</option>
             <option value="2026" selected>2026</option>
             <option value="2025">2025</option>
             <option value="2024">2024</option>
-            <option value="2023">2023</option>
+            <option value="ALL">Todos os Anos</option>
           </select>
         </div>
 
         <div class="filter-group">
           <i data-lucide="filter" class="filter-icon"></i>
           <select id="selectMes">
-            <option value="ALL">Mês: Todos</option>
+            <option value="ALL" selected>Mês: Todos</option>
             <option value="1">Janeiro</option>
             <option value="2">Fevereiro</option>
             <option value="3">Março</option>
@@ -69,15 +60,15 @@
       </div>
     </header>
 
-    <!-- Upload Zone para as 2 planilhas -->
+    <!-- Upload Zone -->
     <section class="upload-zone-container">
       <div class="upload-box" id="dropZone1">
         <input type="file" id="fileInput1" accept=".xlsx, .xls">
         <div class="upload-inner">
           <i data-lucide="file-spreadsheet" class="up-icon"></i>
           <div>
-            <p class="up-title">1ª Planilha (Report Section - Aba Geral)</p>
-            <p class="up-sub" id="labelFile1">Arraste ou clique para carregar</p>
+            <div class="up-title" id="labelFile1">1ª Planilha (Report Section - Aba Geral)</div>
+            <div class="up-sub">Arraste ou clique para selecionar</div>
           </div>
         </div>
       </div>
@@ -87,23 +78,23 @@
         <div class="upload-inner">
           <i data-lucide="file-spreadsheet" class="up-icon"></i>
           <div>
-            <p class="up-title">2ª Planilha (Análise de Carteira - Aba Metas)</p>
-            <p class="up-sub" id="labelFile2">Arraste ou clique para carregar</p>
+            <div class="up-title" id="labelFile2">2ª Planilha (Análise de Carteira - Aba Metas)</div>
+            <div class="up-sub">Arraste ou clique para selecionar</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Dashboard Body -->
-    <main class="dashboard-body" id="dashboardBody">
-
-      <!-- Banner Performance YTD -->
+    <!-- Dashboard Main Body -->
+    <main class="dashboard-body">
+      
+      <!-- Banner YTD -->
       <section class="kpi-ytd-banner">
         <div class="ytd-card">
           <span>Vendas LYTD (Ano Anterior)</span>
           <h3 id="kpiLytd">R$ 0,00</h3>
         </div>
-        <div class="ytd-card highlight">
+        <div class="ytd-card">
           <span>Vendas YTD (Ano Atual)</span>
           <h3 id="kpiYtd">R$ 0,00</h3>
         </div>
@@ -113,7 +104,7 @@
         </div>
       </section>
 
-      <!-- KPI Summary Cards -->
+      <!-- KPI Cards Horizon -->
       <section class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-head">
@@ -121,7 +112,7 @@
             <i data-lucide="dollar-sign"></i>
           </div>
           <div class="kpi-val" id="kpiValorMensal">R$ 0,00</div>
-          <div class="kpi-sub" id="kpiTrendMensal">Mês Selecionado</div>
+          <div class="kpi-sub">Mês Selecionado</div>
         </div>
 
         <div class="kpi-card">
@@ -129,8 +120,8 @@
             <span>% Budget Atingido</span>
             <i data-lucide="target"></i>
           </div>
-          <div class="kpi-val" id="kpiBudgetAtingido">0.0%</div>
-          <div class="kpi-sub" id="kpiBudgetSub">Meta vs Realizado</div>
+          <div class="kpi-val" id="kpiBudgetAtingido">0%</div>
+          <div class="kpi-sub">Meta vs Realizado</div>
         </div>
 
         <div class="kpi-card">
@@ -138,7 +129,7 @@
             <span>% Encomendas Gravadas</span>
             <i data-lucide="percent"></i>
           </div>
-          <div class="kpi-val" id="kpiPctGravadas">0.0%</div>
+          <div class="kpi-val" id="kpiPctGravadas">0%</div>
           <div class="kpi-sub">Últimos 6 meses</div>
         </div>
 
@@ -155,14 +146,14 @@
       <!-- Charts Section -->
       <section class="charts-grid">
         <div class="chart-card">
-          <h3><i data-lucide="trending-up"></i> Histórico Faturamento Mensal (2023 - 2026)</h3>
+          <h3><i data-lucide="line-chart"></i> Histórico Faturamento Mensal</h3>
           <div class="chart-wrapper">
             <canvas id="chartHistoricoFaturamento"></canvas>
           </div>
         </div>
 
         <div class="chart-card">
-          <h3><i data-lucide="target"></i> % Budget Atingida por Mês</h3>
+          <h3><i data-lucide="bar-chart-2"></i> % Budget Atingida por Mês</h3>
           <div class="chart-wrapper">
             <canvas id="chartBudget"></canvas>
           </div>
@@ -182,8 +173,9 @@
           </div>
         </div>
 
+        <!-- Card de Largura Total (Corrigido no CSS para ocupação inteira) -->
         <div class="chart-card full-width">
-          <h3><i data-lucide="package"></i> Top 20 Produtos Mais Vendidos</h3>
+          <h3><i data-lucide="shopping-bag"></i> Top 20 Produtos Mais Vendidos</h3>
           <div class="chart-wrapper">
             <canvas id="chartTopProdutos"></canvas>
           </div>
@@ -194,7 +186,7 @@
       <section class="tables-grid">
         <div class="table-card">
           <div class="table-head">
-            <h3><i data-lucide="users"></i> Vendas (R$) por Cliente <small>(Clique para ver detalhes)</small></h3>
+            <h3><i data-lucide="user-check"></i> Vendas (R$) por Cliente <small>(Clique para ver detalhes)</small></h3>
             <input type="text" id="searchClientInput" placeholder="Buscar cliente..." class="table-search">
           </div>
           <div class="table-container">
@@ -208,7 +200,7 @@
                 </tr>
               </thead>
               <tbody id="tbVendasCliente">
-                <tr><td colspan="4" class="empty-row">Aguardando dados da planilha...</td></tr>
+                <!-- Preenchido via script.js -->
               </tbody>
             </table>
           </div>
@@ -216,7 +208,7 @@
 
         <div class="table-card">
           <div class="table-head">
-            <h3><i data-lucide="user-plus"></i> Recência de Compras por Cliente</h3>
+            <h3><i data-lucide="user-minus"></i> Recência de Compras por Cliente</h3>
           </div>
           <div class="table-container">
             <table>
@@ -229,7 +221,7 @@
                 </tr>
               </thead>
               <tbody id="tbInatividade">
-                <tr><td colspan="4" class="empty-row">Aguardando dados da planilha...</td></tr>
+                <!-- Preenchido via script.js -->
               </tbody>
             </table>
           </div>
@@ -239,7 +231,7 @@
     </main>
   </div>
 
-  <!-- Modal de Detalhes do Cliente -->
+  <!-- Modal Detalhes do Cliente -->
   <div class="modal-overlay" id="clientModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -249,40 +241,39 @@
         </div>
         <button class="modal-close" id="btnCloseModal">&times;</button>
       </div>
-
       <div class="modal-body">
         <div class="modal-kpi-grid">
           <div class="modal-kpi-card">
-            <span class="m-kpi-title">Ação de Contato</span>
-            <strong class="m-kpi-val" id="modalContactStatus">Analisando...</strong>
-          </div>
-          <div class="modal-kpi-card">
-            <span class="m-kpi-title">Última Compra</span>
-            <strong class="m-kpi-val" id="modalLastPurchase">-</strong>
-          </div>
-          <div class="modal-kpi-card">
-            <span class="m-kpi-title">Inatividade</span>
-            <strong class="m-kpi-val" id="modalDaysInactive">0 dias</strong>
-          </div>
-          <div class="modal-kpi-card">
             <span class="m-kpi-title">Total Faturado</span>
-            <strong class="m-kpi-val" id="modalTotalSpent">R$ 0,00</strong>
+            <span class="m-kpi-val" id="modalTotalSpent">R$ 0,00</span>
+          </div>
+          <div class="modal-kpi-card">
+            <span class="m-kpi-title">Última Fatura</span>
+            <span class="m-kpi-val" id="modalLastPurchase">-</span>
+          </div>
+          <div class="modal-kpi-card">
+            <span class="m-kpi-title">Dias Inativo</span>
+            <span class="m-kpi-val" id="modalDaysInactive">0 dias</span>
+          </div>
+          <div class="modal-kpi-card">
+            <span class="m-kpi-title">Status Ação</span>
+            <span class="m-kpi-val" id="modalContactStatus">-</span>
           </div>
         </div>
 
-        <div class="modal-section-title">Histórico de Pedidos / Movimentações</div>
+        <h4 class="modal-section-title">Histórico de Pedidos / Faturas</h4>
         <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th>Nº Pedido / Fatura</th>
+                <th>Fatura / Pedido</th>
                 <th>Data</th>
-                <th>Tipo</th>
-                <th>Valor Total</th>
+                <th>Classe</th>
+                <th>Valor (R$)</th>
               </tr>
             </thead>
             <tbody id="tbModalOrders">
-              <tr><td colspan="4" class="empty-row">Nenhum pedido localizado.</td></tr>
+              <!-- Preenchido via JS -->
             </tbody>
           </table>
         </div>
