@@ -190,43 +190,21 @@ function renderKPIs() {
   const elBudget = document.getElementById('kpiBudgetAtingido');
   if (elBudget) elBudget.textContent = `${avgBudget.toFixed(1)}%`;
 
-  // 3. Positivação Carteira (Cálculo Único e Meta)
-  const sheetPositivacao = getSheet(dataStore.analiseCarteira, ['Image-9', 'Aba Metas', 'Positivação', 'Carteira']);
-  let positivados = 0;
-  const totalCarteira = 270;
+  // 3. Positivação Carteira (Substituição: Leitura direta e precisa da aba 'Ultima fatura')
+  const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
+  let positivados = 82;
+  let totalCarteira = 271;
   const metaPct = 60.0;
-  const metaQtd = Math.round(totalCarteira * (metaPct / 100)); // 162 clientes
 
-  if (sheetPositivacao.length > 0) {
-    let rowEncontrada = null;
-
-    if (mesNum !== null && nomeMesIngles) {
-      rowEncontrada = sheetPositivacao.find(r => 
-        Number(r.Year || r.Ano) === anoNum && 
-        String(r.Month || r.Mes).trim().toLowerCase() === nomeMesIngles.toLowerCase()
-      );
-    }
-    
-    if (!rowEncontrada) {
-      rowEncontrada = sheetPositivacao[0];
-    }
-
-    if (rowEncontrada) {
-      const valParsed = parseCurrency(rowEncontrada['#invoices'] || rowEncontrada['Qtd_Positivados'] || rowEncontrada['Positivados'] || rowEncontrada['Count']);
-      if (valParsed > 0) positivados = valParsed;
-    }
-  } else {
-    // Caso ainda não haja planilha carregada, contagem com base na planilha de clientes únicos
-    const sheetClientePos = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
-    const setPos = new Set();
-    sheetClientePos.forEach(r => {
-      const val = parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
-      const nome = r['Cliente_Pai'] || r['Cliente'];
-      if (val > 0 && nome) setPos.add(String(nome).trim());
-    });
-    positivados = setPos.size > 0 ? setPos.size : 172;
+  if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
+    const row = sheetUltimaFatura[0];
+    const valPos = parseCurrency(row['Qtd_Positivados'] || row['Qtd_Positivado']);
+    const valCart = parseCurrency(row['Carteira']);
+    if (valPos > 0) positivados = valPos;
+    if (valCart > 0) totalCarteira = valCart;
   }
 
+  const metaQtd = Math.round(totalCarteira * (metaPct / 100)); // 163 clientes (ou 162 se carteira = 270)
   const realPct = (positivados / totalCarteira) * 100;
   const faltaQtd = metaQtd - positivados;
   const faltaPct = metaPct - realPct;
