@@ -336,16 +336,17 @@ function renderChartTipoEncomenda() {
   const ctx = document.getElementById('chartTipoEncomenda');
   if (!ctx) return;
 
-  const sheet = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Clientes recentes que já', 'Encomenda por Tipo']);
-
-  let gravado = 44.72, normal = 55.28;
+  const sheet = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
+  
+  let gravado = 89;
+  let normal = 110;
 
   if (sheet.length > 0) {
     const rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
     const rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
 
-    if (rowG) gravado = parsePct(rowG['% gravação'] || rowG['Sum of Valor']);
-    if (rowN) normal = parsePct(rowN['% gravação'] || rowN['Sum of Valor']);
+    if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] || rowG['% gravação']);
+    if (rowN) normal = parseCurrency(rowN['Sum of Valor'] || rowN['% gravação']);
   }
 
   destroyChart('chartTipoEncomenda');
@@ -365,9 +366,14 @@ function renderChartTipoEncomenda() {
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
         datalabels: {
+          display: true,
           color: '#ffffff',
           font: { weight: 'bold', size: 12 },
-          formatter: (value) => `${value.toFixed(1)}%`
+          formatter: (value, ctx) => {
+            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            const percentage = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '0%';
+            return `${value}\n(${percentage})`;
+          }
         }
       }
     }
