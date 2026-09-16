@@ -3,7 +3,7 @@ if (typeof lucide !== 'undefined') {
   lucide.createIcons();
 }
 
-// Registra o plugin de DataLabels para exibir os números nos gráficos
+// Registra o plugin de DataLabels globalmente
 if (typeof ChartDataLabels !== 'undefined') {
   Chart.register(ChartDataLabels);
 }
@@ -256,7 +256,7 @@ function renderKPIs() {
 }
 
 // -----------------------------------------------------------------------------
-// GRÁFICOS COM NÚMEROS E PORCENTAGENS VISÍVEIS DENTRO/NO TOPO
+// GRÁFICOS COM RÓTULOS NUMÉRICOS VISÍVEIS (DATALABELS EXPLICÍTOS)
 // -----------------------------------------------------------------------------
 
 function renderChartHistorico() {
@@ -295,6 +295,7 @@ function renderChartHistorico() {
         { label: '2024', data: v2024, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 1, spanGaps: true }
       ]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -304,7 +305,7 @@ function renderChartHistorico() {
           display: true,
           align: 'top',
           anchor: 'end',
-          color: '#ffffff',
+          color: '#38bdf8',
           font: { weight: 'bold', size: 9 },
           formatter: (val) => val ? `R$ ${(val / 1000).toFixed(0)}k` : ''
         }
@@ -346,6 +347,7 @@ function renderChartBudget() {
         borderRadius: 4
       }]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -353,7 +355,7 @@ function renderChartBudget() {
         legend: { display: true, labels: { color: '#94a3b8' } },
         datalabels: {
           display: true,
-          align: 'top',
+          align: 'end',
           anchor: 'end',
           color: '#ffffff',
           font: { weight: 'bold', size: 10 },
@@ -362,7 +364,7 @@ function renderChartBudget() {
       },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-        y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+        y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
       }
     }
   });
@@ -396,6 +398,7 @@ function renderChartTipoEncomenda() {
         borderWidth: 0
       }]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -436,6 +439,7 @@ function renderChartSegmentos() {
         borderRadius: 4
       }]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -443,7 +447,7 @@ function renderChartSegmentos() {
         legend: { display: true, labels: { color: '#94a3b8' } },
         datalabels: {
           display: true,
-          align: 'top',
+          align: 'end',
           anchor: 'end',
           color: '#ffffff',
           font: { weight: 'bold', size: 10 },
@@ -452,7 +456,7 @@ function renderChartSegmentos() {
       },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-        y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+        y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
       }
     }
   });
@@ -478,6 +482,7 @@ function renderChartTopProdutos() {
         borderRadius: 4
       }]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -485,7 +490,7 @@ function renderChartTopProdutos() {
         legend: { display: true, labels: { color: '#94a3b8' } },
         datalabels: {
           display: true,
-          align: 'top',
+          align: 'end',
           anchor: 'end',
           color: '#ffffff',
           font: { weight: 'bold', size: 10 },
@@ -494,7 +499,7 @@ function renderChartTopProdutos() {
       },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-        y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+        y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
       }
     }
   });
