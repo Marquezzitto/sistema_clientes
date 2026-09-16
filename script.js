@@ -151,7 +151,7 @@ function renderKPIs() {
   const anoNum = Number(anoSel);
   const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
 
-  // 1. Faturamento Carteira (Acumulado sem zerar)
+  // 1. Faturamento Carteira
   let totalFat = 0;
   const sheetCliente = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
 
@@ -225,7 +225,7 @@ function renderKPIs() {
     }
   }
 
-  // 4. % Encomendas Gravadas (Com cálculo de quanto falta)
+  // 4. % Encomendas Gravadas
   const sheetGravados = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
   let pctVal = 44.72;
   const metaGravaçãoPct = 50.0;
@@ -256,7 +256,7 @@ function renderKPIs() {
 }
 
 // -----------------------------------------------------------------------------
-// GRÁFICOS COM NÚMEROS E VALORES EXIBIDOS
+// GRÁFICOS COM NÚMEROS E PORCENTAGENS VISÍVEIS DENTRO/NO TOPO
 // -----------------------------------------------------------------------------
 
 function renderChartHistorico() {
@@ -295,7 +295,25 @@ function renderChartHistorico() {
         { label: '2024', data: v2024, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 1, spanGaps: true }
       ]
     },
-    options: getCommonChartOptions('R$', false)
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8' } },
+        datalabels: {
+          display: true,
+          align: 'top',
+          anchor: 'end',
+          color: '#ffffff',
+          font: { weight: 'bold', size: 9 },
+          formatter: (val) => val ? `R$ ${(val / 1000).toFixed(0)}k` : ''
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
+        y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+      }
+    }
   });
 }
 
@@ -328,7 +346,25 @@ function renderChartBudget() {
         borderRadius: 4
       }]
     },
-    options: getCommonChartOptions('%', true)
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8' } },
+        datalabels: {
+          display: true,
+          align: 'top',
+          anchor: 'end',
+          color: '#ffffff',
+          font: { weight: 'bold', size: 10 },
+          formatter: (val) => val > 0 ? `${val.toFixed(1)}%` : ''
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
+        y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+      }
+    }
   });
 }
 
@@ -400,7 +436,25 @@ function renderChartSegmentos() {
         borderRadius: 4
       }]
     },
-    options: getCommonChartOptions('R$', true)
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8' } },
+        datalabels: {
+          display: true,
+          align: 'top',
+          anchor: 'end',
+          color: '#ffffff',
+          font: { weight: 'bold', size: 10 },
+          formatter: (val) => val > 0 ? `R$ ${(val / 1000).toFixed(0)}k` : ''
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
+        y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+      }
+    }
   });
 }
 
@@ -424,7 +478,25 @@ function renderChartTopProdutos() {
         borderRadius: 4
       }]
     },
-    options: getCommonChartOptions('R$', true)
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8' } },
+        datalabels: {
+          display: true,
+          align: 'top',
+          anchor: 'end',
+          color: '#ffffff',
+          font: { weight: 'bold', size: 10 },
+          formatter: (val) => val > 0 ? `R$ ${(val / 1000).toFixed(0)}k` : ''
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
+        y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+      }
+    }
   });
 }
 
@@ -643,34 +715,4 @@ function mesesArray() {
 
 function destroyChart(chartId) {
   if (charts[chartId]) charts[chartId].destroy();
-}
-
-function getCommonChartOptions(unit, showLabels = true) {
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: true, labels: { color: '#94a3b8' } },
-      datalabels: {
-        display: showLabels,
-        align: 'top',
-        anchor: 'end',
-        color: '#ffffff',
-        font: { weight: 'bold', size: 10 },
-        formatter: (val) => {
-          if (!val || val === 0) return '';
-          if (unit === 'R$') return `R$ ${(val / 1000).toFixed(0)}k`;
-          return `${val.toFixed(1)}%`;
-        }
-      }
-    },
-    scales: {
-      x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-      y: { 
-        beginAtZero: false, 
-        grid: { color: '#1f293d' }, 
-        ticks: { color: '#94a3b8' } 
-      }
-    }
-  };
 }
