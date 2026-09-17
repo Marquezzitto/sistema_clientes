@@ -180,7 +180,7 @@ function renderKPIs() {
   if (sheetBudget.length > 0) {
     if (mesNum !== null) {
       const row = sheetBudget.find(r => Number(r['Mês'] || r['Mes']) === mesNum);
-      if (row) avgBudget = parsePct(row['% do Budget'] || row['Budget']);
+      if (row) avgBudget = parsePct(row['% do Budget'] || r['Budget']);
     } else {
       let sum = 0, count = 0;
       sheetBudget.forEach(r => {
@@ -256,7 +256,7 @@ function renderKPIs() {
 }
 
 // -----------------------------------------------------------------------------
-// GRÁFICOS COM RÓTULOS NUMÉRICOS VISÍVEIS (DATALABELS EXPLICÍTOS)
+// GRÁFICOS COM RÓTULOS DE DADOS ATIVADOS CORRETAMENTE
 // -----------------------------------------------------------------------------
 
 function renderChartHistorico() {
@@ -295,7 +295,6 @@ function renderChartHistorico() {
         { label: '2024', data: v2024, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 1, spanGaps: true }
       ]
     },
-    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -305,7 +304,7 @@ function renderChartHistorico() {
           display: true,
           align: 'top',
           anchor: 'end',
-          color: '#38bdf8',
+          color: '#ffffff',
           font: { weight: 'bold', size: 9 },
           formatter: (val) => val ? `R$ ${(val / 1000).toFixed(0)}k` : ''
         }
@@ -347,7 +346,6 @@ function renderChartBudget() {
         borderRadius: 4
       }]
     },
-    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -398,7 +396,6 @@ function renderChartTipoEncomenda() {
         borderWidth: 0
       }]
     },
-    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -439,7 +436,6 @@ function renderChartSegmentos() {
         borderRadius: 4
       }]
     },
-    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -482,7 +478,6 @@ function renderChartTopProdutos() {
         borderRadius: 4
       }]
     },
-    plugins: [ChartDataLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
