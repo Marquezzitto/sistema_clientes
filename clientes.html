@@ -126,8 +126,13 @@
       const fragment = document.createDocumentFragment();
 
       dados.forEach((c) => {
-        const cidadeUpper = String(c.cidade || '').toUpperCase().trim();
-        const sla = tabelaSLAPorCidade[cidadeUpper] || "D+3 (Padrão Regional)";
+        // Usa o SLA já calculado (Paulinéris/Grande SP) que vem no clientes.json.
+        // Mantém a tabela fixa como fallback caso algum registro não tenha o campo.
+        let sla = c.sla;
+        if (!sla) {
+          const cidadeUpper = String(c.cidade || '').toUpperCase().trim();
+          sla = tabelaSLAPorCidade[cidadeUpper] || "D+3 (Padrão Regional)";
+        }
 
         const tr = document.createElement('tr');
         tr.className = 'clickable-row';
@@ -193,6 +198,7 @@
             <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #10b981;">
               <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">SLA Oficial da Cidade</span>
               <strong style="color: #10b981; font-size: 1rem;">${sla}</strong>
+              ${c.slaSituacao && c.slaSituacao !== '-' ? `<span style="display:block; margin-top:4px; font-size:0.75rem; color:#94a3b8;">${c.slaSituacao}</span>` : ''}
             </div>
           </div>
           <div style="margin-top: 20px; text-align: right;"><button onclick="fecharModalCliente()" style="background: #6366f1; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">Fechar</button></div>
