@@ -1296,22 +1296,6 @@
     "celular": "(19) 98730-2488"
   },
   {
-    "codigo": 179435,
-    "cliente": "Barilog Internacional, Servicos E Logist",
-    "fantasia": "Barilog Internacional, Servicos E Logist",
-    "cidade": "Itupeva",
-    "uf": "SP",
-    "cnpj": "-",
-    "valor": 0.0,
-    "ultimaVenda": "-",
-    "slaDias": 4,
-    "sla": "D+4 (4 Dias Úteis)",
-    "slaSituacao": "Prazo vigente",
-    "email": "-",
-    "telefone": "-",
-    "celular": "-"
-  },
-  {
     "codigo": 123961,
     "cliente": "Barros E Bastos Comercio E Serviços Ltda",
     "fantasia": "Universe Gift",
@@ -4414,22 +4398,6 @@
     "email": "edmilson1910@gmail.com",
     "telefone": "(11) 9471-5144",
     "celular": "(11) 9471-5144"
-  },
-  {
-    "codigo": 13365,
-    "cliente": "Stock Brindes Comercio E Personalizacao Ltda",
-    "fantasia": "Stock Brindes",
-    "cidade": "Sao Paulo",
-    "uf": "SP",
-    "cnpj": "-",
-    "valor": 174644.5,
-    "ultimaVenda": "12/08/2026",
-    "slaDias": 1,
-    "sla": "D+1 (1 Dia Útil)",
-    "slaSituacao": "Prazo vigente (Grande SP)",
-    "email": "-",
-    "telefone": "-",
-    "celular": "-"
   },
   {
     "codigo": 12593,
