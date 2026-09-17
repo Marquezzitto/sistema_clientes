@@ -246,15 +246,11 @@ function renderKPIs() {
   }
 }
 
-// -----------------------------------------------------------------------------
-// PLUGIN NATIVO PARA DESENHAR OS RÓTULOS (NÚMEROS) DIRETAMENTE NO GRÁFICO
-// --------------------------------vales-------------------------------------
-
+// Plugin nativo para os rótulos de dados
 const pluginValoresNativos = {
   id: 'pluginValoresNativos',
   afterDatasetsDraw(chart, args, options) {
-    const { ctx, chartArea: { top, bottom, left, right, width, height } } = chart;
-    
+    const { ctx } = chart;
     chart.data.datasets.forEach((dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);
       if (!meta.hidden) {
@@ -275,7 +271,6 @@ const pluginValoresNativos = {
             const position = element.tooltipPosition();
             ctx.fillText(text, position.x, position.y);
           } else {
-            // Barras e Linhas
             if (chart.options.scales && chart.options.scales.y && chart.options.scales.y.type === 'linear') {
               if (String(dataset.label).includes('%') || value <= 100 && dataset.label.includes('Budget')) {
                 text = `${Number(value).toFixed(1)}%`;
@@ -289,8 +284,6 @@ const pluginValoresNativos = {
             }
 
             const { x, y } = element.tooltipPosition ? element.tooltipPosition() : { x: element.x, y: element.y };
-            
-            // Desenha um fundo escuro elegante para o texto destacar
             const textWidth = ctx.measureText(text).width;
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
             ctx.fillRect(x - textWidth / 2 - 4, y - 16, textWidth + 8, 14);
@@ -305,27 +298,18 @@ const pluginValoresNativos = {
   }
 };
 
-// -----------------------------------------------------------------------------
-// RENDERIZAÇÃO DOS GRÁFICOS
-// -----------------------------------------------------------------------------
-
 function renderChartHistorico() {
   const ctx = document.getElementById('chartHistoricoFaturamento');
   if (!ctx) return;
-
   const sheet = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  
-  let v2024 = new Array(12).fill(null);
-  let v2025 = new Array(12).fill(null);
-  let v2026 = new Array(12).fill(null);
+  let v2024 = new Array(12).fill(null), v2025 = new Array(12).fill(null), v2026 = new Array(12).fill(null);
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       const anoRow = Number(r['Ano']);
       const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-      
       if (idx >= 0 && idx < 12 && val > 0) {
         if (anoRow === 2024) v2024[idx] = val;
         if (anoRow === 2025) v2025[idx] = val;
@@ -347,8 +331,7 @@ function renderChartHistorico() {
     },
     plugins: [pluginValoresNativos],
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
@@ -361,36 +344,22 @@ function renderChartHistorico() {
 function renderChartBudget() {
   const ctx = document.getElementById('chartBudget');
   if (!ctx) return;
-
   const sheet = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
   const labels = mesesArray();
   let dataVals = new Array(12).fill(0);
-
   if (sheet.length > 0) {
     sheet.forEach(r => {
       const idx = Number(r['Mês'] || r['Mes']) - 1;
-      if (idx >= 0 && idx < 12) {
-        dataVals[idx] = parsePct(r['% do Budget'] || r['Budget']);
-      }
+      if (idx >= 0 && idx < 12) dataVals[idx] = parsePct(r['% do Budget'] || r['Budget']);
     });
   }
-
   destroyChart('chartBudget');
   charts['chartBudget'] = new Chart(ctx.getContext('2d'), {
     type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: '% Budget Atingido',
-        data: dataVals,
-        backgroundColor: '#6366f1',
-        borderRadius: 4
-      }]
-    },
+    data: { labels: labels, datasets: [{ label: '% Budget Atingido', data: dataVals, backgroundColor: '#6366f1', borderRadius: 4 }] },
     plugins: [pluginValoresNativos],
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
@@ -403,64 +372,36 @@ function renderChartBudget() {
 function renderChartTipoEncomenda() {
   const ctx = document.getElementById('chartTipoEncomenda');
   if (!ctx) return;
-
   const sheet = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
-  
-  let gravado = 89;
-  let normal = 110;
-
+  let gravado = 89, normal = 110;
   if (sheet.length > 0) {
     const rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
     const rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
-
     if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] || rowG['% gravação']);
     if (rowN) normal = parseCurrency(rowN['Sum of Valor'] || rowN['% gravação']);
   }
-
   destroyChart('chartTipoEncomenda');
   charts['chartTipoEncomenda'] = new Chart(ctx.getContext('2d'), {
     type: 'doughnut',
-    data: {
-      labels: ['Gravado', 'Normal'],
-      datasets: [{
-        data: [gravado, normal],
-        backgroundColor: ['#10b981', '#ef4444'],
-        borderWidth: 0
-      }]
-    },
+    data: { labels: ['Gravado', 'Normal'], datasets: [{ data: [gravado, normal], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }] },
     plugins: [pluginValoresNativos],
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: '#94a3b8' } } } }
   });
 }
 
 function renderChartSegmentos() {
   const ctx = document.getElementById('chartSegmentos');
   if (!ctx) return;
-
   const sheet = getSheet(dataStore.reportSection, ['Venda mensal em reais da', 'Separador Segmento', 'Segmento']);
   const labels = sheet.map(r => r['Separador'] || r['Segmento'] || 'Outros').slice(0, 6);
   const dataVals = sheet.map(r => parseCurrency(r['After_Tax_Amount'] || r['Valor'])).slice(0, 6);
-
   destroyChart('chartSegmentos');
   charts['chartSegmentos'] = new Chart(ctx.getContext('2d'), {
     type: 'bar',
-    data: {
-      labels: labels.length > 0 ? labels : ['Sem Dados'],
-      datasets: [{
-        label: 'Vendas (R$)',
-        data: dataVals.length > 0 ? dataVals : [0],
-        backgroundColor: '#10b981',
-        borderRadius: 4
-      }]
-    },
+    data: { labels: labels.length > 0 ? labels : ['Sem Dados'], datasets: [{ label: 'Vendas (R$)', data: dataVals.length > 0 ? dataVals : [0], backgroundColor: '#10b981', borderRadius: 4 }] },
     plugins: [pluginValoresNativos],
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
@@ -473,27 +414,16 @@ function renderChartSegmentos() {
 function renderChartTopProdutos() {
   const ctx = document.getElementById('chartTopProdutos');
   if (!ctx) return;
-
   const sheet = getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']).slice(0, 5);
   const labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
   const dataVals = sheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']));
-
   destroyChart('chartTopProdutos');
   charts['chartTopProdutos'] = new Chart(ctx.getContext('2d'), {
     type: 'bar',
-    data: {
-      labels: labels.length > 0 ? labels : ['Sem Dados'],
-      datasets: [{
-        label: 'Valor de Venda (R$)',
-        data: dataVals.length > 0 ? dataVals : [0],
-        backgroundColor: '#3b82f6',
-        borderRadius: 4
-      }]
-    },
+    data: { labels: labels.length > 0 ? labels : ['Sem Dados'], datasets: [{ label: 'Valor de Venda (R$)', data: dataVals.length > 0 ? dataVals : [0], backgroundColor: '#3b82f6', borderRadius: 4 }] },
     plugins: [pluginValoresNativos],
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
@@ -503,54 +433,31 @@ function renderChartTopProdutos() {
   });
 }
 
-// -----------------------------------------------------------------------------
-// TABELAS E POPUP
-// -----------------------------------------------------------------------------
-
 function renderVendasClienteTable() {
   const tbody = document.getElementById('tbVendasCliente');
   if (!tbody) return;
-
   const sheet = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
   const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-
   tbody.innerHTML = '';
   const filtered = sheet.filter(r => {
     const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    const matchBusca = nome.toLowerCase().includes(query);
-    const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
-    return matchBusca && matchFiltroTopo;
+    return nome.toLowerCase().includes(query) && (clienteSel === 'ALL' || nome === clienteSel);
   });
-
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
     return;
   }
-
   filtered.forEach(r => {
     const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
     const valorVenda = parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
     const pctTotal = r['% do Total'] || '-';
     const classe = r['Classe'] || 'Fiel';
-
     const tr = document.createElement('tr');
     tr.className = 'clickable-row';
     tr.style.cursor = 'pointer';
-    tr.innerHTML = `
-      <td>${classe}</td>
-      <td><strong>${clientName}</strong></td>
-      <td>${formatBRL(valorVenda)}</td>
-      <td>${pctTotal}</td>
-    `;
-
-    tr.addEventListener('click', () => abrirModalCliente({
-      nome: clientName,
-      classe: classe,
-      faturamento: formatBRL(valorVenda),
-      participacao: pctTotal
-    }));
-
+    tr.innerHTML = `<td>${classe}</td><td><strong>${clientName}</strong></td><td>${formatBRL(valorVenda)}</td><td>${pctTotal}</td>`;
+    tr.addEventListener('click', () => abrirModalCliente({ nome: clientName, classe: classe, faturamento: formatBRL(valorVenda), participacao: pctTotal }));
     tbody.appendChild(tr);
   });
 }
@@ -558,120 +465,58 @@ function renderVendasClienteTable() {
 function renderInatividadeTable() {
   const tbody = document.getElementById('tbInatividade');
   if (!tbody) return;
-
   const sheet = getSheet(dataStore.analiseCarteira, ['#Dias até primeira fatura', 'Clientes com ultima fatura', 'Ultima Fatura']);
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   tbody.innerHTML = '';
-
-  const filtered = sheet.filter(r => {
-    const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    return clienteSel === 'ALL' || nome === clienteSel;
-  });
-
+  const filtered = sheet.filter(r => clienteSel === 'ALL' || String(r['Cliente_Pai'] || r['Cliente'] || '').trim() === clienteSel);
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Aguardando dados da planilha...</td></tr>';
     return;
   }
-
   filtered.forEach(r => {
     const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
     const dias = parseInt(r['#dias desde a ultima fat'] || r['Dias Inativo'] || r['Dias'] || 0, 10);
     const dataFat = formatDate(r['Ultima fat'] || r['Última Fatura']);
     const classe = r['Classe'] || 'Pontual';
-
     const tr = document.createElement('tr');
     tr.className = 'clickable-row';
     tr.style.cursor = 'pointer';
-    tr.innerHTML = `
-      <td>${classe}</td>
-      <td><strong>${clientName}</strong></td>
-      <td>${dataFat}</td>
-      <td><span style="color: ${dias >= 60 ? '#ef4444' : '#10b981'}; font-weight: 700;">${dias} dias</span></td>
-    `;
-
-    tr.addEventListener('click', () => abrirModalCliente({
-      nome: clientName,
-      classe: classe,
-      ultimaFatura: dataFat,
-      inatividade: `${dias} dias`
-    }));
-
+    tr.innerHTML = `<td>${classe}</td><td><strong>${clientName}</strong></td><td>${dataFat}</td><td><span style="color: ${dias >= 60 ? '#ef4444' : '#10b981'}; font-weight: 700;">${dias} dias</span></td>`;
+    tr.addEventListener('click', () => abrirModalCliente({ nome: clientName, classe: classe, ultimaFatura: dataFat, inatividade: `${dias} dias` }));
     tbody.appendChild(tr);
   });
 }
 
 function abrirModalCliente(dados) {
   let modalContainer = document.getElementById('customClientModal');
-
   if (!modalContainer) {
     modalContainer = document.createElement('div');
     modalContainer.id = 'customClientModal';
-    modalContainer.style.position = 'fixed';
-    modalContainer.style.top = '0';
-    modalContainer.style.left = '0';
-    modalContainer.style.width = '100vw';
-    modalContainer.style.height = '100vh';
-    modalContainer.style.backgroundColor = 'rgba(11, 15, 25, 0.8)';
-    modalContainer.style.backdropFilter = 'blur(6px)';
-    modalContainer.style.zIndex = '99999';
-    modalContainer.style.display = 'flex';
-    modalContainer.style.alignItems = 'center';
-    modalContainer.style.justifyContent = 'center';
-
+    modalContainer.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(11,15,25,0.8);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;';
     document.body.appendChild(modalContainer);
   }
-
   modalContainer.innerHTML = `
     <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 90%; max-width: 480px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); font-family: sans-serif; color: #f8fafc;">
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 16px;">
-        <h3 style="margin: 0; font-size: 1.1rem; color: #6366f1; display: flex; align-items: center; gap: 8px;">
-          🏢 Detalhes do Cliente
-        </h3>
+        <h3 style="margin: 0; font-size: 1.1rem; color: #6366f1; display: flex; align-items: center; gap: 8px;">🏢 Detalhes do Cliente</h3>
         <button onclick="fecharModalCliente()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
       </div>
-      
       <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem;">
         <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #6366f1;">
           <span style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; display: block;">Cliente</span>
           <strong style="font-size: 1.05rem; color: #ffffff;">${dados.nome}</strong>
         </div>
-
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Classe</span>
-            <strong style="color: #38bdf8;">${dados.classe || '-'}</strong>
-          </div>
-          ${dados.faturamento ? `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Faturamento</span>
-            <strong style="color: #10b981;">${dados.faturamento}</strong>
-          </div>` : ''}
-          ${dados.participacao ? `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">% do Total</span>
-            <strong style="color: #f59e0b;">${dados.participacao}</strong>
-          </div>` : ''}
-          ${dados.ultimaFatura ? `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Última Fatura</span>
-            <strong style="color: #e2e8f0;">${dados.ultimaFatura}</strong>
-          </div>` : ''}
-          ${dados.inatividade ? `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Inatividade</span>
-            <strong style="color: #ef4444;">${dados.inatividade}</strong>
-          </div>` : ''}
+          <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Classe</span><strong style="color: #38bdf8;">${dados.classe || '-'}</strong></div>
+          ${dados.faturamento ? `<div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Faturamento</span><strong style="color: #10b981;">${dados.faturamento}</strong></div>` : ''}
+          ${dados.participacao ? `<div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">% do Total</span><strong style="color: #f59e0b;">${dados.participacao}</strong></div>` : ''}
+          ${dados.ultimaFatura ? `<div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Última Fatura</span><strong style="color: #e2e8f0;">${dados.ultimaFatura}</strong></div>` : ''}
+          ${dados.inatividade ? `<div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Inatividade</span><strong style="color: #ef4444;">${dados.inatividade}</strong></div>` : ''}
         </div>
       </div>
-
-      <div style="margin-top: 20px; text-align: right;">
-        <button onclick="fecharModalCliente()" style="background: #6366f1; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-          Fechar
-        </button>
-      </div>
+      <div style="margin-top: 20px; text-align: right;"><button onclick="fecharModalCliente()" style="background: #6366f1; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">Fechar</button></div>
     </div>
   `;
-
   modalContainer.style.display = 'flex';
 }
 
@@ -679,10 +524,6 @@ function fecharModalCliente() {
   const modalContainer = document.getElementById('customClientModal');
   if (modalContainer) modalContainer.style.display = 'none';
 }
-
-// -----------------------------------------------------------------------------
-// FUNÇÕES AUXILIARES
-// -----------------------------------------------------------------------------
 
 function parseCurrency(val) {
   if (typeof val === 'number') return val;
