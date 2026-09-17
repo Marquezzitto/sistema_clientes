@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard de Vendas & Carteira</title>
+  <title>Dashboard de Vendas & Carteira - RCA 61</title>
   
   <!-- Fontes & Ícones -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,11 +24,15 @@
     <!-- Cabeçalho Principal -->
     <header class="main-header">
       <div class="header-title">
-        <h1>Dashboard de Performance</h1>
+        <h1>Dashboard de Performance - RCA 61</h1>
         <p>Análise Integrada de Vendas, Carteira e Metas</p>
       </div>
 
       <div class="header-controls">
+        <a href="clientes.html" class="btn-upload" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: var(--accent-green);">
+          <i data-lucide="users" style="width:16px;height:16px;"></i> Base & SLAs (RCA 61)
+        </a>
+
         <div class="filter-group">
           <i data-lucide="user" class="filter-icon"></i>
           <select id="selectCliente">
@@ -252,55 +256,6 @@
       </div>
     </section>
 
-  </div>
-
-  <!-- Modal de Detalhes do Cliente -->
-  <div class="modal-overlay" id="clientModal">
-    <div class="modal-card">
-      <button class="modal-close" id="btnCloseModal">&times;</button>
-      <div class="modal-header">
-        <h2 id="modalClientName">Nome do Cliente</h2>
-        <span class="badge" id="modalClientClass">Classe: -</span>
-      </div>
-      <div class="modal-body">
-        <div class="modal-kpi-row">
-          <div>
-            <span>Total Comprado</span>
-            <strong id="modalTotalSpent">R$ 0,00</strong>
-          </div>
-          <div>
-            <span>Última Compra</span>
-            <strong id="modalLastPurchase">-</strong>
-          </div>
-          <div>
-            <span>Dias sem Comprar</span>
-            <strong id="modalDaysInactive">0 dias</strong>
-          </div>
-          <div>
-            <span>Status</span>
-            <strong id="modalContactStatus">-</strong>
-          </div>
-        </div>
-        <h4>Histórico Recente de Pedidos</h4>
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Fatura</th>
-                <th>Data</th>
-                <th>Tipo</th>
-                <th>Valor</th>
-              </tr>
-            </thead>
-            <tbody id="tbModalOrders">
-              <tr>
-                <td colspan="4" class="empty-row">Sem histórico carregado.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script src="script.js"></script>
