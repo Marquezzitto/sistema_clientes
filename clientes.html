@@ -66,31 +66,31 @@
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     const tabelaSLAPorCidade = {
-      "SÃO PAULO": "D+1 (1 Dia Útil)",
-      "SAO PAULO": "D+1 (1 Dia Útil)",
-      "GUARULHOS": "D+2 (2 Dias Úteis)",
-      "CAMPINAS": "D+2 (2 Dias Úteis)",
-      "SANTOS": "D+2 (2 Dias Úteis)",
-      "JUNDIAI": "D+2 (2 Dias Úteis)",
-      "JUNDIAÍ": "D+2 (2 Dias Úteis)",
-      "SOROCABA": "D+2 (2 Dias Úteis)",
-      "SÃO JOSÉ DOS CAMPOS": "D+2 (2 Dias Úteis)",
-      "SAO JOSE DOS CAMPOS": "D+2 (2 Dias Úteis)",
-      "RIBEIRAO PRETO": "D+3 (3 Dias Úteis)",
-      "RIBEIRÃO PRETO": "D+3 (3 Dias Úteis)",
-      "BAURU": "D+3 (3 Dias Úteis)",
-      "MARILIA": "D+3 (3 Dias Úteis)",
-      "MARÍLIA": "D+3 (3 Dias Úteis)",
-      "SAO CARLOS": "D+3 (3 Dias Úteis)",
-      "SÃO CARLOS": "D+3 (3 Dias Úteis)",
-      "PRESIDENTE PRUDENTE": "D+4 (4 Dias Úteis)",
-      "SUMARÉ": "D+2 (2 Dias Úteis)",
-      "SUMARE": "D+2 (2 Dias Úteis)",
-      "PAULÍNIA": "D+2 (2 Dias Úteis)",
-      "PAULINIA": "D+2 (2 Dias Úteis)",
-      "PIRACICABA": "D+3 (3 Dias Úteis)",
-      "LIMEIRA": "D+3 (3 Dias Úteis)",
-      "AMERICANA": "D+2 (2 Dias Úteis)"
+      "SÃO PAULO": "D+1",
+      "SAO PAULO": "D+1",
+      "GUARULHOS": "D+2",
+      "CAMPINAS": "D+2",
+      "SANTOS": "D+2",
+      "JUNDIAI": "D+2",
+      "JUNDIAÍ": "D+2",
+      "SOROCABA": "D+2",
+      "SÃO JOSÉ DOS CAMPOS": "D+2",
+      "SAO JOSE DOS CAMPOS": "D+2",
+      "RIBEIRAO PRETO": "D+3",
+      "RIBEIRÃO PRETO": "D+3",
+      "BAURU": "D+3",
+      "MARILIA": "D+3",
+      "MARÍLIA": "D+3",
+      "SAO CARLOS": "D+3",
+      "SÃO CARLOS": "D+3",
+      "PRESIDENTE PRUDENTE": "D+4",
+      "SUMARÉ": "D+2",
+      "SUMARE": "D+2",
+      "PAULÍNIA": "D+2",
+      "PAULINIA": "D+2",
+      "PIRACICABA": "D+3",
+      "LIMEIRA": "D+3",
+      "AMERICANA": "D+2"
     };
 
     let baseClientesGlobal = [];
@@ -114,6 +114,33 @@
         });
     });
 
+    // Função para limpar os parênteses do SLA (deixando apenas D+X)
+    function formatarSlaLimpo(slaString, slaDias) {
+      if (!slaString) return `D+${slaDias || 0}`;
+      return slaString.split('(')[0].trim();
+    }
+
+    // Função para verificar se o cliente está há muito tempo sem comprar com base na última venda
+    function verificarTempoSemComprar(ultimaVendaStr) {
+      if (!ultimaVendaStr || ultimaVendaStr === '-' || ultimaVendaStr.trim() === '') {
+        return '<span style="color: #ef4444; font-weight: bold;">⚠️ Sem histórico recente (Inativo)</span>';
+      }
+
+      const partes = ultimaVendaStr.split('/');
+      if (partes.length !== 3) return `<span style="color: #94a3b8;">Última compra: ${ultimaVendaStr}</span>`;
+
+      const dataUltima = new Date(partes[2], partes[1] - 1, partes[0]);
+      const hoje = new Date();
+      const diffDias = Math.ceil(Math.abs(hoje - dataUltima) / (1000 * 60 * 60 * 24));
+
+      // Critério de inatividade (mais de 60 dias sem faturar/comprar)
+      if (diffDias > 60) {
+        return `<span style="color: #f59e0b; font-weight: bold;">⚠️ Muito tempo sem comprar (${diffDias} dias atrás)</span>`;
+      } else {
+        return `<span style="color: #10b981; font-weight: bold;">✅ Comprou recentemente (${diffDias} dias atrás)</span>`;
+      }
+    }
+
     function renderizarTabelaClientes(dados) {
       const tbody = document.getElementById('tbClientesSLA');
       tbody.innerHTML = '';
@@ -126,13 +153,12 @@
       const fragment = document.createDocumentFragment();
 
       dados.forEach((c) => {
-        // Usa o SLA já calculado (Paulinéris/Grande SP) que vem no clientes.json.
-        // Mantém a tabela fixa como fallback caso algum registro não tenha o campo.
-        let sla = c.sla;
-        if (!sla) {
+        let slaBruto = c.sla;
+        if (!slaBruto) {
           const cidadeUpper = String(c.cidade || '').toUpperCase().trim();
-          sla = tabelaSLAPorCidade[cidadeUpper] || "D+3 (Padrão Regional)";
+          slaBruto = tabelaSLAPorCidade[cidadeUpper] || "D+3";
         }
+        const sla = formatarSlaLimpo(slaBruto, c.slaDias);
 
         const tr = document.createElement('tr');
         tr.className = 'clickable-row';
@@ -174,9 +200,10 @@
         document.body.appendChild(modalContainer);
       }
 
+      // Valida se os dados vieram carregados da planilha ou base atualizada
       const valorFormatado = typeof c.valor === 'number' 
         ? c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) 
-        : c.valor;
+        : (c.valor ? c.valor : 'R$ 0,00');
 
       modalContainer.innerHTML = `
         <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 90%; max-width: 480px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); font-family: sans-serif; color: #f8fafc;">
@@ -190,10 +217,14 @@
               <strong style="font-size: 1.05rem; color: #ffffff;">${c.cliente}</strong>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">CNPJ</span><strong style="color: #38bdf8; font-size: 0.85rem;">${c.cnpj}</strong></div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">CNPJ</span><strong style="color: #38bdf8; font-size: 0.85rem;">${c.cnpj || '-'}</strong></div>
               <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Cidade / UF</span><strong style="color: #e2e8f0;">${c.cidade} - ${c.uf}</strong></div>
               <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Faturamento Total</span><strong style="color: #10b981;">${valorFormatado}</strong></div>
-              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Última Venda</span><strong style="color: #e2e8f0;">${c.ultimaVenda}</strong></div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Última Venda</span><strong style="color: #e2e8f0;">${c.ultimaVenda || '-'}</strong></div>
+            </div>
+            <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+              <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Status de Compra / Inatividade</span>
+              <div style="margin-top: 4px;">${verificarTempoSemComprar(c.ultimaVenda)}</div>
             </div>
             <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #10b981;">
               <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">SLA Oficial da Cidade</span>
