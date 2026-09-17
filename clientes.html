@@ -95,8 +95,60 @@
 
     let baseClientesGlobal = [];
 
+    // Dados "vivos" (faturamento e inatividade) salvos pelo index.html quando
+    // as planilhas de Vendas/Carteira são carregadas por lá. Se o usuário
+    // ainda não carregou nada no Dashboard, isso fica nulo e as informações
+    // extras simplesmente não aparecem no modal de detalhes.
+    let dadosVivosGlobal = null;
+
+    function normalizarNome(str) {
+      return String(str || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9 ]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function carregarDadosVivos() {
+      try {
+        const raw = localStorage.getItem('rca61_dadosVivos');
+        dadosVivosGlobal = raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        dadosVivosGlobal = null;
+      }
+    }
+
+    function buscarDadosVivosCliente(c) {
+      if (!dadosVivosGlobal || !dadosVivosGlobal.clientes) return null;
+      const candidatos = [normalizarNome(c.cliente), normalizarNome(c.fantasia)].filter(Boolean);
+      for (const chave of candidatos) {
+        if (dadosVivosGlobal.clientes[chave]) return dadosVivosGlobal.clientes[chave];
+      }
+      const chavesSalvas = Object.keys(dadosVivosGlobal.clientes);
+      for (const k of chavesSalvas) {
+        if (candidatos.some(ca => k.includes(ca) || ca.includes(k))) {
+          return dadosVivosGlobal.clientes[k];
+        }
+      }
+      return null;
+    }
+
+    function formatarSLA(c) {
+      if (c.slaDias !== undefined && c.slaDias !== null && c.slaDias !== '') {
+        return `D+${c.slaDias}`;
+      }
+      if (c.sla) {
+        const match = String(c.sla).match(/D\+\d+/i);
+        if (match) return match[0].toUpperCase();
+      }
+      const cidadeUpper = String(c.cidade || '').toUpperCase().trim();
+      return tabelaSLAPorCidade[cidadeUpper] || "D+3";
+    }
+
     // Carrega os dados automaticamente do arquivo JSON fixo na pasta assim que a página abre
     document.addEventListener("DOMContentLoaded", () => {
+      carregarDadosVivos();
       fetch('clientes.json')
         .then(response => {
           if (!response.ok) throw new Error('Não foi possível carregar o arquivo de clientes.');
@@ -114,33 +166,6 @@
         });
     });
 
-    // Função para limpar os parênteses do SLA (deixando apenas D+X)
-    function formatarSlaLimpo(slaString, slaDias) {
-      if (!slaString) return `D+${slaDias || 0}`;
-      return slaString.split('(')[0].trim();
-    }
-
-    // Função para verificar se o cliente está há muito tempo sem comprar com base na última venda
-    function verificarTempoSemComprar(ultimaVendaStr) {
-      if (!ultimaVendaStr || ultimaVendaStr === '-' || ultimaVendaStr.trim() === '') {
-        return '<span style="color: #ef4444; font-weight: bold;">⚠️ Sem histórico recente (Inativo)</span>';
-      }
-
-      const partes = ultimaVendaStr.split('/');
-      if (partes.length !== 3) return `<span style="color: #94a3b8;">Última compra: ${ultimaVendaStr}</span>`;
-
-      const dataUltima = new Date(partes[2], partes[1] - 1, partes[0]);
-      const hoje = new Date();
-      const diffDias = Math.ceil(Math.abs(hoje - dataUltima) / (1000 * 60 * 60 * 24));
-
-      // Critério de inatividade (mais de 60 dias sem faturar/comprar)
-      if (diffDias > 60) {
-        return `<span style="color: #f59e0b; font-weight: bold;">⚠️ Muito tempo sem comprar (${diffDias} dias atrás)</span>`;
-      } else {
-        return `<span style="color: #10b981; font-weight: bold;">✅ Comprou recentemente (${diffDias} dias atrás)</span>`;
-      }
-    }
-
     function renderizarTabelaClientes(dados) {
       const tbody = document.getElementById('tbClientesSLA');
       tbody.innerHTML = '';
@@ -153,12 +178,8 @@
       const fragment = document.createDocumentFragment();
 
       dados.forEach((c) => {
-        let slaBruto = c.sla;
-        if (!slaBruto) {
-          const cidadeUpper = String(c.cidade || '').toUpperCase().trim();
-          slaBruto = tabelaSLAPorCidade[cidadeUpper] || "D+3";
-        }
-        const sla = formatarSlaLimpo(slaBruto, c.slaDias);
+        // Mostra apenas a quantidade de dias (ex: "D+1"), sem o texto entre parênteses.
+        let sla = formatarSLA(c);
 
         const tr = document.createElement('tr');
         tr.className = 'clickable-row';
@@ -200,10 +221,38 @@
         document.body.appendChild(modalContainer);
       }
 
-      // Valida se os dados vieram carregados da planilha ou base atualizada
       const valorFormatado = typeof c.valor === 'number' 
         ? c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) 
-        : (c.valor ? c.valor : 'R$ 0,00');
+        : c.valor;
+
+      // Só aparece depois que as planilhas forem carregadas no Dashboard (index.html)
+      const dadosVivos = buscarDadosVivosCliente(c);
+      let blocoVivo = '';
+      if (dadosVivos) {
+        const faturamentoVivo = typeof dadosVivos.faturamento === 'number'
+          ? dadosVivos.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+          : '-';
+        const dias = dadosVivos.diasInativo;
+        const temDias = typeof dias === 'number' && !isNaN(dias);
+        const corAtividade = temDias && dias >= 60 ? '#ef4444' : '#10b981';
+        const textoAtividade = temDias ? `${dias} dias sem comprar` : 'Sem dados de inatividade';
+
+        blocoVivo = `
+            <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+              <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Faturamento (Planilha do Dashboard)</span>
+              <strong style="color: #3b82f6; font-size: 1rem;">${faturamentoVivo}</strong>
+            </div>
+            <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid ${corAtividade};">
+              <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Atividade de Compra</span>
+              <strong style="color: ${corAtividade}; font-size: 1rem;">${textoAtividade}</strong>
+              ${dadosVivos.ultimaFatura ? `<span style="display:block; margin-top:4px; font-size:0.75rem; color:#94a3b8;">Última fatura (planilha): ${dadosVivos.ultimaFatura}</span>` : ''}
+            </div>`;
+      } else {
+        blocoVivo = `
+            <div style="background: #0f172a; padding: 10px; border-radius: 8px; border: 1px dashed #334155; grid-column: 1 / -1;">
+              <span style="color: #64748b; font-size: 0.75rem;">💡 Carregue as planilhas no Dashboard (index.html) para ver aqui o faturamento atualizado e a atividade de compra deste cliente.</span>
+            </div>`;
+      }
 
       modalContainer.innerHTML = `
         <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 90%; max-width: 480px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); font-family: sans-serif; color: #f8fafc;">
@@ -217,14 +266,13 @@
               <strong style="font-size: 1.05rem; color: #ffffff;">${c.cliente}</strong>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">CNPJ</span><strong style="color: #38bdf8; font-size: 0.85rem;">${c.cnpj || '-'}</strong></div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">CNPJ</span><strong style="color: #38bdf8; font-size: 0.85rem;">${c.cnpj}</strong></div>
               <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Cidade / UF</span><strong style="color: #e2e8f0;">${c.cidade} - ${c.uf}</strong></div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Telefone</span><strong style="color: #e2e8f0;">${c.telefone && c.telefone !== '-' ? c.telefone : (c.celular && c.celular !== '-' ? c.celular : '-')}</strong></div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">E-mail</span><strong style="color: #e2e8f0; font-size: 0.85rem; word-break: break-all;">${c.email || '-'}</strong></div>
               <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Faturamento Total</span><strong style="color: #10b981;">${valorFormatado}</strong></div>
-              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Última Venda</span><strong style="color: #e2e8f0;">${c.ultimaVenda || '-'}</strong></div>
-            </div>
-            <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-              <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Status de Compra / Inatividade</span>
-              <div style="margin-top: 4px;">${verificarTempoSemComprar(c.ultimaVenda)}</div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Última Venda</span><strong style="color: #e2e8f0;">${c.ultimaVenda}</strong></div>
+              ${blocoVivo}
             </div>
             <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #10b981;">
               <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">SLA Oficial da Cidade</span>
