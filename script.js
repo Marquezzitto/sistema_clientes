@@ -3,11 +3,6 @@ if (typeof lucide !== 'undefined') {
   lucide.createIcons();
 }
 
-// Registra o plugin de DataLabels globalmente
-if (typeof ChartDataLabels !== 'undefined') {
-  Chart.register(ChartDataLabels);
-}
-
 let dataStore = {
   reportSection: {},
   analiseCarteira: {}
@@ -151,7 +146,6 @@ function renderKPIs() {
   const anoNum = Number(anoSel);
   const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
 
-  // 1. Faturamento Carteira
   let totalFat = 0;
   const sheetCliente = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
 
@@ -173,7 +167,6 @@ function renderKPIs() {
   const elValor = document.getElementById('kpiValorMensal');
   if (elValor) elValor.textContent = formatBRL(totalFat || 32766640.70);
 
-  // 2. % Budget Atingido
   const sheetBudget = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
   let avgBudget = 0;
 
@@ -194,7 +187,6 @@ function renderKPIs() {
   const elBudget = document.getElementById('kpiBudgetAtingido');
   if (elBudget) elBudget.textContent = `${avgBudget.toFixed(1)}%`;
 
-  // 3. Positivação Carteira (Aba oficial 'Ultima fatura')
   const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
   let positivados = 82;
   let totalCarteira = 271;
@@ -225,7 +217,6 @@ function renderKPIs() {
     }
   }
 
-  // 4. % Encomendas Gravadas
   const sheetGravados = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
   let pctVal = 44.72;
   const metaGravaçãoPct = 50.0;
@@ -256,7 +247,66 @@ function renderKPIs() {
 }
 
 // -----------------------------------------------------------------------------
-// GRÁFICOS COM OS RÓTULOS EXATOS NOS LOCAIS MARCADOS
+// PLUGIN NATIVO PARA DESENHAR OS RÓTULOS (NÚMEROS) DIRETAMENTE NO GRÁFICO
+// --------------------------------vales-------------------------------------
+
+const pluginValoresNativos = {
+  id: 'pluginValoresNativos',
+  afterDatasetsDraw(chart, args, options) {
+    const { ctx, chartArea: { top, bottom, left, right, width, height } } = chart;
+    
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (!meta.hidden) {
+        meta.data.forEach((element, index) => {
+          const value = dataset.data[index];
+          if (value === null || value === undefined || value === 0) return;
+
+          ctx.save();
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+
+          let text = '';
+          if (chart.config.type === 'doughnut') {
+            const sum = dataset.data.reduce((a, b) => a + b, 0);
+            const pct = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '';
+            text = `${value} (${pct})`;
+            const position = element.tooltipPosition();
+            ctx.fillText(text, position.x, position.y);
+          } else {
+            // Barras e Linhas
+            if (chart.options.scales && chart.options.scales.y && chart.options.scales.y.type === 'linear') {
+              if (String(dataset.label).includes('%') || value <= 100 && dataset.label.includes('Budget')) {
+                text = `${Number(value).toFixed(1)}%`;
+              } else if (value >= 1000) {
+                text = `R$ ${(value / 1000).toFixed(0)}k`;
+              } else {
+                text = `${value}`;
+              }
+            } else {
+              text = `${value}`;
+            }
+
+            const { x, y } = element.tooltipPosition ? element.tooltipPosition() : { x: element.x, y: element.y };
+            
+            // Desenha um fundo escuro elegante para o texto destacar
+            const textWidth = ctx.measureText(text).width;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(x - textWidth / 2 - 4, y - 16, textWidth + 8, 14);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, x, y - 6);
+          }
+          ctx.restore();
+        });
+      }
+    });
+  }
+};
+
+// -----------------------------------------------------------------------------
+// RENDERIZAÇÃO DOS GRÁFICOS
 // -----------------------------------------------------------------------------
 
 function renderChartHistorico() {
@@ -295,23 +345,11 @@ function renderChartHistorico() {
         { label: '2024', data: v2024, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 1, spanGaps: true }
       ]
     },
+    plugins: [pluginValoresNativos],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        datalabels: {
-          display: true,
-          align: 'top',
-          anchor: 'end',
-          color: '#ffffff',
-          font: { weight: 'bold', size: 9 },
-          backgroundColor: 'rgba(15, 23, 42, 0.75)',
-          borderRadius: 4,
-          padding: 3,
-          formatter: (val) => val ? `R$ ${(val / 1000).toFixed(0)}k` : ''
-        }
-      },
+      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
         y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
@@ -349,23 +387,11 @@ function renderChartBudget() {
         borderRadius: 4
       }]
     },
+    plugins: [pluginValoresNativos],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        datalabels: {
-          display: true,
-          align: 'end',
-          anchor: 'end',
-          color: '#ffffff',
-          font: { weight: 'bold', size: 10 },
-          backgroundColor: 'rgba(15, 23, 42, 0.75)',
-          borderRadius: 4,
-          padding: 3,
-          formatter: (val) => val > 0 ? `${val.toFixed(1)}%` : ''
-        }
-      },
+      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
         y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
@@ -402,25 +428,11 @@ function renderChartTipoEncomenda() {
         borderWidth: 0
       }]
     },
+    plugins: [pluginValoresNativos],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        datalabels: {
-          display: true,
-          color: '#ffffff',
-          font: { weight: 'bold', size: 11 },
-          backgroundColor: 'rgba(15, 23, 42, 0.85)',
-          borderRadius: 4,
-          padding: 4,
-          formatter: (value, ctx) => {
-            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-            const percentage = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '0%';
-            return `${value} (${percentage})`;
-          }
-        }
-      }
+      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } }
     }
   });
 }
@@ -445,23 +457,11 @@ function renderChartSegmentos() {
         borderRadius: 4
       }]
     },
+    plugins: [pluginValoresNativos],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        datalabels: {
-          display: true,
-          align: 'end',
-          anchor: 'end',
-          color: '#ffffff',
-          font: { weight: 'bold', size: 10 },
-          backgroundColor: 'rgba(15, 23, 42, 0.75)',
-          borderRadius: 4,
-          padding: 3,
-          formatter: (val) => val > 0 ? `R$ ${(val / 1000).toFixed(0)}k` : ''
-        }
-      },
+      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
         y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
@@ -490,23 +490,11 @@ function renderChartTopProdutos() {
         borderRadius: 4
       }]
     },
+    plugins: [pluginValoresNativos],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        datalabels: {
-          display: true,
-          align: 'end',
-          anchor: 'end',
-          color: '#ffffff',
-          font: { weight: 'bold', size: 10 },
-          backgroundColor: 'rgba(15, 23, 42, 0.75)',
-          borderRadius: 4,
-          padding: 3,
-          formatter: (val) => val > 0 ? `R$ ${(val / 1000).toFixed(0)}k` : ''
-        }
-      },
+      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
         y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
