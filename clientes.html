@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base de Clientes & SLAs - RCA 61</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <header class="main-header">
+      <div class="header-title">
+        <h1>Base de Clientes & SLAs - RCA 61</h1>
+        <p>Consulta unificada da carteira e prazos de entrega por cidade</p>
+      </div>
+
+      <div class="header-controls">
+        <a href="index.html" class="btn-upload" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Voltar ao Dashboard
+        </a>
+        <div class="status-badge active">
+          <span class="status-dot"></span>
+          <span>Módulo RCA 61 Ativo</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="upload-section">
+      <div class="upload-card" id="dropZoneCliente">
+        <i data-lucide="file-spreadsheet" class="upload-icon"></i>
+        <div class="upload-info">
+          <h3>Planilha de Carteira (RCA 61)</h3>
+          <p>Importe o arquivo Excel oficial para carregar os clientes e cidades</p>
+          <span class="file-label" id="labelFileCliente">Nenhum arquivo selecionado</span>
+        </div>
+        <input type="file" id="fileInputCliente" accept=".xlsx, .xls">
+        <label for="fileInputCliente" class="btn-upload">Carregar</label>
+      </div>
+    </section>
+
+    <section class="table-card" style="margin-top: 10px;">
+      <div class="card-header space-between">
+        <h3>Lista de Clientes, Cidades & Prazos de SLA</h3>
+        <input type="text" id="searchClientGlobal" placeholder="Pesquisar por cliente, cidade ou código..." class="table-search" style="width: 300px;">
+      </div>
+      <div class="table-wrapper" style="max-height: 550px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Cliente / Razão Social</th>
+              <th>Fantasia</th>
+              <th>Cidade / UF</th>
+              <th>SLA de Entrega</th>
+              <th style="text-align: center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbClientesSLA">
+            <tr>
+              <td colspan="6" class="empty-row">Carregue a planilha de carteira (RCA 61) acima para visualizar os dados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    const tabelaSLAPorCidade = {
+      "SÃO PAULO": "D+1 (1 Dia Útil)",
+      "SAO PAULO": "D+1 (1 Dia Útil)",
+      "GUARULHOS": "D+2 (2 Dias Úteis)",
+      "CAMPINAS": "D+2 (2 Dias Úteis)",
+      "SANTOS": "D+2 (2 Dias Úteis)",
+      "JUNDIAI": "D+2 (2 Dias Úteis)",
+      "JUNDIAÍ": "D+2 (2 Dias Úteis)",
+      "SOROCABA": "D+2 (2 Dias Úteis)",
+      "SÃO JOSÉ DOS CAMPOS": "D+2 (2 Dias Úteis)",
+      "SAO JOSE DOS CAMPOS": "D+2 (2 Dias Úteis)",
+      "RIBEIRAO PRETO": "D+3 (3 Dias Úteis)",
+      "RIBEIRÃO PRETO": "D+3 (3 Dias Úteis)",
+      "BAURU": "D+3 (3 Dias Úteis)",
+      "MARILIA": "D+3 (3 Dias Úteis)",
+      "MARÍLIA": "D+3 (3 Dias Úteis)",
+      "SAO CARLOS": "D+3 (3 Dias Úteis)",
+      "SÃO CARLOS": "D+3 (3 Dias Úteis)",
+      "PRESIDENTE PRUDENTE": "D+4 (4 Dias Úteis)",
+      "SUMARÉ": "D+2 (2 Dias Úteis)",
+      "SUMARE": "D+2 (2 Dias Úteis)",
+      "PAULÍNIA": "D+2 (2 Dias Úteis)",
+      "PAULINIA": "D+2 (2 Dias Úteis)",
+      "PIRACICABA": "D+3 (3 Dias Úteis)",
+      "LIMEIRA": "D+3 (3 Dias Úteis)",
+      "AMERICANA": "D+2 (2 Dias Úteis)"
+    };
+
+    let baseClientesGlobal = [];
+
+    document.getElementById('fileInputCliente').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          
+          let todosClientes = [];
+
+          workbook.SheetNames.forEach(sheetName => {
+            if (sheetName.toLowerCase().includes('61') || sheetName.toLowerCase().includes('marcos')) {
+              const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+              rows.forEach(r => todosClientes.push(r));
+            }
+          });
+
+          if (todosClientes.length === 0 && workbook.SheetNames.length > 0) {
+            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+            rows.forEach(r => todosClientes.push(r));
+          }
+
+          baseClientesGlobal = todosClientes;
+          document.getElementById('labelFileCliente').textContent = `✔ ${file.name} (${baseClientesGlobal.length} registros)`;
+          document.getElementById('dropZoneCliente').classList.add('loaded');
+          
+          renderizarTabelaClientes(baseClientesGlobal);
+        } catch (err) {
+          console.error("Erro ao ler planilha:", err);
+          alert("Erro ao processar o arquivo Excel.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function renderizarTabelaClientes(dados) {
+      const tbody = document.getElementById('tbClientesSLA');
+      tbody.innerHTML = '';
+
+      if (dados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Nenhum cliente encontrado para RCA 61.</td></tr>';
+        return;
+      }
+
+      dados.forEach((c) => {
+        const codigo = c['Código Cliente'] || c['COD. CLIENTE'] || c['Cod'] || '-';
+        const cliente = c['Cliente'] || c['CLIENTE'] || 'Cliente sem nome';
+        const fantasia = c['Fantasia'] || '-';
+        const cidade = String(c['Cidade'] || c['CIDADE'] || 'Não informada').toUpperCase().trim();
+        const uf = c['UF'] || 'SP';
+        
+        const sla = tabelaSLAPorCidade[cidade] || "D+3 (Padrão Regional)";
+
+        const tr = document.createElement('tr');
+        tr.className = 'clickable-row';
+        tr.innerHTML = `
+          <td>${codigo}</td>
+          <td><strong>${cliente}</strong></td>
+          <td>${fantasia}</td>
+          <td>${cidade} - ${uf}</td>
+          <td style="color: var(--accent-green); font-weight: 600;">${sla}</td>
+          <td style="text-align: center;">
+            <button class="btn-upload" style="padding: 4px 10px; font-size: 0.75rem; margin: 0 auto;" onclick='abrirModalCliente(${JSON.stringify(c).replace(/'/g, "&#39;")}, "${sla}")'>Ver Detalhes</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('searchClientGlobal').addEventListener('input', function(e) {
+      const termo = e.target.value.toLowerCase().trim();
+      const filtrados = baseClientesGlobal.filter(c => {
+        const nome = String(c['Cliente'] || c['CLIENTE'] || '').toLowerCase();
+        const cidade = String(c['Cidade'] || c['CIDADE'] || '').toLowerCase();
+        const cod = String(c['Código Cliente'] || c['COD. CLIENTE'] || '').toLowerCase();
+        return nome.includes(termo) || cidade.includes(termo) || cod.includes(termo);
+      });
+      renderizarTabelaClientes(filtrados);
+    });
+
+    function abrirModalCliente(c, sla) {
+      const cliente = c['Cliente'] || c['CLIENTE'] || 'Cliente';
+      const cnpj = c['CNPJ'] || 'Não informado';
+      const cidade = c['Cidade'] || c['CIDADE'] || '-';
+      const uf = c['UF'] || 'SP';
+      const totalVenda = Number(c['Valor Total Venda'] || c['VALOR'] || 0);
+      const qtdNotas = c['Qtd Notas'] || 1;
+      const ultimaVenda = c['Última Venda'] ? String(c['Última Venda']).split('T')[0] : '-';
+
+      let modalContainer = document.getElementById('customClientModal');
+      if (!modalContainer) {
+        modalContainer = document.createElement('div');
+        modalContainer.id = 'customClientModal';
+        modalContainer.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(11,15,25,0.8);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;';
+        document.body.appendChild(modalContainer);
+      }
+
+      modalContainer.innerHTML = `
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 90%; max-width: 480px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); font-family: sans-serif; color: #f8fafc;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 1.1rem; color: #6366f1; display: flex; align-items: center; gap: 8px;">🏢 Detalhes do Cliente (RCA 61)</h3>
+            <button onclick="fecharModalCliente()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem;">
+            <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #6366f1;">
+              <span style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; display: block;">Cliente</span>
+              <strong style="font-size: 1.05rem; color: #ffffff;">${cliente}</strong>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">CNPJ</span><strong style="color: #38bdf8; font-size: 0.85rem;">${cnpj}</strong></div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Cidade / UF</span><strong style="color: #e2e8f0;">${cidade} - ${uf}</strong></div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Faturamento Total</span><strong style="color: #10b981;">${totalVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></div>
+              <div style="background: #0f172a; padding: 10px; border-radius: 8px;"><span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Última Venda</span><strong style="color: #e2e8f0;">${ultimaVenda}</strong></div>
+            </div>
+            <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #10b981;">
+              <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">SLA Oficial da Cidade</span>
+              <strong style="color: #10b981; font-size: 1rem;">${sla}</strong>
+            </div>
+          </div>
+          <div style="margin-top: 20px; text-align: right;"><button onclick="fecharModalCliente()" style="background: #6366f1; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">Fechar</button></div>
+        </div>
+      `;
+      modalContainer.style.display = 'flex';
+    }
+
+    function fecharModalCliente() {
+      const modalContainer = document.getElementById('customClientModal');
+      if (modalContainer) modalContainer.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
