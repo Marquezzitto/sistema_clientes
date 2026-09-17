@@ -180,7 +180,7 @@ function renderKPIs() {
   if (sheetBudget.length > 0) {
     if (mesNum !== null) {
       const row = sheetBudget.find(r => Number(r['Mês'] || r['Mes']) === mesNum);
-      if (row) avgBudget = parsePct(row['% do Budget'] || r['Budget']);
+      if (row) avgBudget = parsePct(row['% do Budget'] || row['Budget']);
     } else {
       let sum = 0, count = 0;
       sheetBudget.forEach(r => {
@@ -256,7 +256,7 @@ function renderKPIs() {
 }
 
 // -----------------------------------------------------------------------------
-// GRÁFICOS COM RÓTULOS DE DADOS ATIVADOS CORRETAMENTE
+// GRÁFICOS COM OS RÓTULOS EXATOS NOS LOCAIS MARCADOS
 // -----------------------------------------------------------------------------
 
 function renderChartHistorico() {
@@ -306,6 +306,9 @@ function renderChartHistorico() {
           anchor: 'end',
           color: '#ffffff',
           font: { weight: 'bold', size: 9 },
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          borderRadius: 4,
+          padding: 3,
           formatter: (val) => val ? `R$ ${(val / 1000).toFixed(0)}k` : ''
         }
       },
@@ -357,6 +360,9 @@ function renderChartBudget() {
           anchor: 'end',
           color: '#ffffff',
           font: { weight: 'bold', size: 10 },
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          borderRadius: 4,
+          padding: 3,
           formatter: (val) => val > 0 ? `${val.toFixed(1)}%` : ''
         }
       },
@@ -404,11 +410,14 @@ function renderChartTipoEncomenda() {
         datalabels: {
           display: true,
           color: '#ffffff',
-          font: { weight: 'bold', size: 12 },
+          font: { weight: 'bold', size: 11 },
+          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+          borderRadius: 4,
+          padding: 4,
           formatter: (value, ctx) => {
             const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
             const percentage = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '0%';
-            return `${value}\n(${percentage})`;
+            return `${value} (${percentage})`;
           }
         }
       }
@@ -447,6 +456,9 @@ function renderChartSegmentos() {
           anchor: 'end',
           color: '#ffffff',
           font: { weight: 'bold', size: 10 },
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          borderRadius: 4,
+          padding: 3,
           formatter: (val) => val > 0 ? `R$ ${(val / 1000).toFixed(0)}k` : ''
         }
       },
@@ -489,6 +501,9 @@ function renderChartTopProdutos() {
           anchor: 'end',
           color: '#ffffff',
           font: { weight: 'bold', size: 10 },
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          borderRadius: 4,
+          padding: 3,
           formatter: (val) => val > 0 ? `R$ ${(val / 1000).toFixed(0)}k` : ''
         }
       },
