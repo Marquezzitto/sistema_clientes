@@ -31,9 +31,6 @@ const searchInput = document.getElementById('searchClientInput');
 if (fileInput1) fileInput1.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 1));
 if (fileInput2) fileInput2.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 2));
 
-// Guarda as planilhas já lidas na sessão do navegador (sessionStorage), para
-// não precisar carregar de novo ao ir para a Base de Clientes e voltar.
-// Some sozinho quando a guia/aba é fechada (sessionStorage é por aba).
 function salvarSessaoAtual() {
   try {
     sessionStorage.setItem('rca61_sessaoPlanilhas', JSON.stringify({
@@ -69,9 +66,6 @@ function restaurarSessaoAtual() {
       if (statusBadge) statusBadge.classList.add('active');
       if (badgeText) badgeText.textContent = "Dados Sincronizados";
       popularSelectClientes();
-      // Espera o navegador terminar de montar o layout da página antes de
-      // desenhar os gráficos — evita que eles fiquem em branco quando o
-      // restauro acontece muito cedo (canvas ainda sem tamanho definido).
       requestAnimationFrame(() => renderDashboard());
     }
     return temDados;
@@ -81,14 +75,8 @@ function restaurarSessaoAtual() {
   }
 }
 
-// Ao abrir/voltar para esta página, tenta restaurar os dados já carregados
-// nesta mesma aba antes de pedir upload de novo.
 restaurarSessaoAtual();
 
-// Alguns navegadores restauram a página do "cache de navegação" (bfcache) ao
-// clicar em voltar, sem executar o script de novo. Nesse caso os dados em
-// memória continuam certos, mas os gráficos (canvas) podem ficar em branco.
-// Isso força o redesenho sempre que isso acontecer.
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) {
     requestAnimationFrame(() => renderDashboard());
@@ -131,10 +119,6 @@ function readExcelFile(file, fileNum) {
   reader.readAsArrayBuffer(file);
 }
 
-// Salva um resumo (faturamento e inatividade por cliente) no localStorage
-// para que a página "Base de Clientes" (clientes.html) possa exibir essas
-// informações somente quando as planilhas já tiverem sido carregadas aqui.
-// Isso não altera nada na interface do index.html.
 function normalizarNome(str) {
   return String(str || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -184,7 +168,12 @@ function atualizarDadosVivosLocalStorage() {
 if (selectAno) selectAno.addEventListener('change', renderDashboard);
 if (selectMes) selectMes.addEventListener('change', renderDashboard);
 if (selectCliente) selectCliente.addEventListener('change', renderDashboard);
-if (searchInput) searchInput.addEventListener('input', renderVendasClienteTable);
+
+// ADIÇÃO: Ao digitar na busca, atualiza tanto as Vendas quanto a Inatividade simultaneamente
+if (searchInput) searchInput.addEventListener('input', () => {
+  renderVendasClienteTable();
+  renderInatividadeTable();
+});
 
 function popularSelectClientes() {
   if (!selectCliente) return;
@@ -219,15 +208,13 @@ function getSheet(dataObj, keywords) {
   return [];
 }
 
-// Conta quantos dias úteis (seg a sex, sem considerar feriados) faltam para
-// acabar o mês atual, contando o dia de hoje se ainda for dia útil.
 function diasUteisRestantesNoMes(dataRef = new Date()) {
   const ano = dataRef.getFullYear();
   const mes = dataRef.getMonth();
   const ultimoDia = new Date(ano, mes + 1, 0).getDate();
   let count = 0;
   for (let dia = dataRef.getDate(); dia <= ultimoDia; dia++) {
-    const diaSemana = new Date(ano, mes, dia).getDay(); // 0 = domingo, 6 = sábado
+    const diaSemana = new Date(ano, mes, dia).getDay(); 
     if (diaSemana !== 0 && diaSemana !== 6) count++;
   }
   return count;
@@ -319,7 +306,7 @@ function renderKPIs() {
   const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
   let positivados = 82;
   let totalCarteira = 271;
-  let metaQtdPlanilha = null; // Meta em quantidade de clientes, vinda direto da planilha
+  let metaQtdPlanilha = null;
 
   if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
     const row = sheetUltimaFatura[0];
@@ -331,8 +318,6 @@ function renderKPIs() {
     if (valMeta > 0) metaQtdPlanilha = valMeta;
   }
 
-  // Se a planilha já traz a Meta (coluna "Meta"), usa ela. Senão, cai no
-  // padrão antigo de 60% da carteira, para não quebrar planilhas mais antigas.
   const metaQtd = metaQtdPlanilha !== null ? metaQtdPlanilha : Math.round(totalCarteira * 0.60);
   const metaPct = totalCarteira > 0 ? (metaQtd / totalCarteira) * 100 : 60;
   const realPct = (positivados / totalCarteira) * 100;
@@ -342,8 +327,6 @@ function renderKPIs() {
   const elPos = document.getElementById('kpiPositivacao');
   const elPosSub = document.getElementById('kpiPositivacaoSub');
 
-  // Alerta "corra atrás": liga na reta final do mês — quando restam 10 dias
-  // úteis ou menos para acabar e a meta ainda não foi batida.
   const diasUteisRestantes = diasUteisRestantesNoMes();
   const abaixoDaMeta = faltaQtd > 0;
   const alertaPositivacao = abaixoDaMeta && diasUteisRestantes <= 10;
@@ -361,7 +344,6 @@ function renderKPIs() {
     }
   }
 
-  // Destaca todo o card de Positivação em vermelho quando o alerta está ativo.
   const kpiCardPositivacao = elPosSub ? elPosSub.closest('.kpi-card') : null;
   if (kpiCardPositivacao) {
     if (alertaPositivacao) {
@@ -375,7 +357,9 @@ function renderKPIs() {
 
   const sheetGravados = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
   let pctVal = 44.72;
-  const metaGravaçãoPct = 50.0;
+  
+  // ADIÇÃO: Meta de gravação fixada em 60%
+  const metaGravaçãoPct = 60.0;
 
   if (sheetGravados.length > 0) {
     let row = null;
@@ -402,7 +386,6 @@ function renderKPIs() {
   }
 }
 
-// Plugin nativo para desenhar os rótulos (números) diretamente nos gráficos
 const pluginValoresNativos = {
   id: 'pluginValoresNativos',
   afterDatasetsDraw(chart, args, options) {
@@ -462,6 +445,7 @@ function renderChartHistorico() {
 
   const sheet = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   
   let v2024 = new Array(12).fill(null);
   let v2025 = new Array(12).fill(null);
@@ -469,6 +453,12 @@ function renderChartHistorico() {
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
+      // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
+      if (clienteSel !== 'ALL') {
+        const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
+        if (!nome || nome !== clienteSel) return;
+      }
+
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       const anoRow = Number(r['Ano']);
       const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
@@ -511,10 +501,17 @@ function renderChartBudget() {
 
   const sheet = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
   const labels = mesesArray();
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   let dataVals = new Array(12).fill(0);
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
+      // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
+      if (clienteSel !== 'ALL') {
+        const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
+        if (!nome || nome !== clienteSel) return;
+      }
+
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       if (idx >= 0 && idx < 12) {
         dataVals[idx] = parsePct(r['% do Budget'] || r['Budget']);
@@ -552,23 +549,37 @@ function renderChartTipoEncomenda() {
   if (!ctx) return;
 
   const sheet = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   
-  let gravado = 89;
-  let normal = 110;
+  let gravado = 35.16; // Valores de fallback base que o usuário pontuou
+  let normal = 64.84;
 
   if (sheet.length > 0) {
-    const rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
-    const rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
+    let rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
+    let rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
 
-    if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] || rowG['% gravação']);
-    if (rowN) normal = parseCurrency(rowN['Sum of Valor'] || rowN['% gravação']);
+    // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
+    if (clienteSel !== 'ALL') {
+      const cRowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado') && String(r['Cliente_Pai'] || r['Cliente']).trim() === clienteSel);
+      const cRowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal') && String(r['Cliente_Pai'] || r['Cliente']).trim() === clienteSel);
+      if (cRowG || cRowN) {
+        rowG = cRowG;
+        rowN = cRowN;
+      } else {
+        rowG = null; rowN = null; gravado = 0; normal = 0;
+      }
+    }
+
+    if (rowG) gravado = parsePct(rowG['Sum of Valor'] || rowG['% gravação'] || rowG['Gravado']);
+    if (rowN) normal = parsePct(rowN['Sum of Valor'] || rowN['% gravação'] || rowN['Normal']);
   }
 
   destroyChart('chartTipoEncomenda');
   charts['chartTipoEncomenda'] = new Chart(ctx.getContext('2d'), {
     type: 'doughnut',
     data: {
-      labels: ['Gravado', 'Normal'],
+      // ADIÇÃO: Mostra na legenda a meta sempre fixada em 60%
+      labels: ['Gravado (Meta: 60%)', 'Normal'],
       datasets: [{
         data: [gravado, normal],
         backgroundColor: ['#10b981', '#ef4444'],
@@ -589,8 +600,19 @@ function renderChartSegmentos() {
   if (!ctx) return;
 
   const sheet = getSheet(dataStore.reportSection, ['Venda mensal em reais da', 'Separador Segmento', 'Segmento']);
-  const labels = sheet.map(r => r['Separador'] || r['Segmento'] || 'Outros').slice(0, 6);
-  const dataVals = sheet.map(r => parseCurrency(r['After_Tax_Amount'] || r['Valor'])).slice(0, 6);
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  
+  let filteredSheet = sheet;
+  // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
+  if (clienteSel !== 'ALL') {
+    filteredSheet = sheet.filter(r => {
+      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
+      return nome === clienteSel;
+    });
+  }
+
+  const labels = filteredSheet.map(r => r['Separador'] || r['Segmento'] || 'Outros').slice(0, 6);
+  const dataVals = filteredSheet.map(r => parseCurrency(r['After_Tax_Amount'] || r['Valor'])).slice(0, 6);
 
   destroyChart('chartSegmentos');
   charts['chartSegmentos'] = new Chart(ctx.getContext('2d'), {
@@ -622,8 +644,19 @@ function renderChartTopProdutos() {
   if (!ctx) return;
 
   const sheet = getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']).slice(0, 5);
-  const labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
-  const dataVals = sheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']));
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  
+  let filteredSheet = sheet;
+  // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
+  if (clienteSel !== 'ALL') {
+    filteredSheet = sheet.filter(r => {
+      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
+      return nome === clienteSel;
+    });
+  }
+
+  const labels = filteredSheet.map(r => String(r['Produto'] || r['Cod'] || '')).slice(0, 5);
+  const dataVals = filteredSheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)'])).slice(0, 5);
 
   destroyChart('chartTopProdutos');
   charts['chartTopProdutos'] = new Chart(ctx.getContext('2d'), {
@@ -704,11 +737,17 @@ function renderInatividadeTable() {
 
   const sheet = getSheet(dataStore.analiseCarteira, ['#Dias até primeira fatura', 'Clientes com ultima fatura', 'Ultima Fatura']);
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  
+  // ADIÇÃO: Puxa o input do campo de busca de vendas para filtrar aqui também
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  
   tbody.innerHTML = '';
 
   const filtered = sheet.filter(r => {
     const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    return clienteSel === 'ALL' || nome === clienteSel;
+    const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
+    const matchBusca = nome.toLowerCase().includes(query); // Adicionado filtro de busca
+    return matchFiltroTopo && matchBusca;
   });
 
   if (filtered.length === 0) {
@@ -860,9 +899,6 @@ function destroyChart(chartId) {
     charts[chartId].destroy();
     charts[chartId] = null;
   }
-  // Segurança extra: se por algum motivo sobrou um gráfico "grudado" nesse
-  // canvas (ex: página restaurada pelo navegador), remove antes de desenhar
-  // um novo, senão o Chart.js recusa e o gráfico fica em branco.
   const canvas = document.getElementById(chartId);
   if (canvas && typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
     const existente = Chart.getChart(canvas);
