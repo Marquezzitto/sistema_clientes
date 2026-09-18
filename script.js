@@ -169,7 +169,6 @@ if (selectAno) selectAno.addEventListener('change', renderDashboard);
 if (selectMes) selectMes.addEventListener('change', renderDashboard);
 if (selectCliente) selectCliente.addEventListener('change', renderDashboard);
 
-// ADIÇÃO: Ao digitar na busca, atualiza tanto as Vendas quanto a Inatividade simultaneamente
 if (searchInput) searchInput.addEventListener('input', () => {
   renderVendasClienteTable();
   renderInatividadeTable();
@@ -268,7 +267,7 @@ function renderKPIs() {
   if (clienteSel !== 'ALL') {
     sheetCliente.forEach(r => {
       const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-      if (nome === clienteSel) {
+      if (nome.toUpperCase() === clienteSel.toUpperCase()) {
         totalFat += parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
       }
     });
@@ -357,8 +356,6 @@ function renderKPIs() {
 
   const sheetGravados = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
   let pctVal = 44.72;
-  
-  // ADIÇÃO: Meta de gravação fixada em 60%
   const metaGravaçãoPct = 60.0;
 
   if (sheetGravados.length > 0) {
@@ -390,7 +387,6 @@ const pluginValoresNativos = {
   id: 'pluginValoresNativos',
   afterDatasetsDraw(chart, args, options) {
     const { ctx } = chart;
-    
     chart.data.datasets.forEach((dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);
       if (!meta.hidden) {
@@ -453,20 +449,35 @@ function renderChartHistorico() {
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
-      // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
+      // Filtra pelo cliente (ignora maiúsculas/minúsculas)
       if (clienteSel !== 'ALL') {
-        const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-        if (!nome || nome !== clienteSel) return;
+        const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim().toUpperCase();
+        if (!nome || nome !== clienteSel.toUpperCase()) return;
       }
 
       const idx = Number(r['Mês'] || r['Mes']) - 1;
-      const anoRow = Number(r['Ano']);
-      const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-      
-      if (idx >= 0 && idx < 12 && val > 0) {
-        if (anoRow === 2024) v2024[idx] = val;
-        if (anoRow === 2025) v2025[idx] = val;
-        if (anoRow === 2026) v2026[idx] = val;
+      if (idx >= 0 && idx < 12) {
+        
+        // CORREÇÃO AQUI: Em vez de substituir (=), ele soma (+=) caso o cliente tenha mais de um registro no mesmo mês.
+        // E também valida o formato da planilha (se colunas são os anos, ou se tem uma coluna 'Ano')
+        if (r['2026'] !== undefined || r['2025'] !== undefined || r['2026 (R$)'] !== undefined) {
+          const val24 = parseCurrency(r['2024'] || r['2024 (R$)']);
+          const val25 = parseCurrency(r['2025'] || r['2025 (R$)']);
+          const val26 = parseCurrency(r['2026'] || r['2026 (R$)']);
+          
+          if (val24 > 0) v2024[idx] = (v2024[idx] || 0) + val24;
+          if (val25 > 0) v2025[idx] = (v2025[idx] || 0) + val25;
+          if (val26 > 0) v2026[idx] = (v2026[idx] || 0) + val26;
+        } else {
+          const anoRow = Number(r['Ano']);
+          const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
+          
+          if (val > 0) {
+            if (anoRow === 2024) v2024[idx] = (v2024[idx] || 0) + val;
+            if (anoRow === 2025) v2025[idx] = (v2025[idx] || 0) + val;
+            if (anoRow === 2026) v2026[idx] = (v2026[idx] || 0) + val;
+          }
+        }
       }
     });
   }
@@ -506,15 +517,15 @@ function renderChartBudget() {
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
-      // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
       if (clienteSel !== 'ALL') {
-        const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-        if (!nome || nome !== clienteSel) return;
+        const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim().toUpperCase();
+        if (!nome || nome !== clienteSel.toUpperCase()) return;
       }
 
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       if (idx >= 0 && idx < 12) {
-        dataVals[idx] = parsePct(r['% do Budget'] || r['Budget']);
+        const val = parsePct(r['% do Budget'] || r['Budget']);
+        if (val > 0) dataVals[idx] = val; // Consideramos o último Budget lançado ou o único
       }
     });
   }
@@ -551,17 +562,16 @@ function renderChartTipoEncomenda() {
   const sheet = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   
-  let gravado = 35.16; // Valores de fallback base que o usuário pontuou
+  let gravado = 35.16; 
   let normal = 64.84;
 
   if (sheet.length > 0) {
     let rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
     let rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
 
-    // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
     if (clienteSel !== 'ALL') {
-      const cRowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado') && String(r['Cliente_Pai'] || r['Cliente']).trim() === clienteSel);
-      const cRowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal') && String(r['Cliente_Pai'] || r['Cliente']).trim() === clienteSel);
+      const cRowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado') && String(r['Cliente_Pai'] || r['Cliente']).trim().toUpperCase() === clienteSel.toUpperCase());
+      const cRowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal') && String(r['Cliente_Pai'] || r['Cliente']).trim().toUpperCase() === clienteSel.toUpperCase());
       if (cRowG || cRowN) {
         rowG = cRowG;
         rowN = cRowN;
@@ -578,7 +588,6 @@ function renderChartTipoEncomenda() {
   charts['chartTipoEncomenda'] = new Chart(ctx.getContext('2d'), {
     type: 'doughnut',
     data: {
-      // ADIÇÃO: Mostra na legenda a meta sempre fixada em 60%
       labels: ['Gravado (Meta: 60%)', 'Normal'],
       datasets: [{
         data: [gravado, normal],
@@ -603,16 +612,26 @@ function renderChartSegmentos() {
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   
   let filteredSheet = sheet;
-  // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
   if (clienteSel !== 'ALL') {
     filteredSheet = sheet.filter(r => {
-      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-      return nome === clienteSel;
+      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim().toUpperCase();
+      return nome === clienteSel.toUpperCase();
     });
   }
 
-  const labels = filteredSheet.map(r => r['Separador'] || r['Segmento'] || 'Outros').slice(0, 6);
-  const dataVals = filteredSheet.map(r => parseCurrency(r['After_Tax_Amount'] || r['Valor'])).slice(0, 6);
+  // CORREÇÃO: Agrupa e soma os valores caso haja mais de um registro do mesmo segmento
+  let grupos = {};
+  filteredSheet.forEach(r => {
+    const seg = String(r['Separador'] || r['Segmento'] || 'Outros').trim();
+    const val = parseCurrency(r['After_Tax_Amount'] || r['Valor'] || r['Vendas (R$)']);
+    if (val > 0) {
+      grupos[seg] = (grupos[seg] || 0) + val;
+    }
+  });
+
+  const sorted = Object.entries(grupos).sort((a,b) => b[1] - a[1]).slice(0, 6);
+  const labels = sorted.map(x => x[0]);
+  const dataVals = sorted.map(x => x[1]);
 
   destroyChart('chartSegmentos');
   charts['chartSegmentos'] = new Chart(ctx.getContext('2d'), {
@@ -643,20 +662,30 @@ function renderChartTopProdutos() {
   const ctx = document.getElementById('chartTopProdutos');
   if (!ctx) return;
 
-  const sheet = getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']).slice(0, 5);
+  const sheet = getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']);
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   
   let filteredSheet = sheet;
-  // ADIÇÃO: Filtra os dados da linha pelo cliente selecionado (zera o que não tem)
   if (clienteSel !== 'ALL') {
     filteredSheet = sheet.filter(r => {
-      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-      return nome === clienteSel;
+      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim().toUpperCase();
+      return nome === clienteSel.toUpperCase();
     });
   }
 
-  const labels = filteredSheet.map(r => String(r['Produto'] || r['Cod'] || '')).slice(0, 5);
-  const dataVals = filteredSheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)'])).slice(0, 5);
+  // CORREÇÃO: Agrupa e soma os valores caso haja mais de um registro do mesmo produto
+  let grupos = {};
+  filteredSheet.forEach(r => {
+    const prod = String(r['Produto'] || r['Cod'] || 'Desconhecido').trim();
+    const val = parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)'] || r['Valor']);
+    if (val > 0) {
+      grupos[prod] = (grupos[prod] || 0) + val;
+    }
+  });
+
+  const sorted = Object.entries(grupos).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  const labels = sorted.map(x => x[0]);
+  const dataVals = sorted.map(x => x[1]);
 
   destroyChart('chartTopProdutos');
   charts['chartTopProdutos'] = new Chart(ctx.getContext('2d'), {
@@ -695,7 +724,7 @@ function renderVendasClienteTable() {
   const filtered = sheet.filter(r => {
     const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
     const matchBusca = nome.toLowerCase().includes(query);
-    const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
+    const matchFiltroTopo = clienteSel === 'ALL' || nome.toUpperCase() === clienteSel.toUpperCase();
     return matchBusca && matchFiltroTopo;
   });
 
@@ -737,16 +766,14 @@ function renderInatividadeTable() {
 
   const sheet = getSheet(dataStore.analiseCarteira, ['#Dias até primeira fatura', 'Clientes com ultima fatura', 'Ultima Fatura']);
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  
-  // ADIÇÃO: Puxa o input do campo de busca de vendas para filtrar aqui também
   const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
   
   tbody.innerHTML = '';
 
   const filtered = sheet.filter(r => {
     const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
-    const matchBusca = nome.toLowerCase().includes(query); // Adicionado filtro de busca
+    const matchFiltroTopo = clienteSel === 'ALL' || nome.toUpperCase() === clienteSel.toUpperCase();
+    const matchBusca = nome.toLowerCase().includes(query);
     return matchFiltroTopo && matchBusca;
   });
 
