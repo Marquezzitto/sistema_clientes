@@ -342,11 +342,11 @@ function renderKPIs() {
   const elPos = document.getElementById('kpiPositivacao');
   const elPosSub = document.getElementById('kpiPositivacaoSub');
 
-  // Alerta "corra atrás": só liga quando ainda faltam pelo menos 10 dias
-  // úteis para o mês acabar e a meta ainda não foi batida.
+  // Alerta "corra atrás": liga na reta final do mês — quando restam 10 dias
+  // úteis ou menos para acabar e a meta ainda não foi batida.
   const diasUteisRestantes = diasUteisRestantesNoMes();
   const abaixoDaMeta = faltaQtd > 0;
-  const alertaPositivacao = abaixoDaMeta && diasUteisRestantes >= 10;
+  const alertaPositivacao = abaixoDaMeta && diasUteisRestantes <= 10;
 
   if (elPos) {
     elPos.textContent = `${positivados} / ${totalCarteira}`;
