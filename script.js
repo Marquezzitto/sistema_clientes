@@ -31,6 +31,9 @@ const searchInput = document.getElementById('searchClientInput');
 if (fileInput1) fileInput1.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 1));
 if (fileInput2) fileInput2.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 2));
 
+// Guarda as planilhas já lidas na sessão do navegador (sessionStorage), para
+// não precisar carregar de novo ao ir para a Base de Clientes e voltar.
+// Some sozinho quando a guia/aba é fechada (sessionStorage é por aba).
 function salvarSessaoAtual() {
   try {
     sessionStorage.setItem('rca61_sessaoPlanilhas', JSON.stringify({
@@ -66,6 +69,9 @@ function restaurarSessaoAtual() {
       if (statusBadge) statusBadge.classList.add('active');
       if (badgeText) badgeText.textContent = "Dados Sincronizados";
       popularSelectClientes();
+      // Espera o navegador terminar de montar o layout da página antes de
+      // desenhar os gráficos — evita que eles fiquem em branco quando o
+      // restauro acontece muito cedo (canvas ainda sem tamanho definido).
       requestAnimationFrame(() => renderDashboard());
     }
     return temDados;
@@ -75,8 +81,14 @@ function restaurarSessaoAtual() {
   }
 }
 
+// Ao abrir/voltar para esta página, tenta restaurar os dados já carregados
+// nesta mesma aba antes de pedir upload de novo.
 restaurarSessaoAtual();
 
+// Alguns navegadores restauram a página do "cache de navegação" (bfcache) ao
+// clicar em voltar, sem executar o script de novo. Nesse caso os dados em
+// memória continuam certos, mas os gráficos (canvas) podem ficar em branco.
+// Isso força o redesenho sempre que isso acontecer.
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) {
     requestAnimationFrame(() => renderDashboard());
@@ -119,6 +131,10 @@ function readExcelFile(file, fileNum) {
   reader.readAsArrayBuffer(file);
 }
 
+// Salva um resumo (faturamento e inatividade por cliente) no localStorage
+// para que a página "Base de Clientes" (clientes.html) possa exibir essas
+// informações somente quando as planilhas já tiverem sido carregadas aqui.
+// Isso não altera nada na interface do index.html.
 function normalizarNome(str) {
   return String(str || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -168,11 +184,7 @@ function atualizarDadosVivosLocalStorage() {
 if (selectAno) selectAno.addEventListener('change', renderDashboard);
 if (selectMes) selectMes.addEventListener('change', renderDashboard);
 if (selectCliente) selectCliente.addEventListener('change', renderDashboard);
-
-if (searchInput) searchInput.addEventListener('input', () => {
-  renderVendasClienteTable();
-  renderInatividadeTable();
-});
+if (searchInput) searchInput.addEventListener('input', renderVendasClienteTable);
 
 function popularSelectClientes() {
   if (!selectCliente) return;
@@ -207,13 +219,15 @@ function getSheet(dataObj, keywords) {
   return [];
 }
 
+// Conta quantos dias úteis (seg a sex, sem considerar feriados) faltam para
+// acabar o mês atual, contando o dia de hoje se ainda for dia útil.
 function diasUteisRestantesNoMes(dataRef = new Date()) {
   const ano = dataRef.getFullYear();
   const mes = dataRef.getMonth();
   const ultimoDia = new Date(ano, mes + 1, 0).getDate();
   let count = 0;
   for (let dia = dataRef.getDate(); dia <= ultimoDia; dia++) {
-    const diaSemana = new Date(ano, mes, dia).getDay(); 
+    const diaSemana = new Date(ano, mes, dia).getDay(); // 0 = domingo, 6 = sábado
     if (diaSemana !== 0 && diaSemana !== 6) count++;
   }
   return count;
@@ -267,7 +281,7 @@ function renderKPIs() {
   if (clienteSel !== 'ALL') {
     sheetCliente.forEach(r => {
       const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-      if (nome.toUpperCase() === clienteSel.toUpperCase()) {
+      if (nome === clienteSel) {
         totalFat += parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
       }
     });
@@ -305,7 +319,7 @@ function renderKPIs() {
   const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
   let positivados = 82;
   let totalCarteira = 271;
-  let metaQtdPlanilha = null;
+  let metaQtdPlanilha = null; // Meta em quantidade de clientes, vinda direto da planilha
 
   if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
     const row = sheetUltimaFatura[0];
@@ -317,6 +331,8 @@ function renderKPIs() {
     if (valMeta > 0) metaQtdPlanilha = valMeta;
   }
 
+  // Se a planilha já traz a Meta (coluna "Meta"), usa ela. Senão, cai no
+  // padrão antigo de 60% da carteira, para não quebrar planilhas mais antigas.
   const metaQtd = metaQtdPlanilha !== null ? metaQtdPlanilha : Math.round(totalCarteira * 0.60);
   const metaPct = totalCarteira > 0 ? (metaQtd / totalCarteira) * 100 : 60;
   const realPct = (positivados / totalCarteira) * 100;
@@ -326,6 +342,8 @@ function renderKPIs() {
   const elPos = document.getElementById('kpiPositivacao');
   const elPosSub = document.getElementById('kpiPositivacaoSub');
 
+  // Alerta "corra atrás": liga na reta final do mês — quando restam 10 dias
+  // úteis ou menos para acabar e a meta ainda não foi batida.
   const diasUteisRestantes = diasUteisRestantesNoMes();
   const abaixoDaMeta = faltaQtd > 0;
   const alertaPositivacao = abaixoDaMeta && diasUteisRestantes <= 10;
@@ -343,6 +361,7 @@ function renderKPIs() {
     }
   }
 
+  // Destaca todo o card de Positivação em vermelho quando o alerta está ativo.
   const kpiCardPositivacao = elPosSub ? elPosSub.closest('.kpi-card') : null;
   if (kpiCardPositivacao) {
     if (alertaPositivacao) {
@@ -356,7 +375,7 @@ function renderKPIs() {
 
   const sheetGravados = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
   let pctVal = 44.72;
-  const metaGravaçãoPct = 60.0;
+  const metaGravaçãoPct = 50.0;
 
   if (sheetGravados.length > 0) {
     let row = null;
@@ -383,10 +402,12 @@ function renderKPIs() {
   }
 }
 
+// Plugin nativo para desenhar os rótulos (números) diretamente nos gráficos
 const pluginValoresNativos = {
   id: 'pluginValoresNativos',
   afterDatasetsDraw(chart, args, options) {
     const { ctx } = chart;
+    
     chart.data.datasets.forEach((dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);
       if (!meta.hidden) {
@@ -441,7 +462,6 @@ function renderChartHistorico() {
 
   const sheet = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   
   let v2024 = new Array(12).fill(null);
   let v2025 = new Array(12).fill(null);
@@ -449,35 +469,14 @@ function renderChartHistorico() {
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
-      // Filtra pelo cliente (ignora maiúsculas/minúsculas)
-      if (clienteSel !== 'ALL') {
-        const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim().toUpperCase();
-        if (!nome || nome !== clienteSel.toUpperCase()) return;
-      }
-
       const idx = Number(r['Mês'] || r['Mes']) - 1;
-      if (idx >= 0 && idx < 12) {
-        
-        // CORREÇÃO AQUI: Em vez de substituir (=), ele soma (+=) caso o cliente tenha mais de um registro no mesmo mês.
-        // E também valida o formato da planilha (se colunas são os anos, ou se tem uma coluna 'Ano')
-        if (r['2026'] !== undefined || r['2025'] !== undefined || r['2026 (R$)'] !== undefined) {
-          const val24 = parseCurrency(r['2024'] || r['2024 (R$)']);
-          const val25 = parseCurrency(r['2025'] || r['2025 (R$)']);
-          const val26 = parseCurrency(r['2026'] || r['2026 (R$)']);
-          
-          if (val24 > 0) v2024[idx] = (v2024[idx] || 0) + val24;
-          if (val25 > 0) v2025[idx] = (v2025[idx] || 0) + val25;
-          if (val26 > 0) v2026[idx] = (v2026[idx] || 0) + val26;
-        } else {
-          const anoRow = Number(r['Ano']);
-          const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-          
-          if (val > 0) {
-            if (anoRow === 2024) v2024[idx] = (v2024[idx] || 0) + val;
-            if (anoRow === 2025) v2025[idx] = (v2025[idx] || 0) + val;
-            if (anoRow === 2026) v2026[idx] = (v2026[idx] || 0) + val;
-          }
-        }
+      const anoRow = Number(r['Ano']);
+      const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
+      
+      if (idx >= 0 && idx < 12 && val > 0) {
+        if (anoRow === 2024) v2024[idx] = val;
+        if (anoRow === 2025) v2025[idx] = val;
+        if (anoRow === 2026) v2026[idx] = val;
       }
     });
   }
@@ -512,20 +511,13 @@ function renderChartBudget() {
 
   const sheet = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
   const labels = mesesArray();
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   let dataVals = new Array(12).fill(0);
 
   if (sheet.length > 0) {
     sheet.forEach(r => {
-      if (clienteSel !== 'ALL') {
-        const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim().toUpperCase();
-        if (!nome || nome !== clienteSel.toUpperCase()) return;
-      }
-
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       if (idx >= 0 && idx < 12) {
-        const val = parsePct(r['% do Budget'] || r['Budget']);
-        if (val > 0) dataVals[idx] = val; // Consideramos o último Budget lançado ou o único
+        dataVals[idx] = parsePct(r['% do Budget'] || r['Budget']);
       }
     });
   }
@@ -560,35 +552,23 @@ function renderChartTipoEncomenda() {
   if (!ctx) return;
 
   const sheet = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   
-  let gravado = 35.16; 
-  let normal = 64.84;
+  let gravado = 89;
+  let normal = 110;
 
   if (sheet.length > 0) {
-    let rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
-    let rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
+    const rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
+    const rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
 
-    if (clienteSel !== 'ALL') {
-      const cRowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado') && String(r['Cliente_Pai'] || r['Cliente']).trim().toUpperCase() === clienteSel.toUpperCase());
-      const cRowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal') && String(r['Cliente_Pai'] || r['Cliente']).trim().toUpperCase() === clienteSel.toUpperCase());
-      if (cRowG || cRowN) {
-        rowG = cRowG;
-        rowN = cRowN;
-      } else {
-        rowG = null; rowN = null; gravado = 0; normal = 0;
-      }
-    }
-
-    if (rowG) gravado = parsePct(rowG['Sum of Valor'] || rowG['% gravação'] || rowG['Gravado']);
-    if (rowN) normal = parsePct(rowN['Sum of Valor'] || rowN['% gravação'] || rowN['Normal']);
+    if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] || rowG['% gravação']);
+    if (rowN) normal = parseCurrency(rowN['Sum of Valor'] || rowN['% gravação']);
   }
 
   destroyChart('chartTipoEncomenda');
   charts['chartTipoEncomenda'] = new Chart(ctx.getContext('2d'), {
     type: 'doughnut',
     data: {
-      labels: ['Gravado (Meta: 60%)', 'Normal'],
+      labels: ['Gravado', 'Normal'],
       datasets: [{
         data: [gravado, normal],
         backgroundColor: ['#10b981', '#ef4444'],
@@ -609,29 +589,8 @@ function renderChartSegmentos() {
   if (!ctx) return;
 
   const sheet = getSheet(dataStore.reportSection, ['Venda mensal em reais da', 'Separador Segmento', 'Segmento']);
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  
-  let filteredSheet = sheet;
-  if (clienteSel !== 'ALL') {
-    filteredSheet = sheet.filter(r => {
-      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim().toUpperCase();
-      return nome === clienteSel.toUpperCase();
-    });
-  }
-
-  // CORREÇÃO: Agrupa e soma os valores caso haja mais de um registro do mesmo segmento
-  let grupos = {};
-  filteredSheet.forEach(r => {
-    const seg = String(r['Separador'] || r['Segmento'] || 'Outros').trim();
-    const val = parseCurrency(r['After_Tax_Amount'] || r['Valor'] || r['Vendas (R$)']);
-    if (val > 0) {
-      grupos[seg] = (grupos[seg] || 0) + val;
-    }
-  });
-
-  const sorted = Object.entries(grupos).sort((a,b) => b[1] - a[1]).slice(0, 6);
-  const labels = sorted.map(x => x[0]);
-  const dataVals = sorted.map(x => x[1]);
+  const labels = sheet.map(r => r['Separador'] || r['Segmento'] || 'Outros').slice(0, 6);
+  const dataVals = sheet.map(r => parseCurrency(r['After_Tax_Amount'] || r['Valor'])).slice(0, 6);
 
   destroyChart('chartSegmentos');
   charts['chartSegmentos'] = new Chart(ctx.getContext('2d'), {
@@ -662,30 +621,9 @@ function renderChartTopProdutos() {
   const ctx = document.getElementById('chartTopProdutos');
   if (!ctx) return;
 
-  const sheet = getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']);
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  
-  let filteredSheet = sheet;
-  if (clienteSel !== 'ALL') {
-    filteredSheet = sheet.filter(r => {
-      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim().toUpperCase();
-      return nome === clienteSel.toUpperCase();
-    });
-  }
-
-  // CORREÇÃO: Agrupa e soma os valores caso haja mais de um registro do mesmo produto
-  let grupos = {};
-  filteredSheet.forEach(r => {
-    const prod = String(r['Produto'] || r['Cod'] || 'Desconhecido').trim();
-    const val = parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)'] || r['Valor']);
-    if (val > 0) {
-      grupos[prod] = (grupos[prod] || 0) + val;
-    }
-  });
-
-  const sorted = Object.entries(grupos).sort((a,b) => b[1] - a[1]).slice(0, 5);
-  const labels = sorted.map(x => x[0]);
-  const dataVals = sorted.map(x => x[1]);
+  const sheet = getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']).slice(0, 5);
+  const labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
+  const dataVals = sheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']));
 
   destroyChart('chartTopProdutos');
   charts['chartTopProdutos'] = new Chart(ctx.getContext('2d'), {
@@ -724,7 +662,7 @@ function renderVendasClienteTable() {
   const filtered = sheet.filter(r => {
     const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
     const matchBusca = nome.toLowerCase().includes(query);
-    const matchFiltroTopo = clienteSel === 'ALL' || nome.toUpperCase() === clienteSel.toUpperCase();
+    const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
     return matchBusca && matchFiltroTopo;
   });
 
@@ -766,15 +704,11 @@ function renderInatividadeTable() {
 
   const sheet = getSheet(dataStore.analiseCarteira, ['#Dias até primeira fatura', 'Clientes com ultima fatura', 'Ultima Fatura']);
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  
   tbody.innerHTML = '';
 
   const filtered = sheet.filter(r => {
     const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    const matchFiltroTopo = clienteSel === 'ALL' || nome.toUpperCase() === clienteSel.toUpperCase();
-    const matchBusca = nome.toLowerCase().includes(query);
-    return matchFiltroTopo && matchBusca;
+    return clienteSel === 'ALL' || nome === clienteSel;
   });
 
   if (filtered.length === 0) {
@@ -926,6 +860,9 @@ function destroyChart(chartId) {
     charts[chartId].destroy();
     charts[chartId] = null;
   }
+  // Segurança extra: se por algum motivo sobrou um gráfico "grudado" nesse
+  // canvas (ex: página restaurada pelo navegador), remove antes de desenhar
+  // um novo, senão o Chart.js recusa e o gráfico fica em branco.
   const canvas = document.getElementById(chartId);
   if (canvas && typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
     const existente = Chart.getChart(canvas);
