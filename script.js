@@ -31,6 +31,57 @@ const searchInput = document.getElementById('searchClientInput');
 if (fileInput1) fileInput1.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 1));
 if (fileInput2) fileInput2.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 2));
 
+// Guarda as planilhas já lidas na sessão do navegador (sessionStorage), para
+// não precisar carregar de novo ao ir para a Base de Clientes e voltar.
+// Some sozinho quando a guia/aba é fechada (sessionStorage é por aba).
+function salvarSessaoAtual() {
+  try {
+    sessionStorage.setItem('rca61_sessaoPlanilhas', JSON.stringify({
+      dataStore: dataStore,
+      nomeArquivo1: labelFile1 ? labelFile1.textContent : '',
+      nomeArquivo2: labelFile2 ? labelFile2.textContent : '',
+      carregado1: dropZone1 ? dropZone1.classList.contains('loaded') : false,
+      carregado2: dropZone2 ? dropZone2.classList.contains('loaded') : false
+    }));
+  } catch (err) {
+    console.error('Não foi possível salvar a sessão das planilhas:', err);
+  }
+}
+
+function restaurarSessaoAtual() {
+  try {
+    const raw = sessionStorage.getItem('rca61_sessaoPlanilhas');
+    if (!raw) return false;
+    const salvo = JSON.parse(raw);
+    if (!salvo || !salvo.dataStore) return false;
+
+    dataStore = salvo.dataStore;
+
+    if (salvo.carregado1 && dropZone1) dropZone1.classList.add('loaded');
+    if (salvo.carregado2 && dropZone2) dropZone2.classList.add('loaded');
+    if (salvo.nomeArquivo1 && labelFile1) labelFile1.textContent = salvo.nomeArquivo1;
+    if (salvo.nomeArquivo2 && labelFile2) labelFile2.textContent = salvo.nomeArquivo2;
+
+    const temDados = (dataStore.reportSection && Object.keys(dataStore.reportSection).length > 0) ||
+                      (dataStore.analiseCarteira && Object.keys(dataStore.analiseCarteira).length > 0);
+
+    if (temDados) {
+      if (statusBadge) statusBadge.classList.add('active');
+      if (badgeText) badgeText.textContent = "Dados Sincronizados";
+      popularSelectClientes();
+      renderDashboard();
+    }
+    return temDados;
+  } catch (err) {
+    console.error('Não foi possível restaurar a sessão das planilhas:', err);
+    return false;
+  }
+}
+
+// Ao abrir/voltar para esta página, tenta restaurar os dados já carregados
+// nesta mesma aba antes de pedir upload de novo.
+restaurarSessaoAtual();
+
 function readExcelFile(file, fileNum) {
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -58,11 +109,62 @@ function readExcelFile(file, fileNum) {
 
       popularSelectClientes();
       renderDashboard();
+      atualizarDadosVivosLocalStorage();
+      salvarSessaoAtual();
     } catch (err) {
       console.error("Erro ao ler planilha:", err);
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+// Salva um resumo (faturamento e inatividade por cliente) no localStorage
+// para que a página "Base de Clientes" (clientes.html) possa exibir essas
+// informações somente quando as planilhas já tiverem sido carregadas aqui.
+// Isso não altera nada na interface do index.html.
+function normalizarNome(str) {
+  return String(str || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function atualizarDadosVivosLocalStorage() {
+  try {
+    const mapa = {};
+
+    const sheetVendas = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+    sheetVendas.forEach(r => {
+      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
+      if (!nome) return;
+      const chave = normalizarNome(nome);
+      if (!chave) return;
+      if (!mapa[chave]) mapa[chave] = { nome };
+      mapa[chave].faturamento = parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
+      if (r['Classe']) mapa[chave].classe = r['Classe'];
+    });
+
+    const sheetInativ = getSheet(dataStore.analiseCarteira, ['#Dias até primeira fatura', 'Clientes com ultima fatura', 'Ultima Fatura']);
+    sheetInativ.forEach(r => {
+      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
+      if (!nome) return;
+      const chave = normalizarNome(nome);
+      if (!chave) return;
+      if (!mapa[chave]) mapa[chave] = { nome };
+      mapa[chave].diasInativo = parseInt(r['#dias desde a ultima fat'] || r['Dias Inativo'] || r['Dias'] || 0, 10);
+      mapa[chave].ultimaFatura = formatDate(r['Ultima fat'] || r['Última Fatura']);
+      if (r['Classe']) mapa[chave].classe = r['Classe'];
+    });
+
+    localStorage.setItem('rca61_dadosVivos', JSON.stringify({
+      clientes: mapa,
+      atualizadoEm: new Date().toISOString()
+    }));
+  } catch (err) {
+    console.error('Erro ao salvar dados vivos para a Base de Clientes:', err);
+  }
 }
 
 // Event Listeners
