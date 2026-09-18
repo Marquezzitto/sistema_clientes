@@ -219,6 +219,20 @@ function getSheet(dataObj, keywords) {
   return [];
 }
 
+// Conta quantos dias úteis (seg a sex, sem considerar feriados) faltam para
+// acabar o mês atual, contando o dia de hoje se ainda for dia útil.
+function diasUteisRestantesNoMes(dataRef = new Date()) {
+  const ano = dataRef.getFullYear();
+  const mes = dataRef.getMonth();
+  const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+  let count = 0;
+  for (let dia = dataRef.getDate(); dia <= ultimoDia; dia++) {
+    const diaSemana = new Date(ano, mes, dia).getDay(); // 0 = domingo, 6 = sábado
+    if (diaSemana !== 0 && diaSemana !== 6) count++;
+  }
+  return count;
+}
+
 function renderDashboard() {
   renderYTDBanner();
   renderKPIs();
@@ -305,30 +319,57 @@ function renderKPIs() {
   const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
   let positivados = 82;
   let totalCarteira = 271;
-  const metaPct = 60.0;
+  let metaQtdPlanilha = null; // Meta em quantidade de clientes, vinda direto da planilha
 
   if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
     const row = sheetUltimaFatura[0];
     const valPos = parseCurrency(row['Qtd_Positivados'] || row['Qtd_Positivado']);
     const valCart = parseCurrency(row['Carteira']);
+    const valMeta = parseCurrency(row['Meta']);
     if (valPos > 0) positivados = valPos;
     if (valCart > 0) totalCarteira = valCart;
+    if (valMeta > 0) metaQtdPlanilha = valMeta;
   }
 
-  const metaQtd = Math.round(totalCarteira * (metaPct / 100));
+  // Se a planilha já traz a Meta (coluna "Meta"), usa ela. Senão, cai no
+  // padrão antigo de 60% da carteira, para não quebrar planilhas mais antigas.
+  const metaQtd = metaQtdPlanilha !== null ? metaQtdPlanilha : Math.round(totalCarteira * 0.60);
+  const metaPct = totalCarteira > 0 ? (metaQtd / totalCarteira) * 100 : 60;
   const realPct = (positivados / totalCarteira) * 100;
   const faltaQtd = metaQtd - positivados;
   const faltaPct = metaPct - realPct;
 
   const elPos = document.getElementById('kpiPositivacao');
   const elPosSub = document.getElementById('kpiPositivacaoSub');
-  
-  if (elPos) elPos.textContent = `${positivados} / ${totalCarteira}`;
+
+  // Alerta "corra atrás": só liga quando ainda faltam pelo menos 10 dias
+  // úteis para o mês acabar e a meta ainda não foi batida.
+  const diasUteisRestantes = diasUteisRestantesNoMes();
+  const abaixoDaMeta = faltaQtd > 0;
+  const alertaPositivacao = abaixoDaMeta && diasUteisRestantes >= 10;
+
+  if (elPos) {
+    elPos.textContent = `${positivados} / ${totalCarteira}`;
+    elPos.style.color = alertaPositivacao ? '#ef4444' : '';
+  }
   if (elPosSub) {
     if (faltaQtd <= 0) {
-      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta (${metaPct}%): <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
+      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: <strong>${metaQtd} clientes (${metaPct.toFixed(1)}%)</strong> | <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
     } else {
-      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: ${metaPct}% (${metaQtd}) | Falta: <span style="color:#ef4444;font-weight:bold;">${faltaQtd} clientes (${faltaPct.toFixed(2)}%)</span>`;
+      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: <strong>${metaQtd} clientes (${metaPct.toFixed(1)}%)</strong> | Falta: <span style="color:#ef4444;font-weight:bold;">${faltaQtd} clientes (${faltaPct.toFixed(2)}%)</span>` +
+        (alertaPositivacao ? `<br><span style="display:inline-block; margin-top:6px; padding:4px 8px; border-radius:6px; background:rgba(239,68,68,0.15); color:#ef4444; font-weight:700;">🚨 Faltam ${diasUteisRestantes} dias úteis para o fim do mês — corra atrás da meta!</span>` : '');
+    }
+  }
+
+  // Destaca todo o card de Positivação em vermelho quando o alerta está ativo.
+  const kpiCardPositivacao = elPosSub ? elPosSub.closest('.kpi-card') : null;
+  if (kpiCardPositivacao) {
+    if (alertaPositivacao) {
+      kpiCardPositivacao.style.borderColor = '#ef4444';
+      kpiCardPositivacao.style.boxShadow = '0 0 0 1px rgba(239,68,68,0.45)';
+    } else {
+      kpiCardPositivacao.style.borderColor = '';
+      kpiCardPositivacao.style.boxShadow = '';
     }
   }
 
