@@ -69,7 +69,10 @@ function restaurarSessaoAtual() {
       if (statusBadge) statusBadge.classList.add('active');
       if (badgeText) badgeText.textContent = "Dados Sincronizados";
       popularSelectClientes();
-      renderDashboard();
+      // Espera o navegador terminar de montar o layout da página antes de
+      // desenhar os gráficos — evita que eles fiquem em branco quando o
+      // restauro acontece muito cedo (canvas ainda sem tamanho definido).
+      requestAnimationFrame(() => renderDashboard());
     }
     return temDados;
   } catch (err) {
@@ -81,6 +84,16 @@ function restaurarSessaoAtual() {
 // Ao abrir/voltar para esta página, tenta restaurar os dados já carregados
 // nesta mesma aba antes de pedir upload de novo.
 restaurarSessaoAtual();
+
+// Alguns navegadores restauram a página do "cache de navegação" (bfcache) ao
+// clicar em voltar, sem executar o script de novo. Nesse caso os dados em
+// memória continuam certos, mas os gráficos (canvas) podem ficar em branco.
+// Isso força o redesenho sempre que isso acontecer.
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    requestAnimationFrame(() => renderDashboard());
+  }
+});
 
 function readExcelFile(file, fileNum) {
   const reader = new FileReader();
@@ -802,5 +815,16 @@ function mesesArray() {
 }
 
 function destroyChart(chartId) {
-  if (charts[chartId]) charts[chartId].destroy();
+  if (charts[chartId]) {
+    charts[chartId].destroy();
+    charts[chartId] = null;
+  }
+  // Segurança extra: se por algum motivo sobrou um gráfico "grudado" nesse
+  // canvas (ex: página restaurada pelo navegador), remove antes de desenhar
+  // um novo, senão o Chart.js recusa e o gráfico fica em branco.
+  const canvas = document.getElementById(chartId);
+  if (canvas && typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
+    const existente = Chart.getChart(canvas);
+    if (existente) existente.destroy();
+  }
 }
