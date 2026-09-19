@@ -1,0 +1,5975 @@
+{
+  "meses_disponiveis": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "ano": 2026,
+  "porCliente": {
+    "1": [
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12606-1 MAIS 99 COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 95340.7151,
+        "% do Total": 0.1438689870357886
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11095-DONNA BRINDES E PRESENTES PERS",
+        "Valor de venda (R$)": 89864.88899999998,
+        "% do Total": 0.13560597418377848
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9152-POLYMARK COM IMPORTACAO E EXPO",
+        "Valor de venda (R$)": 86701.54840000001,
+        "% do Total": 0.13083249826329865
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10770-WORLD PRESENTES LTDA",
+        "Valor de venda (R$)": 78041.62099999998,
+        "% do Total": 0.11776468162761794
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "16154-THIAGO PARANHOS IBANHES",
+        "Valor de venda (R$)": 23627.56,
+        "% do Total": 0.03565395035858419
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12888-LIMARI BRINDES PERSONALIZADOS LTD",
+        "Valor de venda (R$)": 9916.75,
+        "% do Total": 0.014964359934690238
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11248-CAMPINAS PROMOCIONAL LTDA",
+        "Valor de venda (R$)": 9024.45,
+        "% do Total": 0.013617880657737195
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10563-TATIANA DONIZETE CASAROTO",
+        "Valor de venda (R$)": 8703.81,
+        "% do Total": 0.013134035409096351
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "5711-SUMPRO COMERCIO DE ARTIGOS PROMOCIO",
+        "Valor de venda (R$)": 8485.308,
+        "% do Total": 0.012804316239565036
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9232-LIRA BRINDES EIRELI",
+        "Valor de venda (R$)": 7667.34,
+        "% do Total": 0.01157000383206674
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12643-AM ASSUNCAO BRINDES",
+        "Valor de venda (R$)": 6960.438,
+        "% do Total": 0.01050328984143953
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9808-EP BRINDES LTDA",
+        "Valor de venda (R$)": 6364.25,
+        "% do Total": 0.009603643100244773
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13398-CHINEN EDITORA IMPRESSAO DIGITAL LT",
+        "Valor de venda (R$)": 6158.99,
+        "% do Total": 0.009293906087595012
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13204-VANESSA APARECIDA GUIRRO",
+        "Valor de venda (R$)": 5705.329999999998,
+        "% do Total": 0.008609333871095493
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9323-BRINDERIA BRINDES COMERCIO LTD",
+        "Valor de venda (R$)": 5355.0,
+        "% do Total": 0.008080686459804495
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14280-BIZ MARKETING DIRETO LTDA",
+        "Valor de venda (R$)": 5213.9400000000005,
+        "% do Total": 0.007867827144768077
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12681-MONACO BRINDES E MATERIAIS PROMOCIO",
+        "Valor de venda (R$)": 5050.985,
+        "% do Total": 0.007621928309649973
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "27145-ARS PRINT SIGN GIFT LTDA",
+        "Valor de venda (R$)": 4729.9,
+        "% do Total": 0.00713741155671882
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11457-GRAFICA PATRICELLI LTDA EPP",
+        "Valor de venda (R$)": 4486.18,
+        "% do Total": 0.006769638465405366
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11233-MB BRINDES & PRESENTES LTDA",
+        "Valor de venda (R$)": 3637.41,
+        "% do Total": 0.00548884588903034
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13085-CRIARTE PHELIPE TADEU DOS SANTOS",
+        "Valor de venda (R$)": 3075.96,
+        "% do Total": 0.004641618734435152
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11368-LU&LU EMBALAGENS PERSONALIZADAS EIR",
+        "Valor de venda (R$)": 2745.6859999999997,
+        "% do Total": 0.004143235795158686
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "102404-ALIADO BRINDES PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 1944.6200000000001,
+        "% do Total": 0.002934428478704952
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9634-A AMARAL DE LIMA BRINDES EPP",
+        "Valor de venda (R$)": 1752.22,
+        "% do Total": 0.0026440971855459633
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14941-F. RODRIGUES DA SILVA PROMOCAO DE VENDAS",
+        "Valor de venda (R$)": 891.37,
+        "% do Total": 0.0013450759084362154
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "98535-GUILHERME MANOEL MAGALHAES",
+        "Valor de venda (R$)": 648.9000000000001,
+        "% do Total": 0.0009791890651292508
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9137-IDAPLAST INDUSTRIA E COMERCIO",
+        "Valor de venda (R$)": 441.9,
+        "% do Total": 0.000666826395254455
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10067-VALBERTO FORMIGAO BRUCKNER LTDA",
+        "Valor de venda (R$)": 117.5,
+        "% do Total": 0.0001773073126100893
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "91700-FMB 3 NIEDZIELSKI COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 113.80000000000001,
+        "% do Total": 0.000171724018510878
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12085-AMANDA GRAZIELA FERREIRA 4429204586",
+        "Valor de venda (R$)": 80.8497,
+        "% do Total": 0.0001220020683602718
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11550-PUPUB LEMOS COMERCIAL E IMPORTADORA LTDA",
+        "Valor de venda (R$)": 44346.0,
+        "% do Total": 0.06691804327665549
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "35286-51.277.471 ANA PAULA VALADAO STORTI",
+        "Valor de venda (R$)": 11750.599999999999,
+        "% do Total": 0.017731636660052043
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13134-LIVE MOTION BRINDES E EVENTOS LTDA",
+        "Valor de venda (R$)": 8146.0,
+        "% do Total": 0.012292301008696063
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13125-48.912.136 KARLA CRISTINA FROHLICKI",
+        "Valor de venda (R$)": 6516.64,
+        "% do Total": 0.00983359936721202
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10731-EDIVALDO HENRIQUE CUBA ME",
+        "Valor de venda (R$)": 2591.0,
+        "% do Total": 0.0039098148678531185
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14013-BEMDITO SERVICOS DE COMUNICACAO EMPRESARIAL LTDA",
+        "Valor de venda (R$)": 2362.55,
+        "% do Total": 0.003565084182186949
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "34584-TACA SOLUÇÕES PERSONALIZADAS",
+        "Valor de venda (R$)": 2117.1001,
+        "% do Total": 0.003194700674532352
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9833-BRINDES VALE DO PARAIBA LTDA",
+        "Valor de venda (R$)": 1949.0,
+        "% do Total": 0.002941037891719694
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10142-MGDIAS JUNIOR BRINDES ME",
+        "Valor de venda (R$)": 1812.5,
+        "% do Total": 0.002735059609410952
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13043-T GOMES DA SILVA LTDA",
+        "Valor de venda (R$)": 1276.0,
+        "% do Total": 0.0019254819650253103
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "42397-FOR U BRINDES CORPORATIVOS LIMITADA",
+        "Valor de venda (R$)": 936.35,
+        "% do Total": 0.0014129506567017627
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "31649-ENGEBRINDES INDUSTRIA E COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 553.5,
+        "% do Total": 0.00083523061727391
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11928-ROMAR COMÉRCIO E SERVIÇOS DE BRINDES E COMUNICAÇÃO VISUAL LT",
+        "Valor de venda (R$)": 533.4,
+        "% do Total": 0.0008048997493295458
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27619-GRAFICA BOSQUEIRO LTDA",
+        "Valor de venda (R$)": 408.65,
+        "% do Total": 0.0006166521982818127
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "72631-L. A. FELIX BRINDES CORPORATIVOS LTDA",
+        "Valor de venda (R$)": 357.0,
+        "% do Total": 0.000538712430653633
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "47397-BRINDES PARA TODAS OCASIOES LTDA",
+        "Valor de venda (R$)": 95.7,
+        "% do Total": 0.00014441114737689828
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13232-AQUIMOS COMERCIO DE BRINDES E MATER",
+        "Valor de venda (R$)": 2.35,
+        "% do Total": 3.546146252201786e-06
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10418-MARCELO CARVALHO DA SILVA CONF",
+        "Valor de venda (R$)": 26428.34,
+        "% do Total": 0.039880322911878534
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10404-LIDIANE DOS SANTOS LIMA 381181",
+        "Valor de venda (R$)": 16337.792400000002,
+        "% do Total": 0.024653702675962057
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9324-SUGESTAO BRINDES E COMERCIO EI",
+        "Valor de venda (R$)": 5579.27,
+        "% do Total": 0.008419109532136962
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "33618-TROVAO BRINDES LTDA",
+        "Valor de venda (R$)": 4742.14,
+        "% do Total": 0.007155881697198374
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10214-VISUAL SERIGRAFIA SOROCABA LTD",
+        "Valor de venda (R$)": 4740.8701,
+        "% do Total": 0.00715396542012362
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9276-S NARAZAKI BRINDES PROMOCIONAI",
+        "Valor de venda (R$)": 3706.9,
+        "% do Total": 0.005593706188207149
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36197-PIXEL GRAFICA, EDITORA E PRODUTOS DIGITAIS LTDA",
+        "Valor de venda (R$)": 3691.975,
+        "% do Total": 0.005571184387009655
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5284-MARCA BRINDES DE INDAIATUBA LT",
+        "Valor de venda (R$)": 3238.89,
+        "% do Total": 0.004887479844593125
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "87919-RM INDUSTRIA E COMERCIO DE VESTUARIO E BRINDES LTDA",
+        "Valor de venda (R$)": 2134.708,
+        "% do Total": 0.0032212709675511365
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10667-CONDRI INDUSTRIA E COMERCIO DE",
+        "Valor de venda (R$)": 2060.0,
+        "% do Total": 0.0031085367146960335
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "94757-JOYCE SIQUEIRA PRETEL",
+        "Valor de venda (R$)": 1761.8,
+        "% do Total": 0.002658553390267705
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11237-FLAVIO HENRIQUE CAMARGO MORILL",
+        "Valor de venda (R$)": 1273.0,
+        "% do Total": 0.0019209549698097335
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11580-LA PAPELETA COMERCIO DE BRINDE",
+        "Valor de venda (R$)": 1116.2,
+        "% do Total": 0.0016843440198755888
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "112273-62.304.341 THIAGO DO NASCIMENTO LIMA",
+        "Valor de venda (R$)": 947.1,
+        "% do Total": 0.0014291723895575794
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36207-WR CONFECÇÃO",
+        "Valor de venda (R$)": 811.2,
+        "% do Total": 0.0012240995062919528
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34095-LUIZ HENRIQUE BULHER PEREIRA",
+        "Valor de venda (R$)": 772.2,
+        "% do Total": 0.001165248568489455
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10665-SERIGRAFIA RIO PRETO SOUZA COM",
+        "Valor de venda (R$)": 747.4,
+        "% do Total": 0.0011278254080406872
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13050-48.087.279 EDUARDO DE ANDRADE GODOY",
+        "Valor de venda (R$)": 682.9,
+        "% do Total": 0.001030495010905787
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11839-MAURO ADRIANO CEARA",
+        "Valor de venda (R$)": 680.4,
+        "% do Total": 0.0010267225148928064
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34067-GUIMARAES OFICIAL CONSULTORIA E TREINAMENTO LTDA",
+        "Valor de venda (R$)": 645.5,
+        "% do Total": 0.000974058470551597
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9426-PAULO FRANCISCO LEITE 30603316859",
+        "Valor de venda (R$)": 626.8,
+        "% do Total": 0.0009458402003745018
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11289-ETC SOLUCOES LTDA",
+        "Valor de venda (R$)": 603.02,
+        "% do Total": 0.0009099562182990302
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19351-LEANDRO PIRES RODRIGUES 41772502871",
+        "Valor de venda (R$)": 432.0,
+        "% do Total": 0.0006518873110430517
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19333-SELETO PRINT E EDITORA LTDA",
+        "Valor de venda (R$)": 382.8,
+        "% do Total": 0.0005776445895075931
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9044-ARTHUR MARQUES ESCALERA 423514",
+        "Valor de venda (R$)": 372.0,
+        "% do Total": 0.0005613474067315168
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "39873-ROBERTO FURLAN EPP",
+        "Valor de venda (R$)": 37.0,
+        "% do Total": 5.5832940992113226e-05
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10231-ANA CAROLINA DOS SANTOS TURCAT",
+        "Valor de venda (R$)": 2758.8981,
+        "% do Total": 0.004163172832987927
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10835-ALEXANDRE R NESPINI",
+        "Valor de venda (R$)": 2736.0,
+        "% do Total": 0.0041286196366059945
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "59208-ATC BUSINESS & MATERIAL PUBLICITARIO LTDA",
+        "Valor de venda (R$)": 1580.94,
+        "% do Total": 0.002385635938704635
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "35056-W A MOREIRA IMPRESSOS LTDA",
+        "Valor de venda (R$)": 1194.62,
+        "% do Total": 0.0018026796748107647
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "28339-SOLUBRINDES PROMOCIONAIS LTDA",
+        "Valor de venda (R$)": 567.0,
+        "% do Total": 0.0008556020957440054
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "87927-57.555.937 TASSIANA APARECIDA TREVISAN BERNARDO",
+        "Valor de venda (R$)": 546.0,
+        "% do Total": 0.0008239131292349681
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "13522-TK COMUNICACAO VISUAL EIRELI",
+        "Valor de venda (R$)": 152.0,
+        "% do Total": 0.0002293677575892219
+      }
+    ],
+    "2": [
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11095-DONNA BRINDES E PRESENTES PERS",
+        "Valor de venda (R$)": 64922.04380000001,
+        "% do Total": 0.09858325280262423
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10770-WORLD PRESENTES LTDA",
+        "Valor de venda (R$)": 52336.148,
+        "% do Total": 0.07947173882716792
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12606-1 MAIS 99 COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 36878.739,
+        "% do Total": 0.05599987056906236
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14941-F. RODRIGUES DA SILVA PROMOCAO DE VENDAS",
+        "Valor de venda (R$)": 34606.8462,
+        "% do Total": 0.052550031821951594
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12681-MONACO BRINDES E MATERIAIS PROMOCIO",
+        "Valor de venda (R$)": 29675.769999999993,
+        "% do Total": 0.045062258745811865
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11457-GRAFICA PATRICELLI LTDA EPP",
+        "Valor de venda (R$)": 24048.79,
+        "% do Total": 0.036517765082546914
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9152-POLYMARK COM IMPORTACAO E EXPO",
+        "Valor de venda (R$)": 23957.435999999994,
+        "% do Total": 0.036379045258749076
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11368-LU&LU EMBALAGENS PERSONALIZADAS EIR",
+        "Valor de venda (R$)": 19627.062800000003,
+        "% do Total": 0.02980343163172848
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "5711-SUMPRO COMERCIO DE ARTIGOS PROMOCIO",
+        "Valor de venda (R$)": 18210.899999999998,
+        "% do Total": 0.027653007412919883
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9808-EP BRINDES LTDA",
+        "Valor de venda (R$)": 16796.660000000003,
+        "% do Total": 0.0255055029401235
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "91700-FMB 3 NIEDZIELSKI COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 13752.047900000001,
+        "% do Total": 0.020882300299355297
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14280-BIZ MARKETING DIRETO LTDA",
+        "Valor de venda (R$)": 12438.39,
+        "% do Total": 0.018887528396443257
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12643-AM ASSUNCAO BRINDES",
+        "Valor de venda (R$)": 12327.116,
+        "% do Total": 0.018718560319804255
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12085-AMANDA GRAZIELA FERREIRA 4429204586",
+        "Valor de venda (R$)": 11816.45,
+        "% do Total": 0.017943120847646037
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12888-LIMARI BRINDES PERSONALIZADOS LTD",
+        "Valor de venda (R$)": 10104.8,
+        "% do Total": 0.015344003278589901
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9323-BRINDERIA BRINDES COMERCIO LTD",
+        "Valor de venda (R$)": 9751.5,
+        "% do Total": 0.014807521966903792
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10282-MICHAEL FILIPE OLIVEIRA 385003",
+        "Valor de venda (R$)": 7237.3,
+        "% do Total": 0.010989742986317266
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10067-VALBERTO FORMIGAO BRUCKNER LTDA",
+        "Valor de venda (R$)": 6087.9,
+        "% do Total": 0.00924439450159602
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "30363-DANIELE DE OLIVEIRA FARIAS",
+        "Valor de venda (R$)": 5759.8,
+        "% do Total": 0.008746179051937903
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9130-FLECHA BRINDES LTDA ME",
+        "Valor de venda (R$)": 5031.575,
+        "% do Total": 0.0076403791560912615
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13398-CHINEN EDITORA IMPRESSAO DIGITAL LT",
+        "Valor de venda (R$)": 4014.27,
+        "% do Total": 0.0060956151572663575
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9137-IDAPLAST INDUSTRIA E COMERCIO",
+        "Valor de venda (R$)": 3553.9700000000003,
+        "% do Total": 0.005396655780620117
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "102404-ALIADO BRINDES PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 3402.1779999999994,
+        "% do Total": 0.005166161664391817
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11233-MB BRINDES & PRESENTES LTDA",
+        "Valor de venda (R$)": 3139.0,
+        "% do Total": 0.0047665294010266115
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13085-CRIARTE PHELIPE TADEU DOS SANTOS",
+        "Valor de venda (R$)": 3059.04,
+        "% do Total": 0.004645111213417153
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11248-CAMPINAS PROMOCIONAL LTDA",
+        "Valor de venda (R$)": 2970.4000000000005,
+        "% do Total": 0.004510512562220277
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9634-A AMARAL DE LIMA BRINDES EPP",
+        "Valor de venda (R$)": 2314.0,
+        "% do Total": 0.0035137779655863583
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13204-VANESSA APARECIDA GUIRRO",
+        "Valor de venda (R$)": 1817.55,
+        "% do Total": 0.0027599252987690085
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "27145-ARS PRINT SIGN GIFT LTDA",
+        "Valor de venda (R$)": 1651.67,
+        "% do Total": 0.002508038743483155
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10563-TATIANA DONIZETE CASAROTO",
+        "Valor de venda (R$)": 1530.6,
+        "% do Total": 0.0023241955722240622
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12790-CLAUDINEIDE MARIA SANTOS NASCIMENT",
+        "Valor de venda (R$)": 1316.7,
+        "% do Total": 0.001999391290962644
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "98535-GUILHERME MANOEL MAGALHAES",
+        "Valor de venda (R$)": 50.15,
+        "% do Total": 7.615210240888327e-05
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9232-LIRA BRINDES EIRELI",
+        "Valor de venda (R$)": 40.5,
+        "% do Total": 6.149870683070333e-05
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11064-ROSEMARY APARECIDA RAMOS CAMPO",
+        "Valor de venda (R$)": 35228.21,
+        "% do Total": 0.053493564418776576
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "38552-ALVES E SILVA SOLUCOES EMPRESARIAIS LTDA",
+        "Valor de venda (R$)": 19868.24,
+        "% do Total": 0.03016965597535934
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5284-MARCA BRINDES DE INDAIATUBA LT",
+        "Valor de venda (R$)": 13622.650000000001,
+        "% do Total": 0.020685811323636564
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "112273-62.304.341 THIAGO DO NASCIMENTO LIMA",
+        "Valor de venda (R$)": 8382.65,
+        "% do Total": 0.01272894160035544
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10606-OFICINA DO CONVITE LTDA ME",
+        "Valor de venda (R$)": 8258.985,
+        "% do Total": 0.012541157956399417
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13206-FERNANDO HERNANDES PROMOCIONAIS LTD",
+        "Valor de venda (R$)": 6610.3,
+        "% do Total": 0.010037651895382672
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "122022-PINHA.INC LTDA",
+        "Valor de venda (R$)": 6456.589999999999,
+        "% do Total": 0.009804245321877797
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "148229-ON GRAFICA E ACABAMENTOS GRÁFICOS LTDA",
+        "Valor de venda (R$)": 6362.719999999999,
+        "% do Total": 0.009661704985823522
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11237-FLAVIO HENRIQUE CAMARGO MORILL",
+        "Valor de venda (R$)": 6191.3,
+        "% do Total": 0.009401406014837866
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10418-MARCELO CARVALHO DA SILVA CONF",
+        "Valor de venda (R$)": 5338.599999999999,
+        "% do Total": 0.008106592500898588
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9044-ARTHUR MARQUES ESCALERA 423514",
+        "Valor de venda (R$)": 4944.0383999999995,
+        "% do Total": 0.007507456002996038
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "14183-GRUPO CM BUSINESS LTDA",
+        "Valor de venda (R$)": 3952.0,
+        "% do Total": 0.006001058997405915
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10102-CARLOS RUSSEL ALVES PEREIRA 06",
+        "Valor de venda (R$)": 3934.3801000000003,
+        "% do Total": 0.005974303415566748
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "94757-JOYCE SIQUEIRA PRETEL",
+        "Valor de venda (R$)": 3825.75,
+        "% do Total": 0.005809350065618846
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "87919-RM INDUSTRIA E COMERCIO DE VESTUARIO E BRINDES LTDA",
+        "Valor de venda (R$)": 2293.295,
+        "% do Total": 0.003482337700773279
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13157-KARINA M.L. DE FARIA",
+        "Valor de venda (R$)": 2137.45,
+        "% do Total": 0.003245689158402144
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34067-GUIMARAES OFICIAL CONSULTORIA E TREINAMENTO LTDA",
+        "Valor de venda (R$)": 1905.12,
+        "% do Total": 0.0028928991693162845
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9276-S NARAZAKI BRINDES PROMOCIONAI",
+        "Valor de venda (R$)": 1547.0,
+        "% do Total": 0.002349098752274026
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11289-ETC SOLUCOES LTDA",
+        "Valor de venda (R$)": 1494.5,
+        "% do Total": 0.0022693782063823737
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34478-MIRA CASSIANI COMERCIO E IMPORTACOES LTDA",
+        "Valor de venda (R$)": 1444.4799999999993,
+        "% do Total": 0.0021934235072299827
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34095-LUIZ HENRIQUE BULHER PEREIRA",
+        "Valor de venda (R$)": 1372.0,
+        "% do Total": 0.002083363599301851
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9324-SUGESTAO BRINDES E COMERCIO EI",
+        "Valor de venda (R$)": 1230.0,
+        "% do Total": 0.0018677385037472864
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13050-48.087.279 EDUARDO DE ANDRADE GODOY",
+        "Valor de venda (R$)": 1056.46,
+        "% do Total": 0.0016042203411941937
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10404-LIDIANE DOS SANTOS LIMA 381181",
+        "Valor de venda (R$)": 667.0,
+        "% do Total": 0.0010128305544710894
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36207-WR CONFECÇÃO",
+        "Valor de venda (R$)": 622.56,
+        "% do Total": 0.0009453490104820411
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13897-MERCADO DA AVIACAO SERVICOS LTDA",
+        "Valor de venda (R$)": 575.1,
+        "% do Total": 0.0008732816369959874
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "123961-BARROS E BASTOS COMERCIO E SERVIÇOS LTDA",
+        "Valor de venda (R$)": 539.97,
+        "% do Total": 0.0008199372031450588
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5601-KATIA GISLENE DE CASTRO BRINDE",
+        "Valor de venda (R$)": 504.9,
+        "% do Total": 0.0007666838784894348
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "18029-AGATHA APARECIDA DAMACENA",
+        "Valor de venda (R$)": 392.75,
+        "% do Total": 0.0005963856075989811
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10665-SERIGRAFIA RIO PRETO SOUZA COM",
+        "Valor de venda (R$)": 148.47,
+        "% do Total": 0.00022544970378159319
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11839-MAURO ADRIANO CEARA",
+        "Valor de venda (R$)": 98.2002,
+        "% do Total": 0.0001491156866794181
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9107-VM MACHADO JUNIOR ACESSORIOS M",
+        "Valor de venda (R$)": 10027.699999999999,
+        "% do Total": 0.015226927962623302
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11550-PUPUB LEMOS COMERCIAL E IMPORTADORA LTDA",
+        "Valor de venda (R$)": 9690.0,
+        "% do Total": 0.014714135041716427
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13232-AQUIMOS COMERCIO DE BRINDES E MATER",
+        "Valor de venda (R$)": 6010.68,
+        "% do Total": 0.009127136967238813
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "42397-FOR U BRINDES CORPORATIVOS LIMITADA",
+        "Valor de venda (R$)": 5858.1,
+        "% do Total": 0.008895446283578844
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10142-MGDIAS JUNIOR BRINDES ME",
+        "Valor de venda (R$)": 3621.0,
+        "% do Total": 0.0054984399366414015
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9915-SIMIONATTO COMERCIO DE BRINDES",
+        "Valor de venda (R$)": 3315.0,
+        "% do Total": 0.0050337830405871985
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11451-40 WATTS ARTIGOS DECORATIVOS L",
+        "Valor de venda (R$)": 2931.36,
+        "% do Total": 0.004451230845808655
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11407-WT7 BRINDES LTDA",
+        "Valor de venda (R$)": 2433.68,
+        "% do Total": 0.0036955104404875574
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "75079-CS BRINDES",
+        "Valor de venda (R$)": 1959.4,
+        "% do Total": 0.0029753226213353116
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11818-LETICIA ORLOSKI DE CASTRO 4563",
+        "Valor de venda (R$)": 1861.25,
+        "% do Total": 0.0028262831626826314
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "31302-49.656.925 TAINA GALVAO DE SOUSA",
+        "Valor de venda (R$)": 1760.8,
+        "% do Total": 0.002673751184876603
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12625-PEDRO HENRIQUE TEIXEIRA SOARES",
+        "Valor de venda (R$)": 1286.9,
+        "% do Total": 0.0019541403906279536
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11785-ZEST COMERCIO E INDUSTRIA DE U",
+        "Valor de venda (R$)": 907.8,
+        "% do Total": 0.001378482124960802
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11486-JOSE AUGUSTO MARQUESINI BOLSAS",
+        "Valor de venda (R$)": 524.0799999999999,
+        "% do Total": 0.0007958084512551851
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14013-BEMDITO SERVICOS DE COMUNICACAO EMPRESARIAL LTDA",
+        "Valor de venda (R$)": 454.74,
+        "% do Total": 0.0006905165912146675
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "72631-L. A. FELIX BRINDES CORPORATIVOS LTDA",
+        "Valor de venda (R$)": 284.4,
+        "% do Total": 0.0004318575857444945
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27619-GRAFICA BOSQUEIRO LTDA",
+        "Valor de venda (R$)": 262.5,
+        "% do Total": 0.00039860272945826237
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "102343-TEMESVARI BRINDES E EMBALANGENS LTDA",
+        "Valor de venda (R$)": 242.67139999999995,
+        "% do Total": 0.0003684932662912676
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11633-PATRICIA RODRIGUES BENEDETTI 2",
+        "Valor de venda (R$)": 198.0,
+        "% do Total": 0.0003006603445056607
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11026-MACARIO GOMES DE CAMPOS NETO 0",
+        "Valor de venda (R$)": 148.2,
+        "% do Total": 0.00022503971240272181
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "71553-BRUNO HENRIQUE DIAS DA SILVA",
+        "Valor de venda (R$)": 110.4,
+        "% do Total": 0.00016764091936073206
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14208-TUDU PHOOTO SERVICOS E COMERCIO LTDA",
+        "Valor de venda (R$)": 105.0,
+        "% do Total": 0.00015944109178330494
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11058-SILVEIRA E MARTINS COMERCIALIZ",
+        "Valor de venda (R$)": 6.2,
+        "% do Total": 9.414616848157053e-06
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "30043-BRINDES SPEED",
+        "Valor de venda (R$)": 2400.0,
+        "% do Total": 0.003644367812189827
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "59208-ATC BUSINESS & MATERIAL PUBLICITARIO LTDA",
+        "Valor de venda (R$)": 1815.0,
+        "% do Total": 0.0027560531579685567
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "37076-31.828.787 WILLIAM PEREIRA DOS ANJOS",
+        "Valor de venda (R$)": 1154.44,
+        "% do Total": 0.0017530016571268435
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "14187-ALEX FERNANDO MALVEZZI 17270665885",
+        "Valor de venda (R$)": 975.5,
+        "% do Total": 0.0014812836669963235
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "34008-53.824.834 CARLA VIVIANE CEOLIN GOMES",
+        "Valor de venda (R$)": 826.06,
+        "% do Total": 0.00125436103122397
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10231-ANA CAROLINA DOS SANTOS TURCAT",
+        "Valor de venda (R$)": 609.5,
+        "% do Total": 0.0009255175756373748
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10324-KB BRINDES PROMOCIONAIS EIRELI",
+        "Valor de venda (R$)": 590.0,
+        "% do Total": 0.0008959070871633325
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "102460-BONE PRESS CONFECCOES LTDA",
+        "Valor de venda (R$)": 575.0,
+        "% do Total": 0.000873129788337146
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "28339-SOLUBRINDES PROMOCIONAIS LTDA",
+        "Valor de venda (R$)": 189.0,
+        "% do Total": 0.0002869939652099489
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "87927-57.555.937 TASSIANA APARECIDA TREVISAN BERNARDO",
+        "Valor de venda (R$)": 183.1,
+        "% do Total": 0.00027803489433831556
+      }
+    ],
+    "3": [
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10770-WORLD PRESENTES LTDA",
+        "Valor de venda (R$)": 143773.195,
+        "% do Total": 0.1492552182858375
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9152-POLYMARK COM IMPORTACAO E EXPO",
+        "Valor de venda (R$)": 90196.69999999997,
+        "% do Total": 0.09363586965680351
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9137-IDAPLAST INDUSTRIA E COMERCIO",
+        "Valor de venda (R$)": 58458.79999999999,
+        "% do Total": 0.06068781426696482
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12606-1 MAIS 99 COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 57160.594,
+        "% do Total": 0.05934010811137731
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12681-MONACO BRINDES E MATERIAIS PROMOCIO",
+        "Valor de venda (R$)": 34507.62,
+        "% do Total": 0.035823383876422386
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11368-LU&LU EMBALAGENS PERSONALIZADAS EIR",
+        "Valor de venda (R$)": 32663.882499999996,
+        "% do Total": 0.03390934528929712
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11095-DONNA BRINDES E PRESENTES PERS",
+        "Valor de venda (R$)": 21225.77,
+        "% do Total": 0.022035101429268376
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12643-AM ASSUNCAO BRINDES",
+        "Valor de venda (R$)": 20698.4,
+        "% do Total": 0.021487622989581463
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "5711-SUMPRO COMERCIO DE ARTIGOS PROMOCIO",
+        "Valor de venda (R$)": 19495.660000000003,
+        "% do Total": 0.020239022920277114
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12888-LIMARI BRINDES PERSONALIZADOS LTD",
+        "Valor de venda (R$)": 17421.9,
+        "% do Total": 0.01808619115304513
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11457-GRAFICA PATRICELLI LTDA EPP",
+        "Valor de venda (R$)": 16911.96,
+        "% do Total": 0.01755680731336152
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10067-VALBERTO FORMIGAO BRUCKNER LTDA",
+        "Valor de venda (R$)": 16900.33,
+        "% do Total": 0.017544733865396036
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "30363-DANIELE DE OLIVEIRA FARIAS",
+        "Valor de venda (R$)": 15954.550000000001,
+        "% do Total": 0.016562891593960256
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9808-EP BRINDES LTDA",
+        "Valor de venda (R$)": 12299.839999999998,
+        "% do Total": 0.012768828738075099
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14941-F. RODRIGUES DA SILVA PROMOCAO DE VENDAS",
+        "Valor de venda (R$)": 10421.240000000002,
+        "% do Total": 0.01081859835561908
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9232-LIRA BRINDES EIRELI",
+        "Valor de venda (R$)": 9682.259999999998,
+        "% do Total": 0.010051441298221359
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14280-BIZ MARKETING DIRETO LTDA",
+        "Valor de venda (R$)": 9664.8,
+        "% do Total": 0.010033315554328204
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "91700-FMB 3 NIEDZIELSKI COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 9216.560000000001,
+        "% do Total": 0.009567984314771042
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9323-BRINDERIA BRINDES COMERCIO LTD",
+        "Valor de venda (R$)": 8476.9,
+        "% do Total": 0.008800121329203372
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12790-CLAUDINEIDE MARIA SANTOS NASCIMENT",
+        "Valor de venda (R$)": 6807.65,
+        "% do Total": 0.00706722339142273
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13398-CHINEN EDITORA IMPRESSAO DIGITAL LT",
+        "Valor de venda (R$)": 6178.9,
+        "% do Total": 0.0064144993666334065
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13204-VANESSA APARECIDA GUIRRO",
+        "Valor de venda (R$)": 4558.91,
+        "% do Total": 0.004732739695987749
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12085-AMANDA GRAZIELA FERREIRA 4429204586",
+        "Valor de venda (R$)": 4206.799999999999,
+        "% do Total": 0.00436720386080911
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "102404-ALIADO BRINDES PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 3898.8999999999996,
+        "% do Total": 0.004047563737973909
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13085-CRIARTE PHELIPE TADEU DOS SANTOS",
+        "Valor de venda (R$)": 3602.8900000000003,
+        "% do Total": 0.0037402669768162354
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10563-TATIANA DONIZETE CASAROTO",
+        "Valor de venda (R$)": 3553.25,
+        "% do Total": 0.0036887342204098062
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11248-CAMPINAS PROMOCIONAL LTDA",
+        "Valor de venda (R$)": 2693.53,
+        "% do Total": 0.0027962333876593052
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10282-MICHAEL FILIPE OLIVEIRA 385003",
+        "Valor de venda (R$)": 2649.0,
+        "% do Total": 0.0027500054738241264
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "16154-THIAGO PARANHOS IBANHES",
+        "Valor de venda (R$)": 2310.8821000000003,
+        "% do Total": 0.0023989952526848593
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11233-MB BRINDES & PRESENTES LTDA",
+        "Valor de venda (R$)": 1803.4000000000003,
+        "% do Total": 0.001872163031896727
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "27145-ARS PRINT SIGN GIFT LTDA",
+        "Valor de venda (R$)": 1391.9,
+        "% do Total": 0.0014449726761101554
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9130-FLECHA BRINDES LTDA ME",
+        "Valor de venda (R$)": 525.0,
+        "% do Total": 0.0005450180723887
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9634-A AMARAL DE LIMA BRINDES EPP",
+        "Valor de venda (R$)": 472.35,
+        "% do Total": 0.0004903605457005761
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "98535-GUILHERME MANOEL MAGALHAES",
+        "Valor de venda (R$)": 76.0,
+        "% do Total": 7.88978542886499e-05
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "39863-MAEDU ARTIGOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 19.0,
+        "% do Total": 1.9724463572162475e-05
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34478-MIRA CASSIANI COMERCIO E IMPORTACOES LTDA",
+        "Valor de venda (R$)": 141360.0,
+        "% do Total": 0.14675000897688883
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11064-ROSEMARY APARECIDA RAMOS CAMPO",
+        "Valor de venda (R$)": 24172.6,
+        "% do Total": 0.025094293060234456
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5284-MARCA BRINDES DE INDAIATUBA LT",
+        "Valor de venda (R$)": 20748.770000000004,
+        "% do Total": 0.021539913580640932
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10404-LIDIANE DOS SANTOS LIMA 381181",
+        "Valor de venda (R$)": 9604.99,
+        "% do Total": 0.009971225019262361
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10102-CARLOS RUSSEL ALVES PEREIRA 06",
+        "Valor de venda (R$)": 5724.85,
+        "% do Total": 0.005943136593741808
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10606-OFICINA DO CONVITE LTDA ME",
+        "Valor de venda (R$)": 5695.5,
+        "% do Total": 0.005912667488171126
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10214-VISUAL SERIGRAFIA SOROCABA LTD",
+        "Valor de venda (R$)": 5317.780000000001,
+        "% do Total": 0.005520545152356536
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9276-S NARAZAKI BRINDES PROMOCIONAI",
+        "Valor de venda (R$)": 4325.9,
+        "% do Total": 0.004490845103516718
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "39873-ROBERTO FURLAN EPP",
+        "Valor de venda (R$)": 3886.54,
+        "% do Total": 0.004034732455355387
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11289-ETC SOLUCOES LTDA",
+        "Valor de venda (R$)": 3549.505,
+        "% do Total": 0.003684846424826767
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13050-48.087.279 EDUARDO DE ANDRADE GODOY",
+        "Valor de venda (R$)": 3446.88,
+        "% do Total": 0.0035783083682955474
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "148229-ON GRAFICA E ACABAMENTOS GRÁFICOS LTDA",
+        "Valor de venda (R$)": 3269.3900000000003,
+        "% do Total": 0.003394050734641699
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "122022-PINHA.INC LTDA",
+        "Valor de venda (R$)": 3078.29,
+        "% do Total": 0.003195664156292212
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "14183-GRUPO CM BUSINESS LTDA",
+        "Valor de venda (R$)": 2593.63,
+        "% do Total": 0.0026925242344561983
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11580-LA PAPELETA COMERCIO DE BRINDE",
+        "Valor de venda (R$)": 1887.6000000000004,
+        "% do Total": 0.001959573549411258
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "94757-JOYCE SIQUEIRA PRETEL",
+        "Valor de venda (R$)": 1836.6,
+        "% do Total": 0.0019066289366649264
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9324-SUGESTAO BRINDES E COMERCIO EI",
+        "Valor de venda (R$)": 1571.2,
+        "% do Total": 0.0016311093244516675
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13897-MERCADO DA AVIACAO SERVICOS LTDA",
+        "Valor de venda (R$)": 830.0,
+        "% do Total": 0.0008616476192049924
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "18029-AGATHA APARECIDA DAMACENA",
+        "Valor de venda (R$)": 802.56,
+        "% do Total": 0.0008331613412881429
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10418-MARCELO CARVALHO DA SILVA CONF",
+        "Valor de venda (R$)": 656.33,
+        "% do Total": 0.0006813556408588105
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34095-LUIZ HENRIQUE BULHER PEREIRA",
+        "Valor de venda (R$)": 634.1999999999999,
+        "% do Total": 0.0006583818314455495
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "98162-MERCADO BRINDE CORPORATIVO LTDA",
+        "Valor de venda (R$)": 632.22,
+        "% do Total": 0.0006563263347153979
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9426-PAULO FRANCISCO LEITE 30603316859",
+        "Valor de venda (R$)": 606.5,
+        "% do Total": 0.0006296256398166601
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "87919-RM INDUSTRIA E COMERCIO DE VESTUARIO E BRINDES LTDA",
+        "Valor de venda (R$)": 585.0,
+        "% do Total": 0.0006073058520902657
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19333-SELETO PRINT E EDITORA LTDA",
+        "Valor de venda (R$)": 583.7,
+        "% do Total": 0.0006059562835300651
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13206-FERNANDO HERNANDES PROMOCIONAIS LTD",
+        "Valor de venda (R$)": 549.45,
+        "% do Total": 0.0005704003426170881
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10001-APOENA PRODUCAO GRAFICA LTDA",
+        "Valor de venda (R$)": 411.84,
+        "% do Total": 0.000427543319871547
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36207-WR CONFECÇÃO",
+        "Valor de venda (R$)": 397.8,
+        "% do Total": 0.0004129679794213807
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19351-LEANDRO PIRES RODRIGUES 41772502871",
+        "Valor de venda (R$)": 348.8,
+        "% do Total": 0.0003620996259984354
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10667-CONDRI INDUSTRIA E COMERCIO DE",
+        "Valor de venda (R$)": 335.0,
+        "% do Total": 0.0003477734366670752
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "38552-ALVES E SILVA SOLUCOES EMPRESARIAIS LTDA",
+        "Valor de venda (R$)": 230.0,
+        "% do Total": 0.00023876982218933523
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12192-39.804.434 KARINE PRADO MEDEIROS",
+        "Valor de venda (R$)": 229.45,
+        "% do Total": 0.00023819885087540422
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "123961-BARROS E BASTOS COMERCIO E SERVIÇOS LTDA",
+        "Valor de venda (R$)": 179.99,
+        "% do Total": 0.00018685295780808024
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11839-MAURO ADRIANO CEARA",
+        "Valor de venda (R$)": 166.8,
+        "% do Total": 0.0001731600275703527
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5601-KATIA GISLENE DE CASTRO BRINDE",
+        "Valor de venda (R$)": 97.5,
+        "% do Total": 0.00010121764201504428
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9044-ARTHUR MARQUES ESCALERA 423514",
+        "Valor de venda (R$)": 41.3,
+        "% do Total": 4.2874755027911066e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "102343-TEMESVARI BRINDES E EMBALANGENS LTDA",
+        "Valor de venda (R$)": 9979.6601,
+        "% do Total": 0.010360181163421753
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27958-51.381.327 BEATRIZ DA SILVA ABDALA ANDRADE",
+        "Valor de venda (R$)": 7428.5,
+        "% do Total": 0.007711746191884682
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "159008-RD CONSULTORIA E SOLUCOES INTEGRADAS LTDA",
+        "Valor de venda (R$)": 7197.55,
+        "% do Total": 0.007471990146516738
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11925-VINCULO CERTO LTDA",
+        "Valor de venda (R$)": 6507.62,
+        "% do Total": 0.006755753349025051
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13232-AQUIMOS COMERCIO DE BRINDES E MATER",
+        "Valor de venda (R$)": 4037.19,
+        "% do Total": 0.004191126688889401
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14013-BEMDITO SERVICOS DE COMUNICACAO EMPRESARIAL LTDA",
+        "Valor de venda (R$)": 3726.3199999999997,
+        "% do Total": 0.0038684033209589724
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "64346-LE FER BRINDES E EVENTOS LTDA",
+        "Valor de venda (R$)": 3032.41,
+        "% do Total": 0.003148034767413748
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10206-ROSANTE E MATIAS GRAFICA E EDI",
+        "Valor de venda (R$)": 2868.9,
+        "% do Total": 0.002978290186430365
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9326-DIGIPAPER COMERCIO DE INFORMAT",
+        "Valor de venda (R$)": 2826.0,
+        "% do Total": 0.0029337544239437453
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11684-AGENCIA AWAKE LTDA",
+        "Valor de venda (R$)": 2659.2300000000005,
+        "% do Total": 0.002760625540263244
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12733-ROSINEIDE MARIA SANTOS SILVA",
+        "Valor de venda (R$)": 2364.3,
+        "% do Total": 0.002454449959140197
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "35286-51.277.471 ANA PAULA VALADAO STORTI",
+        "Valor de venda (R$)": 2130.95,
+        "% do Total": 0.0022122024025841907
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10142-MGDIAS JUNIOR BRINDES ME",
+        "Valor de venda (R$)": 2048.0,
+        "% do Total": 0.0021260895471467765
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12836-TROCHMANN & CAMPOS COMERCIO DE BRIN",
+        "Valor de venda (R$)": 1893.97,
+        "% do Total": 0.00196618643535624
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9915-SIMIONATTO COMERCIO DE BRINDES",
+        "Valor de venda (R$)": 611.0,
+        "% do Total": 0.0006342972232942775
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "42658-VITOR HUGO DA SILVA",
+        "Valor de venda (R$)": 531.25,
+        "% do Total": 0.0005515063827742797
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11785-ZEST COMERCIO E INDUSTRIA DE U",
+        "Valor de venda (R$)": 414.0,
+        "% do Total": 0.00042978567994080344
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "67423-45.009.112 KARINE APARECIDA GARCIA DE LIMA",
+        "Valor de venda (R$)": 368.5,
+        "% do Total": 0.0003825507803337828
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11058-SILVEIRA E MARTINS COMERCIALIZ",
+        "Valor de venda (R$)": 270.0,
+        "% do Total": 0.0002802950086570457
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "47397-BRINDES PARA TODAS OCASIOES LTDA",
+        "Valor de venda (R$)": 140.0,
+        "% do Total": 0.00014533815263698666
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "127252-63.280.402 MAYARA MIRELE DA SILVA",
+        "Valor de venda (R$)": 131.9,
+        "% do Total": 0.0001369293023772753
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12625-PEDRO HENRIQUE TEIXEIRA SOARES",
+        "Valor de venda (R$)": 109.8,
+        "% do Total": 0.00011398663685386526
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "72631-L. A. FELIX BRINDES CORPORATIVOS LTDA",
+        "Valor de venda (R$)": 74.10000000000001,
+        "% do Total": 7.692540793143367e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "161575-RICARTS COMUNICACAO VISUAL LTDA",
+        "Valor de venda (R$)": 53.400000000000006,
+        "% do Total": 5.543612393439349e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "71553-BRUNO HENRIQUE DIAS DA SILVA",
+        "Valor de venda (R$)": 39.2,
+        "% do Total": 4.069468273835627e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11551-TNEWT BRINDES E CONFECCOES LTDA",
+        "Valor de venda (R$)": 34.1,
+        "% do Total": 3.540022146372318e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11550-PUPUB LEMOS COMERCIAL E IMPORTADORA LTDA",
+        "Valor de venda (R$)": -9379.240000000002,
+        "% do Total": -0.009736867248135222
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "157036-VIEIRA LOJAS LTDA",
+        "Valor de venda (R$)": 6747.1402,
+        "% do Total": 0.0070044063732196335
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "28339-SOLUBRINDES PROMOCIONAIS LTDA",
+        "Valor de venda (R$)": 2303.0,
+        "% do Total": 0.0023908126108784307
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "13393-G H FOGAROLLO",
+        "Valor de venda (R$)": 1015.5999999999999,
+        "% do Total": 0.001054324484415169
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "130711-15.138.719 JOSE ALEX SANDRO SOARES GALDINO",
+        "Valor de venda (R$)": 421.7998,
+        "% do Total": 0.00043788288367607465
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10835-ALEXANDRE R NESPINI",
+        "Valor de venda (R$)": 388.7,
+        "% do Total": 0.00040352099949997653
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "30437-RUTE DE OLIVEIRA MESQUITA 21521610843",
+        "Valor de venda (R$)": 28.1712,
+        "% do Total": 2.9245358325479133e-05
+      }
+    ],
+    "4": [
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10770-WORLD PRESENTES LTDA",
+        "Valor de venda (R$)": 142291.43000000002,
+        "% do Total": 0.166820496581907
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13204-VANESSA APARECIDA GUIRRO",
+        "Valor de venda (R$)": 50656.579999999994,
+        "% do Total": 0.05938907094222819
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11457-GRAFICA PATRICELLI LTDA EPP",
+        "Valor de venda (R$)": 48864.17,
+        "% do Total": 0.05728767434878349
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12681-MONACO BRINDES E MATERIAIS PROMOCIO",
+        "Valor de venda (R$)": 27933.56010000001,
+        "% do Total": 0.03274891795790193
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11095-DONNA BRINDES E PRESENTES PERS",
+        "Valor de venda (R$)": 27128.08,
+        "% do Total": 0.03180458427407539
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11368-LU&LU EMBALAGENS PERSONALIZADAS EIR",
+        "Valor de venda (R$)": 26414.57,
+        "% do Total": 0.030968075058333048
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9323-BRINDERIA BRINDES COMERCIO LTD",
+        "Valor de venda (R$)": 22343.86,
+        "% do Total": 0.02619563118282393
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "30363-DANIELE DE OLIVEIRA FARIAS",
+        "Valor de venda (R$)": 21527.499999999996,
+        "% do Total": 0.025238542055322673
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14280-BIZ MARKETING DIRETO LTDA",
+        "Valor de venda (R$)": 20178.579999999998,
+        "% do Total": 0.02365708697929128
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9152-POLYMARK COM IMPORTACAO E EXPO",
+        "Valor de venda (R$)": 15048.810000000001,
+        "% do Total": 0.01764301586656883
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10282-MICHAEL FILIPE OLIVEIRA 385003",
+        "Valor de venda (R$)": 14715.7,
+        "% do Total": 0.01725248232834802
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12643-AM ASSUNCAO BRINDES",
+        "Valor de venda (R$)": 11190.0,
+        "% do Total": 0.013119000608480352
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12888-LIMARI BRINDES PERSONALIZADOS LTD",
+        "Valor de venda (R$)": 9830.06,
+        "% do Total": 0.011524625837479745
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "5711-SUMPRO COMERCIO DE ARTIGOS PROMOCIO",
+        "Valor de venda (R$)": 9310.820000000002,
+        "% do Total": 0.010915876071979538
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13398-CHINEN EDITORA IMPRESSAO DIGITAL LT",
+        "Valor de venda (R$)": 8124.68,
+        "% do Total": 0.00952526200748062
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12606-1 MAIS 99 COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 8062.119999999999,
+        "% do Total": 0.009451917532228918
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "98535-GUILHERME MANOEL MAGALHAES",
+        "Valor de venda (R$)": 6911.4400000000005,
+        "% do Total": 0.008102876279309692
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9137-IDAPLAST INDUSTRIA E COMERCIO",
+        "Valor de venda (R$)": 6080.17,
+        "% do Total": 0.007128306874858264
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14941-F. RODRIGUES DA SILVA PROMOCAO DE VENDAS",
+        "Valor de venda (R$)": 5581.870000000001,
+        "% do Total": 0.0065441068745717805
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "16154-THIAGO PARANHOS IBANHES",
+        "Valor de venda (R$)": 5028.6,
+        "% do Total": 0.005895460809633986
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9232-LIRA BRINDES EIRELI",
+        "Valor de venda (R$)": 4843.070000000001,
+        "% do Total": 0.005677948014022604
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12790-CLAUDINEIDE MARIA SANTOS NASCIMENT",
+        "Valor de venda (R$)": 4317.45,
+        "% do Total": 0.005061718425119168
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13085-CRIARTE PHELIPE TADEU DOS SANTOS",
+        "Valor de venda (R$)": 3845.0900000000006,
+        "% do Total": 0.004507930120613201
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10563-TATIANA DONIZETE CASAROTO",
+        "Valor de venda (R$)": 3460.0,
+        "% do Total": 0.0040564559522200195
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9808-EP BRINDES LTDA",
+        "Valor de venda (R$)": 3266.0499999999993,
+        "% do Total": 0.003829071665534159
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12085-AMANDA GRAZIELA FERREIRA 4429204586",
+        "Valor de venda (R$)": 3195.7,
+        "% do Total": 0.003746594302459397
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "102404-ALIADO BRINDES PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 3134.06,
+        "% do Total": 0.0036743284224319862
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "91700-FMB 3 NIEDZIELSKI COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 3115.7188,
+        "% do Total": 0.0036528254542496576
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9634-A AMARAL DE LIMA BRINDES EPP",
+        "Valor de venda (R$)": 2705.1000000000004,
+        "% do Total": 0.003171421675245773
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9130-FLECHA BRINDES LTDA ME",
+        "Valor de venda (R$)": 2218.5,
+        "% do Total": 0.0026009385924855816
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11248-CAMPINAS PROMOCIONAL LTDA",
+        "Valor de venda (R$)": 2058.8,
+        "% do Total": 0.0024137085301822476
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10067-VALBERTO FORMIGAO BRUCKNER LTDA",
+        "Valor de venda (R$)": 1047.6,
+        "% do Total": 0.0012281916923542462
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11233-MB BRINDES & PRESENTES LTDA",
+        "Valor de venda (R$)": 1039.5,
+        "% do Total": 0.0012186953648360432
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "39863-MAEDU ARTIGOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 1037.8,
+        "% do Total": 0.001216702308443334
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "27145-ARS PRINT SIGN GIFT LTDA",
+        "Valor de venda (R$)": 656.3,
+        "% do Total": 0.0007694370061971093
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9276-S NARAZAKI BRINDES PROMOCIONAI",
+        "Valor de venda (R$)": 54336.96000000002,
+        "% do Total": 0.06370389734611016
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11289-ETC SOLUCOES LTDA",
+        "Valor de venda (R$)": 36204.2,
+        "% do Total": 0.042445301325249714
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5284-MARCA BRINDES DE INDAIATUBA LT",
+        "Valor de venda (R$)": 33143.990000000005,
+        "% do Total": 0.03885755361728925
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10404-LIDIANE DOS SANTOS LIMA 381181",
+        "Valor de venda (R$)": 16345.44,
+        "% do Total": 0.019163166872732715
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13206-FERNANDO HERNANDES PROMOCIONAIS LTD",
+        "Valor de venda (R$)": 13365.5,
+        "% do Total": 0.01566952659809152
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36197-PIXEL GRAFICA, EDITORA E PRODUTOS DIGITAIS LTDA",
+        "Valor de venda (R$)": 12410.400000000001,
+        "% do Total": 0.014549780621222927
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10418-MARCELO CARVALHO DA SILVA CONF",
+        "Valor de venda (R$)": 12015.05,
+        "% do Total": 0.014086277771306686
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34478-MIRA CASSIANI COMERCIO E IMPORTACOES LTDA",
+        "Valor de venda (R$)": 10644.21,
+        "% do Total": 0.012479123991670477
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "33618-TROVAO BRINDES LTDA",
+        "Valor de venda (R$)": 7876.999999999998,
+        "% do Total": 0.009234885414924012
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13157-KARINA M.L. DE FARIA",
+        "Valor de venda (R$)": 7313.9,
+        "% do Total": 0.008574714794491907
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "159212-FERNANDO AUGUSTO ESTAMPARIA ME  ( PROSILK BRINDES )",
+        "Valor de venda (R$)": 6375.0,
+        "% do Total": 0.007473961472659717
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34067-GUIMARAES OFICIAL CONSULTORIA E TREINAMENTO LTDA",
+        "Valor de venda (R$)": 5775.4,
+        "% do Total": 0.006770998759090028
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10214-VISUAL SERIGRAFIA SOROCABA LTD",
+        "Valor de venda (R$)": 5670.24,
+        "% do Total": 0.00664771063540926
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11064-ROSEMARY APARECIDA RAMOS CAMPO",
+        "Valor de venda (R$)": 4321.0,
+        "% do Total": 0.00506588039582159
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11174-NARA MARIA FRANCO 14130328859",
+        "Valor de venda (R$)": 4098.0,
+        "% do Total": 0.00480443829254267
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "94757-JOYCE SIQUEIRA PRETEL",
+        "Valor de venda (R$)": 3075.46,
+        "% do Total": 0.003605626596189185
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5601-KATIA GISLENE DE CASTRO BRINDE",
+        "Valor de venda (R$)": 2802.4,
+        "% do Total": 0.0032854948440755437
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11839-MAURO ADRIANO CEARA",
+        "Valor de venda (R$)": 2602.6000000000004,
+        "% do Total": 0.0030512520986265383
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "123961-BARROS E BASTOS COMERCIO E SERVIÇOS LTDA",
+        "Valor de venda (R$)": 2293.2,
+        "% do Total": 0.0026885158351534527
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10665-SERIGRAFIA RIO PRETO SOUZA COM",
+        "Valor de venda (R$)": 2263.2999999999997,
+        "% do Total": 0.002653461490364037
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10001-APOENA PRODUCAO GRAFICA LTDA",
+        "Valor de venda (R$)": 2158.2299999999996,
+        "% do Total": 0.0025302788814334713
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10606-OFICINA DO CONVITE LTDA ME",
+        "Valor de venda (R$)": 2125.5,
+        "% do Total": 0.0024919066839432518
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13897-MERCADO DA AVIACAO SERVICOS LTDA",
+        "Valor de venda (R$)": 1887.6,
+        "% do Total": 0.002212996027575291
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "148229-ON GRAFICA E ACABAMENTOS GRÁFICOS LTDA",
+        "Valor de venda (R$)": 1872.72,
+        "% do Total": 0.0021955509222085184
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34095-LUIZ HENRIQUE BULHER PEREIRA",
+        "Valor de venda (R$)": 1445.295,
+        "% do Total": 0.00169444378770631
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12192-39.804.434 KARINE PRADO MEDEIROS",
+        "Valor de venda (R$)": 1314.5,
+        "% do Total": 0.0015411015460095997
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13050-48.087.279 EDUARDO DE ANDRADE GODOY",
+        "Valor de venda (R$)": 1268.8,
+        "% do Total": 0.0014875235006291214
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12828-RICCA BRINDES PRESENTES E PRODUTOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 1122.0,
+        "% do Total": 0.0013154172191881103
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9426-PAULO FRANCISCO LEITE 30603316859",
+        "Valor de venda (R$)": 1019.8100000000001,
+        "% do Total": 0.0011956110822640168
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11580-LA PAPELETA COMERCIO DE BRINDE",
+        "Valor de venda (R$)": 888.51,
+        "% do Total": 0.0010416767855800605
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "38552-ALVES E SILVA SOLUCOES EMPRESARIAIS LTDA",
+        "Valor de venda (R$)": 784.0,
+        "% do Total": 0.0009191507128729755
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11237-FLAVIO HENRIQUE CAMARGO MORILL",
+        "Valor de venda (R$)": 713.6800000000001,
+        "% do Total": 0.0008367085213816137
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "112273-62.304.341 THIAGO DO NASCIMENTO LIMA",
+        "Valor de venda (R$)": 693.0,
+        "% do Total": 0.0008124635765573622
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10667-CONDRI INDUSTRIA E COMERCIO DE",
+        "Valor de venda (R$)": 668.5,
+        "% do Total": 0.0007837401167800817
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10143-LUANA DA CUNHA 30553126865",
+        "Valor de venda (R$)": 626.2,
+        "% do Total": 0.0007341481841850221
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "122022-PINHA.INC LTDA",
+        "Valor de venda (R$)": 297.5,
+        "% do Total": 0.00034878486872412013
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "18029-AGATHA APARECIDA DAMACENA",
+        "Valor de venda (R$)": 73.0,
+        "% do Total": 8.558418627516226e-05
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19333-SELETO PRINT E EDITORA LTDA",
+        "Valor de venda (R$)": 59.2,
+        "% do Total": 6.940525791081651e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "31649-ENGEBRINDES INDUSTRIA E COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 8599.44,
+        "% do Total": 0.010081864038658649
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11633-PATRICIA RODRIGUES BENEDETTI 2",
+        "Valor de venda (R$)": 6677.55,
+        "% do Total": 0.007828666891256298
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "166533-58.607.956 CAROLINA NOCETTI ALENCAR",
+        "Valor de venda (R$)": 5433.6,
+        "% do Total": 0.006370277185544132
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10206-ROSANTE E MATIAS GRAFICA E EDI",
+        "Valor de venda (R$)": 4814.0,
+        "% do Total": 0.005643866749707275
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13134-LIVE MOTION BRINDES E EVENTOS LTDA",
+        "Valor de venda (R$)": 4137.0,
+        "% do Total": 0.0048501613509636474
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "159008-RD CONSULTORIA E SOLUCOES INTEGRADAS LTDA",
+        "Valor de venda (R$)": 4026.5199999999995,
+        "% do Total": 0.004720636133159812
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27623-12.876.749 ADRIANA CRISTINA DE OLIVEIRA BUENO",
+        "Valor de venda (R$)": 3210.0,
+        "% do Total": 0.0037633594238804225
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "64346-LE FER BRINDES E EVENTOS LTDA",
+        "Valor de venda (R$)": 2738.08,
+        "% do Total": 0.0032100869692643324
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14208-TUDU PHOOTO SERVICOS E COMERCIO LTDA",
+        "Valor de venda (R$)": 2255.8,
+        "% do Total": 0.00264466859451385
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "109456-58.917.343 ANA PAULA DE SOUZA PEDRONI",
+        "Valor de venda (R$)": 1432.0000000000002,
+        "% do Total": 0.0016788569143292105
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "141197-56.066.961 LUCAS DELLA TORRE",
+        "Valor de venda (R$)": 1425.8501999999999,
+        "% do Total": 0.0016716469742092787
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "102349-GRAFICA EDUARDO LT",
+        "Valor de venda (R$)": 1129.8,
+        "% do Total": 0.0013245618308723056
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12625-PEDRO HENRIQUE TEIXEIRA SOARES",
+        "Valor de venda (R$)": 1121.4,
+        "% do Total": 0.0013147137875200953
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11026-MACARIO GOMES DE CAMPOS NETO 0",
+        "Valor de venda (R$)": 1014.5,
+        "% do Total": 0.0011893857120020836
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13043-T GOMES DA SILVA LTDA",
+        "Valor de venda (R$)": 1004.45,
+        "% do Total": 0.001177603231562832
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11486-JOSE AUGUSTO MARQUESINI BOLSAS",
+        "Valor de venda (R$)": 822.15,
+        "% do Total": 0.0009638772430975979
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "31302-49.656.925 TAINA GALVAO DE SOUSA",
+        "Valor de venda (R$)": 729.6,
+        "% do Total": 0.0008553729083062792
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10959-MARINA LOCCI FURTADO ME",
+        "Valor de venda (R$)": 693.0,
+        "% do Total": 0.0008124635765573622
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11550-PUPUB LEMOS COMERCIAL E IMPORTADORA LTDA",
+        "Valor de venda (R$)": 570.0,
+        "% do Total": 0.0006682600846142806
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13232-AQUIMOS COMERCIO DE BRINDES E MATER",
+        "Valor de venda (R$)": 539.0,
+        "% do Total": 0.0006319161151001707
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11684-AGENCIA AWAKE LTDA",
+        "Valor de venda (R$)": 512.5001,
+        "% do Total": 0.0006008480003347847
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "42397-FOR U BRINDES CORPORATIVOS LIMITADA",
+        "Valor de venda (R$)": 500.0,
+        "% do Total": 0.0005861930566791935
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "161575-RICARTS COMUNICACAO VISUAL LTDA",
+        "Valor de venda (R$)": 389.4,
+        "% do Total": 0.0004565271525417559
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "102343-TEMESVARI BRINDES E EMBALANGENS LTDA",
+        "Valor de venda (R$)": 345.0,
+        "% do Total": 0.0004044732091086435
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13899-BRINDES COTIA LTDA",
+        "Valor de venda (R$)": 334.0,
+        "% do Total": 0.00039157696186170127
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11928-ROMAR COMÉRCIO E SERVIÇOS DE BRINDES E COMUNICAÇÃO VISUAL LT",
+        "Valor de venda (R$)": 182.4,
+        "% do Total": 0.0002138432270765698
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11551-TNEWT BRINDES E CONFECCOES LTDA",
+        "Valor de venda (R$)": 154.05,
+        "% do Total": 0.00018060608076285955
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14013-BEMDITO SERVICOS DE COMUNICACAO EMPRESARIAL LTDA",
+        "Valor de venda (R$)": 147.0,
+        "% do Total": 0.0001723407586636829
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "20786-TRADICIONAL COMERCIO E SERVICOS LTDA",
+        "Valor de venda (R$)": 110.08,
+        "% do Total": 0.00012905626335849124
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "75079-CS BRINDES",
+        "Valor de venda (R$)": 105.0,
+        "% do Total": 0.00012310054190263064
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "35286-51.277.471 ANA PAULA VALADAO STORTI",
+        "Valor de venda (R$)": 98.96,
+        "% do Total": 0.00011601932977794597
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11424-SOLANGE SOARES DE MORAES",
+        "Valor de venda (R$)": 89.0,
+        "% do Total": 0.00010434236408889644
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "42658-VITOR HUGO DA SILVA",
+        "Valor de venda (R$)": 58.0,
+        "% do Total": 6.799839457478645e-05
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "157035-63.190.849 FABIANO DE LUCA GIMENES",
+        "Valor de venda (R$)": 3168.0,
+        "% do Total": 0.00371411920711937
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "37076-31.828.787 WILLIAM PEREIRA DOS ANJOS",
+        "Valor de venda (R$)": 1580.16,
+        "% do Total": 0.0018525576408843889
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "30259-17.540.180 MARIA TEREZA GOMES SAID",
+        "Valor de venda (R$)": 1224.89,
+        "% do Total": 0.0014360440263915548
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "162711-B.O.S.S ASSESSORIA E TREINAMENTOS LTDA",
+        "Valor de venda (R$)": 1013.0,
+        "% do Total": 0.001187627132832046
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "134750-EVAN BRINDES",
+        "Valor de venda (R$)": 717.5,
+        "% do Total": 0.0008411870363346427
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "13149-GAMA SOLD E LASER SERVIÇOS EM EQUIP",
+        "Valor de venda (R$)": 672.0,
+        "% do Total": 0.000787843468176836
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10324-KB BRINDES PROMOCIONAIS EIRELI",
+        "Valor de venda (R$)": 72.0,
+        "% do Total": 8.441180016180387e-05
+      }
+    ],
+    "5": [
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10770-WORLD PRESENTES LTDA",
+        "Valor de venda (R$)": 159447.14059999998,
+        "% do Total": 0.2294529050920756
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "5711-SUMPRO COMERCIO DE ARTIGOS PROMOCIO",
+        "Valor de venda (R$)": 31174.0,
+        "% do Total": 0.04486104195047801
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12681-MONACO BRINDES E MATERIAIS PROMOCIO",
+        "Valor de venda (R$)": 22849.100000000006,
+        "% do Total": 0.03288106863510193
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14280-BIZ MARKETING DIRETO LTDA",
+        "Valor de venda (R$)": 20005.9101,
+        "% do Total": 0.02878956733988554
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11095-DONNA BRINDES E PRESENTES PERS",
+        "Valor de venda (R$)": 18843.77,
+        "% do Total": 0.027117186003565764
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12606-1 MAIS 99 COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 18274.850000000002,
+        "% do Total": 0.0262984799027617
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "27145-ARS PRINT SIGN GIFT LTDA",
+        "Valor de venda (R$)": 16247.92,
+        "% do Total": 0.023381619963046472
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14941-F. RODRIGUES DA SILVA PROMOCAO DE VENDAS",
+        "Valor de venda (R$)": 14897.07,
+        "% do Total": 0.021437675056431883
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12888-LIMARI BRINDES PERSONALIZADOS LTD",
+        "Valor de venda (R$)": 12817.73,
+        "% do Total": 0.01844539434271831
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11368-LU&LU EMBALAGENS PERSONALIZADAS EIR",
+        "Valor de venda (R$)": 12752.322,
+        "% do Total": 0.01835126875627137
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11457-GRAFICA PATRICELLI LTDA EPP",
+        "Valor de venda (R$)": 11935.5,
+        "% do Total": 0.017175818509011686
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "98535-GUILHERME MANOEL MAGALHAES",
+        "Valor de venda (R$)": 10640.08,
+        "% do Total": 0.015311640316816645
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9152-POLYMARK COM IMPORTACAO E EXPO",
+        "Valor de venda (R$)": 10407.919999999998,
+        "% do Total": 0.014977549744569803
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10282-MICHAEL FILIPE OLIVEIRA 385003",
+        "Valor de venda (R$)": 9730.7,
+        "% do Total": 0.014002994190912825
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9808-EP BRINDES LTDA",
+        "Valor de venda (R$)": 9012.440000000002,
+        "% do Total": 0.012969379897227374
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "102404-ALIADO BRINDES PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 7412.82,
+        "% do Total": 0.010667441746049349
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10563-TATIANA DONIZETE CASAROTO",
+        "Valor de venda (R$)": 7045.849999999999,
+        "% do Total": 0.01013935242274894
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9137-IDAPLAST INDUSTRIA E COMERCIO",
+        "Valor de venda (R$)": 6971.4800000000005,
+        "% do Total": 0.010032330042244129
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9130-FLECHA BRINDES LTDA ME",
+        "Valor de venda (R$)": 6425.18,
+        "% do Total": 0.009246175323005463
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9232-LIRA BRINDES EIRELI",
+        "Valor de venda (R$)": 5501.26,
+        "% do Total": 0.007916605364742629
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9323-BRINDERIA BRINDES COMERCIO LTD",
+        "Valor de venda (R$)": 5026.71,
+        "% do Total": 0.007233702706835418
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "16154-THIAGO PARANHOS IBANHES",
+        "Valor de venda (R$)": 4025.3999999999996,
+        "% do Total": 0.00579276442764657
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10067-VALBERTO FORMIGAO BRUCKNER LTDA",
+        "Valor de venda (R$)": 3951.16,
+        "% do Total": 0.005685929124047306
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11233-MB BRINDES & PRESENTES LTDA",
+        "Valor de venda (R$)": 3809.5299999999997,
+        "% do Total": 0.00548211603071805
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12085-AMANDA GRAZIELA FERREIRA 4429204586",
+        "Valor de venda (R$)": 3561.4,
+        "% do Total": 0.005125043780151164
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "91700-FMB 3 NIEDZIELSKI COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 3233.23,
+        "% do Total": 0.00465278971789132
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12790-CLAUDINEIDE MARIA SANTOS NASCIMENT",
+        "Valor de venda (R$)": 2905.2,
+        "% do Total": 0.004180737123068221
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13398-CHINEN EDITORA IMPRESSAO DIGITAL LT",
+        "Valor de venda (R$)": 2895.6499999999996,
+        "% do Total": 0.00416699416577602
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "39863-MAEDU ARTIGOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 2454.3,
+        "% do Total": 0.0035318680714396034
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13085-CRIARTE PHELIPE TADEU DOS SANTOS",
+        "Valor de venda (R$)": 2321.5499999999997,
+        "% do Total": 0.003340833769812415
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "30363-DANIELE DE OLIVEIRA FARIAS",
+        "Valor de venda (R$)": 1686.3,
+        "% do Total": 0.0024266752755851373
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9634-A AMARAL DE LIMA BRINDES EPP",
+        "Valor de venda (R$)": 869.7,
+        "% do Total": 0.0012515444981180063
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12643-AM ASSUNCAO BRINDES",
+        "Valor de venda (R$)": 645.0,
+        "% do Total": 0.000928189262143399
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11248-CAMPINAS PROMOCIONAL LTDA",
+        "Valor de venda (R$)": 498.59999999999997,
+        "% do Total": 0.0007175118854336413
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13204-VANESSA APARECIDA GUIRRO",
+        "Valor de venda (R$)": 169.95,
+        "% do Total": 0.0002445670776763886
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9044-ARTHUR MARQUES ESCALERA 423514",
+        "Valor de venda (R$)": 19610.4,
+        "% do Total": 0.028220407296646374
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "167141-ORIENTAVIDA ASSOCIAÇÃO DE ASSISTENCIA E PROMOÇÃO COMUNITARIA",
+        "Valor de venda (R$)": 17523.148400000013,
+        "% do Total": 0.025216741370271772
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34478-MIRA CASSIANI COMERCIO E IMPORTACOES LTDA",
+        "Valor de venda (R$)": 12564.8,
+        "% do Total": 0.018081414637177332
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "112273-62.304.341 THIAGO DO NASCIMENTO LIMA",
+        "Valor de venda (R$)": 11504.18,
+        "% do Total": 0.016555126117464878
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5284-MARCA BRINDES DE INDAIATUBA LT",
+        "Valor de venda (R$)": 10380.500000000002,
+        "% do Total": 0.014938090908030317
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "14183-GRUPO CM BUSINESS LTDA",
+        "Valor de venda (R$)": 9952.06,
+        "% do Total": 0.01432154298946796
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11580-LA PAPELETA COMERCIO DE BRINDE",
+        "Valor de venda (R$)": 9340.969699999996,
+        "% do Total": 0.01344215158689433
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11174-NARA MARIA FRANCO 14130328859",
+        "Valor de venda (R$)": 7734.05,
+        "% do Total": 0.011129708779659155
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "39873-ROBERTO FURLAN EPP",
+        "Valor de venda (R$)": 7592.200000000001,
+        "% do Total": 0.010925579094643588
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10001-APOENA PRODUCAO GRAFICA LTDA",
+        "Valor de venda (R$)": 6554.1,
+        "% do Total": 0.009431698051184576
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11237-FLAVIO HENRIQUE CAMARGO MORILL",
+        "Valor de venda (R$)": 5333.4,
+        "% do Total": 0.007675045908086207
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13157-KARINA M.L. DE FARIA",
+        "Valor de venda (R$)": 5152.15,
+        "% do Total": 0.007414217530158314
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "33618-TROVAO BRINDES LTDA",
+        "Valor de venda (R$)": 5040.0,
+        "% do Total": 0.007252827722794931
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10143-LUANA DA CUNHA 30553126865",
+        "Valor de venda (R$)": 4779.6,
+        "% do Total": 0.0068780982904505265
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13206-FERNANDO HERNANDES PROMOCIONAIS LTD",
+        "Valor de venda (R$)": 4373.53,
+        "% do Total": 0.006293741990173673
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13050-48.087.279 EDUARDO DE ANDRADE GODOY",
+        "Valor de venda (R$)": 3838.77,
+        "% do Total": 0.0055241939439352175
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9276-S NARAZAKI BRINDES PROMOCIONAI",
+        "Valor de venda (R$)": 3681.34,
+        "% do Total": 0.005297643811316249
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34095-LUIZ HENRIQUE BULHER PEREIRA",
+        "Valor de venda (R$)": 3083.8199999999997,
+        "% do Total": 0.00443778079129156
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "159212-FERNANDO AUGUSTO ESTAMPARIA ME  ( PROSILK BRINDES )",
+        "Valor de venda (R$)": 3019.2,
+        "% do Total": 0.004344789178702868
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10606-OFICINA DO CONVITE LTDA ME",
+        "Valor de venda (R$)": 2747.0,
+        "% do Total": 0.003953078919547158
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10418-MARCELO CARVALHO DA SILVA CONF",
+        "Valor de venda (R$)": 2717.8,
+        "% do Total": 0.003911058568454775
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10665-SERIGRAFIA RIO PRETO SOUZA COM",
+        "Valor de venda (R$)": 2665.6,
+        "% do Total": 0.003835939995611541
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36197-PIXEL GRAFICA, EDITORA E PRODUTOS DIGITAIS LTDA",
+        "Valor de venda (R$)": 2609.8,
+        "% do Total": 0.0037556408315377408
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "18029-AGATHA APARECIDA DAMACENA",
+        "Valor de venda (R$)": 2241.63,
+        "% do Total": 0.00322582464449381
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11839-MAURO ADRIANO CEARA",
+        "Valor de venda (R$)": 1908.51,
+        "% do Total": 0.0027464472692919355
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "127251-63.279.563 MAYARA FERNANDES RIBEIRO",
+        "Valor de venda (R$)": 1788.9,
+        "% do Total": 0.00257432212565632
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10214-VISUAL SERIGRAFIA SOROCABA LTD",
+        "Valor de venda (R$)": 1214.5,
+        "% do Total": 0.001747730013756834
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11289-ETC SOLUCOES LTDA",
+        "Valor de venda (R$)": 1118.3,
+        "% do Total": 0.0016092931036511054
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "38552-ALVES E SILVA SOLUCOES EMPRESARIAIS LTDA",
+        "Valor de venda (R$)": 1063.9,
+        "% do Total": 0.0015310086139447476
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12192-39.804.434 KARINE PRADO MEDEIROS",
+        "Valor de venda (R$)": 790.0,
+        "% do Total": 0.0011368519644857134
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9426-PAULO FRANCISCO LEITE 30603316859",
+        "Valor de venda (R$)": 671.7,
+        "% do Total": 0.0009666119804367769
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36207-WR CONFECÇÃO",
+        "Valor de venda (R$)": 595.0,
+        "% do Total": 0.0008562366061632905
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19333-SELETO PRINT E EDITORA LTDA",
+        "Valor de venda (R$)": 281.0,
+        "% do Total": 0.00040437392660820946
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9324-SUGESTAO BRINDES E COMERCIO EI",
+        "Valor de venda (R$)": 223.0,
+        "% do Total": 0.00032090884567128366
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5601-KATIA GISLENE DE CASTRO BRINDE",
+        "Valor de venda (R$)": 201.24,
+        "% do Total": 0.0002895950497887405
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "94757-JOYCE SIQUEIRA PRETEL",
+        "Valor de venda (R$)": 188.5,
+        "% do Total": 0.00027126151304500884
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "122022-PINHA.INC LTDA",
+        "Valor de venda (R$)": 119.0,
+        "% do Total": 0.0001712473212326581
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "148229-ON GRAFICA E ACABAMENTOS GRÁFICOS LTDA",
+        "Valor de venda (R$)": 82.9,
+        "% do Total": 0.00011929750361501981
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "76647-RA BORGES COMERCIO E SERVICOS LTDA",
+        "Valor de venda (R$)": 14459.75,
+        "% do Total": 0.02080834834616746
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "170037-GOHEAD360",
+        "Valor de venda (R$)": 9402.5,
+        "% do Total": 0.013530696957059394
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10142-MGDIAS JUNIOR BRINDES ME",
+        "Valor de venda (R$)": 5000.0,
+        "% do Total": 0.007195265598010844
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "31649-ENGEBRINDES INDUSTRIA E COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 4747.200000000001,
+        "% do Total": 0.0068314729693754175
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "102343-TEMESVARI BRINDES E EMBALANGENS LTDA",
+        "Valor de venda (R$)": 4066.2,
+        "% do Total": 0.005851477794926339
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13043-T GOMES DA SILVA LTDA",
+        "Valor de venda (R$)": 2129.35,
+        "% do Total": 0.0030642477602248783
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "166533-58.607.956 CAROLINA NOCETTI ALENCAR",
+        "Valor de venda (R$)": 1944.8800999999996,
+        "% do Total": 0.002798785775157178
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14013-BEMDITO SERVICOS DE COMUNICACAO EMPRESARIAL LTDA",
+        "Valor de venda (R$)": 1917.0,
+        "% do Total": 0.002758664830277358
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "64346-LE FER BRINDES E EVENTOS LTDA",
+        "Valor de venda (R$)": 1901.9,
+        "% do Total": 0.0027369351281713653
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11451-40 WATTS ARTIGOS DECORATIVOS L",
+        "Valor de venda (R$)": 1761.1,
+        "% do Total": 0.0025343164489313795
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "72631-L. A. FELIX BRINDES CORPORATIVOS LTDA",
+        "Valor de venda (R$)": 1540.0,
+        "% do Total": 0.00221614180418734
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "34584-TACA SOLUÇÕES PERSONALIZADAS",
+        "Valor de venda (R$)": 1537.16,
+        "% do Total": 0.00221205489332767
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "127252-63.280.402 MAYARA MIRELE DA SILVA",
+        "Valor de venda (R$)": 1156.5500000000002,
+        "% do Total": 0.0016643368854758888
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "35286-51.277.471 ANA PAULA VALADAO STORTI",
+        "Valor de venda (R$)": 1101.0,
+        "% do Total": 0.0015843974846819879
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "141197-56.066.961 LUCAS DELLA TORRE",
+        "Valor de venda (R$)": 1074.8999999999999,
+        "% do Total": 0.001546838198260371
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11407-WT7 BRINDES LTDA",
+        "Valor de venda (R$)": 1049.45,
+        "% do Total": 0.0015102142963664962
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "102349-GRAFICA EDUARDO LT",
+        "Valor de venda (R$)": 1020.0,
+        "% do Total": 0.0014678341819942123
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9915-SIMIONATTO COMERCIO DE BRINDES",
+        "Valor de venda (R$)": 1008.0,
+        "% do Total": 0.0014505655445589862
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13125-48.912.136 KARLA CRISTINA FROHLICKI",
+        "Valor de venda (R$)": 943.5,
+        "% do Total": 0.0013577466183446463
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "75079-CS BRINDES",
+        "Valor de venda (R$)": 746.2,
+        "% do Total": 0.0010738214378471385
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9107-VM MACHADO JUNIOR ACESSORIOS M",
+        "Valor de venda (R$)": 495.88,
+        "% do Total": 0.0007135976609483235
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10886-REDOMA INDUSTRIA GRAFICA LTDA",
+        "Valor de venda (R$)": 489.3,
+        "% do Total": 0.0007041286914213412
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "170027-DACAR BRINDES ESPECIAIS LTDA",
+        "Valor de venda (R$)": 348.0,
+        "% do Total": 0.0005007904856215548
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9833-BRINDES VALE DO PARAIBA LTDA",
+        "Valor de venda (R$)": 316.0,
+        "% do Total": 0.00045474078579428535
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12836-TROCHMANN & CAMPOS COMERCIO DE BRIN",
+        "Valor de venda (R$)": 237.35,
+        "% do Total": 0.0003415592579375748
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10959-MARINA LOCCI FURTADO ME",
+        "Valor de venda (R$)": 211.65,
+        "% do Total": 0.00030457559276379905
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11633-PATRICIA RODRIGUES BENEDETTI 2",
+        "Valor de venda (R$)": 157.98,
+        "% do Total": 0.00022734161183475063
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "67423-45.009.112 KARINE APARECIDA GARCIA DE LIMA",
+        "Valor de venda (R$)": 142.4,
+        "% do Total": 0.00020492116423134887
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11818-LETICIA ORLOSKI DE CASTRO 4563",
+        "Valor de venda (R$)": 141.0,
+        "% do Total": 0.00020290648986390583
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14208-TUDU PHOOTO SERVICOS E COMERCIO LTDA",
+        "Valor de venda (R$)": 49.5,
+        "% do Total": 7.123312942030736e-05
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "36316-KOMUNIK COMUNICAÇÃO VISUAL RIBEIRÃO PRETO LTDA",
+        "Valor de venda (R$)": 2655.58,
+        "% do Total": 0.0038215206833531277
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "14381-SR2 GRAFICA DIGITAL E INFORMATICA LTDA",
+        "Valor de venda (R$)": 2034.0,
+        "% do Total": 0.0029270340452708116
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "34008-53.824.834 CARLA VIVIANE CEOLIN GOMES",
+        "Valor de venda (R$)": 1987.7099999999998,
+        "% do Total": 0.002860420276364427
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "13148-ARTE OPCIONAL COMERCIO DE BRINDES L",
+        "Valor de venda (R$)": 824.67,
+        "% do Total": 0.0011867439361423206
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "14212-CLAITON BARBOSA RIBEIRO 21923133810",
+        "Valor de venda (R$)": 446.95,
+        "% do Total": 0.0006431847918061894
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "87927-57.555.937 TASSIANA APARECIDA TREVISAN BERNARDO",
+        "Valor de venda (R$)": 417.15,
+        "% do Total": 0.0006003010088420447
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "79779-20.180.281 DAIANE DI CASSIA FONSECA EVANGELISTA",
+        "Valor de venda (R$)": 409.5,
+        "% do Total": 0.0005892922524770881
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "35056-W A MOREIRA IMPRESSOS LTDA",
+        "Valor de venda (R$)": 283.5,
+        "% do Total": 0.00040797155940721486
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "134744-62.645.455 FRANK RODRIGUES DA SILVA",
+        "Valor de venda (R$)": 13.4,
+        "% do Total": 1.9283311802669064e-05
+      }
+    ],
+    "6": [
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10770-WORLD PRESENTES LTDA",
+        "Valor de venda (R$)": 110089.63999999998,
+        "% do Total": 0.16332932229684963
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9137-IDAPLAST INDUSTRIA E COMERCIO",
+        "Valor de venda (R$)": 97760.26000000002,
+        "% do Total": 0.1450374169028423
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12681-MONACO BRINDES E MATERIAIS PROMOCIO",
+        "Valor de venda (R$)": 39661.44,
+        "% do Total": 0.05884183213349744
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11095-DONNA BRINDES E PRESENTES PERS",
+        "Valor de venda (R$)": 16861.649999999998,
+        "% do Total": 0.02501599485025725
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "102404-ALIADO BRINDES PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 15693.64,
+        "% do Total": 0.02328313168769315
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11368-LU&LU EMBALAGENS PERSONALIZADAS EIR",
+        "Valor de venda (R$)": 15551.35,
+        "% do Total": 0.02307202981407799
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "5711-SUMPRO COMERCIO DE ARTIGOS PROMOCIO",
+        "Valor de venda (R$)": 12932.4,
+        "% do Total": 0.019186547686701295
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "27145-ARS PRINT SIGN GIFT LTDA",
+        "Valor de venda (R$)": 12461.96,
+        "% do Total": 0.018488601482305224
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13398-CHINEN EDITORA IMPRESSAO DIGITAL LT",
+        "Valor de venda (R$)": 10558.81,
+        "% do Total": 0.015665082396138265
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9323-BRINDERIA BRINDES COMERCIO LTD",
+        "Valor de venda (R$)": 8836.91,
+        "% do Total": 0.013110466357218114
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11457-GRAFICA PATRICELLI LTDA EPP",
+        "Valor de venda (R$)": 8654.3,
+        "% do Total": 0.012839545609865067
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10282-MICHAEL FILIPE OLIVEIRA 385003",
+        "Valor de venda (R$)": 7936.7,
+        "% do Total": 0.011774912083220606
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9634-A AMARAL DE LIMA BRINDES EPP",
+        "Valor de venda (R$)": 7622.23,
+        "% do Total": 0.011308363441743621
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9152-POLYMARK COM IMPORTACAO E EXPO",
+        "Valor de venda (R$)": 6591.890000000001,
+        "% do Total": 0.009779747906845552
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13204-VANESSA APARECIDA GUIRRO",
+        "Valor de venda (R$)": 6120.04,
+        "% do Total": 0.009079709822192276
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14280-BIZ MARKETING DIRETO LTDA",
+        "Valor de venda (R$)": 5835.449999999999,
+        "% do Total": 0.008657491238931756
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "91700-FMB 3 NIEDZIELSKI COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 5277.3,
+        "% do Total": 0.007829418213713522
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9808-EP BRINDES LTDA",
+        "Valor de venda (R$)": 4448.500000000001,
+        "% do Total": 0.006599808031323709
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "39863-MAEDU ARTIGOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 4215.04,
+        "% do Total": 0.0062534460704396265
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14941-F. RODRIGUES DA SILVA PROMOCAO DE VENDAS",
+        "Valor de venda (R$)": 3965.75,
+        "% do Total": 0.005883598673760142
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10563-TATIANA DONIZETE CASAROTO",
+        "Valor de venda (R$)": 3855.0,
+        "% do Total": 0.005719289639373472
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9232-LIRA BRINDES EIRELI",
+        "Valor de venda (R$)": 3783.9300000000003,
+        "% do Total": 0.005613849972792339
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12085-AMANDA GRAZIELA FERREIRA 4429204586",
+        "Valor de venda (R$)": 3125.4,
+        "% do Total": 0.004636852876497497
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "16154-THIAGO PARANHOS IBANHES",
+        "Valor de venda (R$)": 2603.95,
+        "% do Total": 0.003863228082087303
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12643-AM ASSUNCAO BRINDES",
+        "Valor de venda (R$)": 1638.3000000000002,
+        "% do Total": 0.002430586826507279
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13085-CRIARTE PHELIPE TADEU DOS SANTOS",
+        "Valor de venda (R$)": 1590.8,
+        "% do Total": 0.002360115683090874
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "98535-GUILHERME MANOEL MAGALHAES",
+        "Valor de venda (R$)": 1346.5,
+        "% do Total": 0.0019976714654776602
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "30363-DANIELE DE OLIVEIRA FARIAS",
+        "Valor de venda (R$)": 1111.0,
+        "% do Total": 0.0016482829544342225
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11248-CAMPINAS PROMOCIONAL LTDA",
+        "Valor de venda (R$)": 1091.4999999999998,
+        "% do Total": 0.0016193526955580139
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10067-VALBERTO FORMIGAO BRUCKNER LTDA",
+        "Valor de venda (R$)": 895.2,
+        "% do Total": 0.0013281214228708516
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12790-CLAUDINEIDE MARIA SANTOS NASCIMENT",
+        "Valor de venda (R$)": 861.5,
+        "% do Total": 0.0012781240011206865
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12888-LIMARI BRINDES PERSONALIZADOS LTD",
+        "Valor de venda (R$)": 751.85,
+        "% do Total": 0.0011154469300552387
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11233-MB BRINDES & PRESENTES LTDA",
+        "Valor de venda (R$)": 632.74,
+        "% do Total": 0.0009387349744272817
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12606-1 MAIS 99 COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 497.3,
+        "% do Total": 0.0007377957814942744
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9130-FLECHA BRINDES LTDA ME",
+        "Valor de venda (R$)": 422.25,
+        "% do Total": 0.000626451374896355
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "167141-ORIENTAVIDA ASSOCIAÇÃO DE ASSISTENCIA E PROMOÇÃO COMUNITARIA",
+        "Valor de venda (R$)": 26402.65,
+        "% do Total": 0.039171051257329184
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5284-MARCA BRINDES DE INDAIATUBA LT",
+        "Valor de venda (R$)": 25504.050000000003,
+        "% do Total": 0.037837885584192744
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "38552-ALVES E SILVA SOLUCOES EMPRESARIAIS LTDA",
+        "Valor de venda (R$)": 21488.2,
+        "% do Total": 0.03187995839916603
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9044-ARTHUR MARQUES ESCALERA 423514",
+        "Valor de venda (R$)": 11757.9,
+        "% do Total": 0.017444055940541985
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9324-SUGESTAO BRINDES E COMERCIO EI",
+        "Valor de venda (R$)": 11515.3,
+        "% do Total": 0.017084133848061567
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "39873-ROBERTO FURLAN EPP",
+        "Valor de venda (R$)": 10358.1,
+        "% do Total": 0.015367308434136022
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "123961-BARROS E BASTOS COMERCIO E SERVIÇOS LTDA",
+        "Valor de venda (R$)": 8131.35,
+        "% do Total": 0.012063695410925937
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11174-NARA MARIA FRANCO 14130328859",
+        "Valor de venda (R$)": 6605.4,
+        "% do Total": 0.009799791383636194
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12828-RICCA BRINDES PRESENTES E PRODUTOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 6374.31,
+        "% do Total": 0.00945694556190784
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9276-S NARAZAKI BRINDES PROMOCIONAI",
+        "Valor de venda (R$)": 6133.4400000000005,
+        "% do Total": 0.0090995901026508
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10102-CARLOS RUSSEL ALVES PEREIRA 06",
+        "Valor de venda (R$)": 5767.25,
+        "% do Total": 0.008556309513015994
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34095-LUIZ HENRIQUE BULHER PEREIRA",
+        "Valor de venda (R$)": 4737.6,
+        "% do Total": 0.007028717664201236
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11064-ROSEMARY APARECIDA RAMOS CAMPO",
+        "Valor de venda (R$)": 4654.951,
+        "% do Total": 0.006906099358259711
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10418-MARCELO CARVALHO DA SILVA CONF",
+        "Valor de venda (R$)": 4603.1,
+        "% do Total": 0.0068291730581063635
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10404-LIDIANE DOS SANTOS LIMA 381181",
+        "Valor de venda (R$)": 4557.14,
+        "% do Total": 0.00676098666333967
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "18029-AGATHA APARECIDA DAMACENA",
+        "Valor de venda (R$)": 4061.74,
+        "% do Total": 0.006026009727582051
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "14183-GRUPO CM BUSINESS LTDA",
+        "Valor de venda (R$)": 3565.8,
+        "% do Total": 0.005290231646194015
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "127251-63.279.563 MAYARA FERNANDES RIBEIRO",
+        "Valor de venda (R$)": 3385.5399999999995,
+        "% do Total": 0.005022797365936307
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13157-KARINA M.L. DE FARIA",
+        "Valor de venda (R$)": 2533.96,
+        "% do Total": 0.0037593907067670048
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "94757-JOYCE SIQUEIRA PRETEL",
+        "Valor de venda (R$)": 2424.56,
+        "% do Total": 0.00359708453645638
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10665-SERIGRAFIA RIO PRETO SOUZA COM",
+        "Valor de venda (R$)": 2252.47,
+        "% do Total": 0.003341771292866294
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10667-CONDRI INDUSTRIA E COMERCIO DE",
+        "Valor de venda (R$)": 1340.0,
+        "% do Total": 0.0019880280458522575
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13897-MERCADO DA AVIACAO SERVICOS LTDA",
+        "Valor de venda (R$)": 1249.5,
+        "% do Total": 0.0018537619726062655
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11839-MAURO ADRIANO CEARA",
+        "Valor de venda (R$)": 1150.4,
+        "% do Total": 0.0017067369133943562
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "148229-ON GRAFICA E ACABAMENTOS GRÁFICOS LTDA",
+        "Valor de venda (R$)": 858.88,
+        "% do Total": 0.0012742369612101395
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10143-LUANA DA CUNHA 30553126865",
+        "Valor de venda (R$)": 849.0,
+        "% do Total": 0.0012595789633795273
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "87919-RM INDUSTRIA E COMERCIO DE VESTUARIO E BRINDES LTDA",
+        "Valor de venda (R$)": 791.0357,
+        "% do Total": 0.0011735829528883377
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34067-GUIMARAES OFICIAL CONSULTORIA E TREINAMENTO LTDA",
+        "Valor de venda (R$)": 784.61,
+        "% do Total": 0.0011640497649672685
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "159212-FERNANDO AUGUSTO ESTAMPARIA ME  ( PROSILK BRINDES )",
+        "Valor de venda (R$)": 632.4,
+        "% do Total": 0.0009382305494007221
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "98162-MERCADO BRINDE CORPORATIVO LTDA",
+        "Valor de venda (R$)": 374.0,
+        "% do Total": 0.0005548675292154808
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19333-SELETO PRINT E EDITORA LTDA",
+        "Valor de venda (R$)": 170.0,
+        "% do Total": 0.00025221251327976405
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19351-LEANDRO PIRES RODRIGUES 41772502871",
+        "Valor de venda (R$)": 21.0,
+        "% do Total": 3.115566340514732e-05
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13050-48.087.279 EDUARDO DE ANDRADE GODOY",
+        "Valor de venda (R$)": 0,
+        "% do Total": 0
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9915-SIMIONATTO COMERCIO DE BRINDES",
+        "Valor de venda (R$)": 8280.0,
+        "% do Total": 0.0122842329997438
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "34584-TACA SOLUÇÕES PERSONALIZADAS",
+        "Valor de venda (R$)": 6127.1,
+        "% do Total": 0.009090184059508484
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "176966-VISUAL GERENCIAMENTO LTDA",
+        "Valor de venda (R$)": 4142.900000000001,
+        "% do Total": 0.00614641894862785
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11486-JOSE AUGUSTO MARQUESINI BOLSAS",
+        "Valor de venda (R$)": 4107.22,
+        "% do Total": 0.006093483992899485
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11058-SILVEIRA E MARTINS COMERCIALIZ",
+        "Valor de venda (R$)": 3103.56,
+        "% do Total": 0.004604450986556144
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27958-51.381.327 BEATRIZ DA SILVA ABDALA ANDRADE",
+        "Valor de venda (R$)": 2414.7499000000003,
+        "% do Total": 0.0035825302424768173
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "172690-SLM BRINDES CORPORATIVOS ATACADOS LTDA",
+        "Valor de venda (R$)": 2060.0699999999997,
+        "% do Total": 0.003056326071954373
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11550-PUPUB LEMOS COMERCIAL E IMPORTADORA LTDA",
+        "Valor de venda (R$)": 1667.0,
+        "% do Total": 0.0024731662331609803
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27619-GRAFICA BOSQUEIRO LTDA",
+        "Valor de venda (R$)": 1487.8999999999999,
+        "% do Total": 0.002207452932405652
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11222-BRINDES RIO PRETO EIRELI ME",
+        "Valor de venda (R$)": 1310.0,
+        "% do Total": 0.0019435199552734757
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12515-ADELAIDE C D S TOMAZ",
+        "Valor de venda (R$)": 893.0,
+        "% do Total": 0.0013248574962284076
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9833-BRINDES VALE DO PARAIBA LTDA",
+        "Valor de venda (R$)": 872.3,
+        "% do Total": 0.0012941469137290479
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11451-40 WATTS ARTIGOS DECORATIVOS L",
+        "Valor de venda (R$)": 572.6600000000001,
+        "% do Total": 0.0008496001050281746
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27623-12.876.749 ADRIANA CRISTINA DE OLIVEIRA BUENO",
+        "Valor de venda (R$)": 569.03,
+        "% do Total": 0.0008442146260681418
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "170027-DACAR BRINDES ESPECIAIS LTDA",
+        "Valor de venda (R$)": 559.0,
+        "% do Total": 0.0008293340877846358
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13232-AQUIMOS COMERCIO DE BRINDES E MATER",
+        "Valor de venda (R$)": 494.7,
+        "% do Total": 0.0007339384136441133
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "31302-49.656.925 TAINA GALVAO DE SOUSA",
+        "Valor de venda (R$)": 444.0,
+        "% do Total": 0.0006587197405659719
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9326-DIGIPAPER COMERCIO DE INFORMAT",
+        "Valor de venda (R$)": 380.1,
+        "% do Total": 0.0005639175076331666
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10886-REDOMA INDUSTRIA GRAFICA LTDA",
+        "Valor de venda (R$)": 379.44,
+        "% do Total": 0.0005629383296404332
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "42658-VITOR HUGO DA SILVA",
+        "Valor de venda (R$)": 200.0,
+        "% do Total": 0.0002967206038585459
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "47397-BRINDES PARA TODAS OCASIOES LTDA",
+        "Valor de venda (R$)": 141.0,
+        "% do Total": 0.00020918802572027486
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "170037-GOHEAD360",
+        "Valor de venda (R$)": 68.7,
+        "% do Total": 0.00010192352742541052
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12733-ROSINEIDE MARIA SANTOS SILVA",
+        "Valor de venda (R$)": 36.0,
+        "% do Total": 5.3409708694538265e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13899-BRINDES COTIA LTDA",
+        "Valor de venda (R$)": 18.9,
+        "% do Total": 2.8040097064632586e-05
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "30051-PC ATA COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 14301.56,
+        "% do Total": 0.021217837596596126
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "153735-DIEGO HENRIQUE FERRETI LTDA",
+        "Valor de venda (R$)": 2675.85,
+        "% do Total": 0.00396989913917445
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "30342-MAICON ALEXANDRE DE SOUZA 06580523905",
+        "Valor de venda (R$)": 2520.4,
+        "% do Total": 0.0037392730498253955
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "11150-GRAVATAS PRIME LTDA",
+        "Valor de venda (R$)": 1764.0,
+        "% do Total": 0.002617075726032375
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "103047-NA CASA DA ARVORE LTDA",
+        "Valor de venda (R$)": 1486.0,
+        "% do Total": 0.0022046340866689962
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "13514-MARIANA TERESA DO PRADO MELO",
+        "Valor de venda (R$)": 552.5,
+        "% do Total": 0.0008196906681592331
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "14265-IDEIAS & CORES COMUNICACAO VISUAL GRAFICA E BRINDES LTDA",
+        "Valor de venda (R$)": 87.0,
+        "% do Total": 0.00012907346267846748
+      }
+    ],
+    "7": [
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10770-WORLD PRESENTES LTDA",
+        "Valor de venda (R$)": 117725.93000000001,
+        "% do Total": 0.12519431157494945
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12681-MONACO BRINDES E MATERIAIS PROMOCIO",
+        "Valor de venda (R$)": 89629.92000000001,
+        "% do Total": 0.09531592683886884
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14941-F. RODRIGUES DA SILVA PROMOCAO DE VENDAS",
+        "Valor de venda (R$)": 73146.76,
+        "% do Total": 0.0777870963698316
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10282-MICHAEL FILIPE OLIVEIRA 385003",
+        "Valor de venda (R$)": 28446.95,
+        "% do Total": 0.03025158791828621
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11457-GRAFICA PATRICELLI LTDA EPP",
+        "Valor de venda (R$)": 25445.629999999997,
+        "% do Total": 0.027059868037915526
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11095-DONNA BRINDES E PRESENTES PERS",
+        "Valor de venda (R$)": 25289.65,
+        "% do Total": 0.02689399286734384
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "5711-SUMPRO COMERCIO DE ARTIGOS PROMOCIO",
+        "Valor de venda (R$)": 16245.879999999997,
+        "% do Total": 0.01727649773103716
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "98535-GUILHERME MANOEL MAGALHAES",
+        "Valor de venda (R$)": 14875.0,
+        "% do Total": 0.015818650867123096
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9137-IDAPLAST INDUSTRIA E COMERCIO",
+        "Valor de venda (R$)": 14607.12,
+        "% do Total": 0.015533776904482094
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "91700-FMB 3 NIEDZIELSKI COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 9514.74,
+        "% do Total": 0.010118342867324425
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10563-TATIANA DONIZETE CASAROTO",
+        "Valor de venda (R$)": 8522.900000000001,
+        "% do Total": 0.009063581813472502
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11368-LU&LU EMBALAGENS PERSONALIZADAS EIR",
+        "Valor de venda (R$)": 8287.53,
+        "% do Total": 0.008813280243415711
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "102404-ALIADO BRINDES PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 8096.570000000001,
+        "% do Total": 0.00861020598663683
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9130-FLECHA BRINDES LTDA ME",
+        "Valor de venda (R$)": 6652.65,
+        "% do Total": 0.007074685559070014
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9152-POLYMARK COM IMPORTACAO E EXPO",
+        "Valor de venda (R$)": 6052.06,
+        "% do Total": 0.006435994901975195
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13398-CHINEN EDITORA IMPRESSAO DIGITAL LT",
+        "Valor de venda (R$)": 5961.780000000001,
+        "% do Total": 0.0063399876548972875
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11248-CAMPINAS PROMOCIONAL LTDA",
+        "Valor de venda (R$)": 5955.1,
+        "% do Total": 0.006332883884289395
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12643-AM ASSUNCAO BRINDES",
+        "Valor de venda (R$)": 5730.0,
+        "% do Total": 0.006093503829822881
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13085-CRIARTE PHELIPE TADEU DOS SANTOS",
+        "Valor de venda (R$)": 5461.345000000001,
+        "% do Total": 0.005807805702178716
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14280-BIZ MARKETING DIRETO LTDA",
+        "Valor de venda (R$)": 5069.5152,
+        "% do Total": 0.0053911187236553755
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9323-BRINDERIA BRINDES COMERCIO LTD",
+        "Valor de venda (R$)": 4900.099999999999,
+        "% do Total": 0.005210956041276631
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9232-LIRA BRINDES EIRELI",
+        "Valor de venda (R$)": 4678.280000000001,
+        "% do Total": 0.0049750640657912374
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "16154-THIAGO PARANHOS IBANHES",
+        "Valor de venda (R$)": 4498.66,
+        "% do Total": 0.0047840492040263525
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12888-LIMARI BRINDES PERSONALIZADOS LTD",
+        "Valor de venda (R$)": 4265.8,
+        "% do Total": 0.0045364168651410896
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13204-VANESSA APARECIDA GUIRRO",
+        "Valor de venda (R$)": 4095.46,
+        "% do Total": 0.0043552707146398625
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9808-EP BRINDES LTDA",
+        "Valor de venda (R$)": 3840.87,
+        "% do Total": 0.004084529852504678
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12790-CLAUDINEIDE MARIA SANTOS NASCIMENT",
+        "Valor de venda (R$)": 3048.6899999999996,
+        "% do Total": 0.0032420949722413114
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "30363-DANIELE DE OLIVEIRA FARIAS",
+        "Valor de venda (R$)": 2860.9,
+        "% do Total": 0.00304239181618504
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12085-AMANDA GRAZIELA FERREIRA 4429204586",
+        "Valor de venda (R$)": 2569.8,
+        "% do Total": 0.0027328248066106177
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11233-MB BRINDES & PRESENTES LTDA",
+        "Valor de venda (R$)": 2461.92,
+        "% do Total": 0.0026181010381706015
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10067-VALBERTO FORMIGAO BRUCKNER LTDA",
+        "Valor de venda (R$)": 2092.16,
+        "% do Total": 0.002224883939372118
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9634-A AMARAL DE LIMA BRINDES EPP",
+        "Valor de venda (R$)": 1839.56,
+        "% do Total": 0.0019562593202773083
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "27145-ARS PRINT SIGN GIFT LTDA",
+        "Valor de venda (R$)": 1713.19,
+        "% do Total": 0.0018218725700199407
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12606-1 MAIS 99 COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 1262.3099999999997,
+        "% do Total": 0.0013423893227615565
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "39863-MAEDU ARTIGOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 540.0,
+        "% do Total": 0.0005742569054283343
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5284-MARCA BRINDES DE INDAIATUBA LT",
+        "Valor de venda (R$)": 45540.31999999999,
+        "% do Total": 0.048429339324844584
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13206-FERNANDO HERNANDES PROMOCIONAIS LTD",
+        "Valor de venda (R$)": 30848.1,
+        "% do Total": 0.03280506378582185
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9324-SUGESTAO BRINDES E COMERCIO EI",
+        "Valor de venda (R$)": 19689.54,
+        "% do Total": 0.02093861909205075
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "94757-JOYCE SIQUEIRA PRETEL",
+        "Valor de venda (R$)": 17470.43,
+        "% do Total": 0.018578731607967285
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9276-S NARAZAKI BRINDES PROMOCIONAI",
+        "Valor de venda (R$)": 16469.84,
+        "% do Total": 0.017514665465369995
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "38552-ALVES E SILVA SOLUCOES EMPRESARIAIS LTDA",
+        "Valor de venda (R$)": 12982.95,
+        "% do Total": 0.013806571648760728
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10214-VISUAL SERIGRAFIA SOROCABA LTD",
+        "Valor de venda (R$)": 9528.720000000001,
+        "% do Total": 0.010133209740542737
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36197-PIXEL GRAFICA, EDITORA E PRODUTOS DIGITAIS LTDA",
+        "Valor de venda (R$)": 8527.0,
+        "% do Total": 0.009067941912198901
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11237-FLAVIO HENRIQUE CAMARGO MORILL",
+        "Valor de venda (R$)": 7898.9,
+        "% do Total": 0.008399996056088647
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13157-KARINA M.L. DE FARIA",
+        "Valor de venda (R$)": 7740.75,
+        "% do Total": 0.008231813223508109
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13897-MERCADO DA AVIACAO SERVICOS LTDA",
+        "Valor de venda (R$)": 7465.51,
+        "% do Total": 0.007939112351933859
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "112273-62.304.341 THIAGO DO NASCIMENTO LIMA",
+        "Valor de venda (R$)": 7306.4,
+        "% do Total": 0.007769908618188113
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34478-MIRA CASSIANI COMERCIO E IMPORTACOES LTDA",
+        "Valor de venda (R$)": 6286.99,
+        "% do Total": 0.006685828558997932
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11289-ETC SOLUCOES LTDA",
+        "Valor de venda (R$)": 5256.75,
+        "% do Total": 0.0055902314585377704
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "127251-63.279.563 MAYARA FERNANDES RIBEIRO",
+        "Valor de venda (R$)": 5182.75,
+        "% do Total": 0.005511536993719814
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5601-KATIA GISLENE DE CASTRO BRINDE",
+        "Valor de venda (R$)": 4736.9,
+        "% do Total": 0.005037402843191623
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "14183-GRUPO CM BUSINESS LTDA",
+        "Valor de venda (R$)": 4338.1,
+        "% do Total": 0.004613303484145661
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10102-CARLOS RUSSEL ALVES PEREIRA 06",
+        "Valor de venda (R$)": 4108.0,
+        "% do Total": 0.004368606236110365
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13050-48.087.279 EDUARDO DE ANDRADE GODOY",
+        "Valor de venda (R$)": 3803.2,
+        "% do Total": 0.004044470116157483
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10143-LUANA DA CUNHA 30553126865",
+        "Valor de venda (R$)": 2568.75,
+        "% do Total": 0.0027317081959611733
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10667-CONDRI INDUSTRIA E COMERCIO DE",
+        "Valor de venda (R$)": 2212.25,
+        "% do Total": 0.0023525922945070972
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10404-LIDIANE DOS SANTOS LIMA 381181",
+        "Valor de venda (R$)": 2207.6,
+        "% do Total": 0.002347647304488131
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12828-RICCA BRINDES PRESENTES E PRODUTOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 1754.97,
+        "% do Total": 0.0018663030394806737
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10665-SERIGRAFIA RIO PRETO SOUZA COM",
+        "Valor de venda (R$)": 1601.1,
+        "% do Total": 0.001702671724595011
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19351-LEANDRO PIRES RODRIGUES 41772502871",
+        "Valor de venda (R$)": 1101.24,
+        "% do Total": 0.0011711012491368497
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11064-ROSEMARY APARECIDA RAMOS CAMPO",
+        "Valor de venda (R$)": 928.2,
+        "% do Total": 0.0009870838141084813
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10606-OFICINA DO CONVITE LTDA ME",
+        "Valor de venda (R$)": 895.2,
+        "% do Total": 0.0009519903365545275
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "18029-AGATHA APARECIDA DAMACENA",
+        "Valor de venda (R$)": 814.68,
+        "% do Total": 0.0008663622513228802
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "33618-TROVAO BRINDES LTDA",
+        "Valor de venda (R$)": 780.0,
+        "% do Total": 0.0008294821967298161
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36207-WR CONFECÇÃO",
+        "Valor de venda (R$)": 761.64,
+        "% do Total": 0.0008099574619452528
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "87919-RM INDUSTRIA E COMERCIO DE VESTUARIO E BRINDES LTDA",
+        "Valor de venda (R$)": 757.4499,
+        "% do Total": 0.000805501547390743
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "98162-MERCADO BRINDE CORPORATIVO LTDA",
+        "Valor de venda (R$)": 724.68,
+        "% do Total": 0.0007706527670848245
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12192-39.804.434 KARINE PRADO MEDEIROS",
+        "Valor de venda (R$)": 490.5,
+        "% do Total": 0.0005216166890974036
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10001-APOENA PRODUCAO GRAFICA LTDA",
+        "Valor de venda (R$)": 423.6,
+        "% do Total": 0.0004504726391471156
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "167141-ORIENTAVIDA ASSOCIAÇÃO DE ASSISTENCIA E PROMOÇÃO COMUNITARIA",
+        "Valor de venda (R$)": 250.3,
+        "% do Total": 0.0002661787100531705
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11839-MAURO ADRIANO CEARA",
+        "Valor de venda (R$)": 246.0,
+        "% do Total": 0.00026160592358401893
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11174-NARA MARIA FRANCO 14130328859",
+        "Valor de venda (R$)": 163.26,
+        "% do Total": 0.00017361700440783305
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12733-ROSINEIDE MARIA SANTOS SILVA",
+        "Valor de venda (R$)": 69815.14000000003,
+        "% do Total": 0.07424412268230729
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "39346-44.129.431 SANDREANY LAVINIA TEIXEIRA BAHIA",
+        "Valor de venda (R$)": 22944.34,
+        "% do Total": 0.024399899417584348
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11684-AGENCIA AWAKE LTDA",
+        "Valor de venda (R$)": 6042.0,
+        "% do Total": 0.006425296708514806
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "176966-VISUAL GERENCIAMENTO LTDA",
+        "Valor de venda (R$)": 5173.86,
+        "% do Total": 0.005502083023554521
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "76647-RA BORGES COMERCIO E SERVICOS LTDA",
+        "Valor de venda (R$)": 4979.0,
+        "% do Total": 0.005294861355791993
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11928-ROMAR COMÉRCIO E SERVIÇOS DE BRINDES E COMUNICAÇÃO VISUAL LT",
+        "Valor de venda (R$)": 4491.9,
+        "% do Total": 0.00477686035832136
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "31302-49.656.925 TAINA GALVAO DE SOUSA",
+        "Valor de venda (R$)": 3105.03,
+        "% do Total": 0.003302009109374335
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11550-PUPUB LEMOS COMERCIAL E IMPORTADORA LTDA",
+        "Valor de venda (R$)": 2924.0,
+        "% do Total": 0.0031094947990230543
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13134-LIVE MOTION BRINDES E EVENTOS LTDA",
+        "Valor de venda (R$)": 2551.6,
+        "% do Total": 0.002713470222020255
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "127252-63.280.402 MAYARA MIRELE DA SILVA",
+        "Valor de venda (R$)": 2410.86,
+        "% do Total": 0.0025638018574462114
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27958-51.381.327 BEATRIZ DA SILVA ABDALA ANDRADE",
+        "Valor de venda (R$)": 2107.8,
+        "% do Total": 0.002241516120855265
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10731-EDIVALDO HENRIQUE CUBA ME",
+        "Valor de venda (R$)": 2026.58,
+        "% do Total": 0.002155143628523988
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27619-GRAFICA BOSQUEIRO LTDA",
+        "Valor de venda (R$)": 1601.6,
+        "% do Total": 0.001703203443951889
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11407-WT7 BRINDES LTDA",
+        "Valor de venda (R$)": 1175.0,
+        "% do Total": 0.0012495404886635052
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "109456-58.917.343 ANA PAULA DE SOUZA PEDRONI",
+        "Valor de venda (R$)": 1159.6599999999999,
+        "% do Total": 0.0012332273387944852
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "71553-BRUNO HENRIQUE DIAS DA SILVA",
+        "Valor de venda (R$)": 1069.6,
+        "% do Total": 0.0011374540482336042
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12515-ADELAIDE C D S TOMAZ",
+        "Valor de venda (R$)": 1056.0,
+        "% do Total": 0.0011229912817265204
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9326-DIGIPAPER COMERCIO DE INFORMAT",
+        "Valor de venda (R$)": 946.88,
+        "% do Total": 0.0010069488492814465
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "172690-SLM BRINDES CORPORATIVOS ATACADOS LTDA",
+        "Valor de venda (R$)": 935.0,
+        "% do Total": 0.0009943151973620232
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11026-MACARIO GOMES DE CAMPOS NETO 0",
+        "Valor de venda (R$)": 874.5,
+        "% do Total": 0.0009299771551797746
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "72631-L. A. FELIX BRINDES CORPORATIVOS LTDA",
+        "Valor de venda (R$)": 803.52,
+        "% do Total": 0.0008544942752773614
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "170025-TETTEO CRIATIVO",
+        "Valor de venda (R$)": 743.5295000000004,
+        "% do Total": 0.0007906980551197721
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27623-12.876.749 ADRIANA CRISTINA DE OLIVEIRA BUENO",
+        "Valor de venda (R$)": 504.5,
+        "% do Total": 0.00053650483108999
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11058-SILVEIRA E MARTINS COMERCIALIZ",
+        "Valor de venda (R$)": 405.0,
+        "% do Total": 0.0004306926790712507
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10959-MARINA LOCCI FURTADO ME",
+        "Valor de venda (R$)": 403.41,
+        "% do Total": 0.0004290018115163784
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "141197-56.066.961 LUCAS DELLA TORRE",
+        "Valor de venda (R$)": 399.73,
+        "% do Total": 0.00042508835704975565
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "42397-FOR U BRINDES CORPORATIVOS LIMITADA",
+        "Valor de venda (R$)": 344.76,
+        "% do Total": 0.00036663113095457874
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13125-48.912.136 KARLA CRISTINA FROHLICKI",
+        "Valor de venda (R$)": 269.1,
+        "% do Total": 0.0002861713578717866
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11818-LETICIA ORLOSKI DE CASTRO 4563",
+        "Valor de venda (R$)": 213.5,
+        "% do Total": 0.00022704416538694327
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "102349-GRAFICA EDUARDO LT",
+        "Valor de venda (R$)": 132.0,
+        "% do Total": 0.00014037391021581505
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "161575-RICARTS COMUNICACAO VISUAL LTDA",
+        "Valor de venda (R$)": 50.779999999999994,
+        "% do Total": 5.400141788453854e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11785-ZEST COMERCIO E INDUSTRIA DE U",
+        "Valor de venda (R$)": 36.0,
+        "% do Total": 3.828379369522228e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9107-VM MACHADO JUNIOR ACESSORIOS M",
+        "Valor de venda (R$)": 20.7,
+        "% do Total": 2.2013181374752813e-05
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "163071-INOVA MAIS TRADE SERVICES LTDA",
+        "Valor de venda (R$)": 16895.65,
+        "% do Total": 0.017967488304074512
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "12956-RAFAEL DA SILVA APPARECIDO 30812665",
+        "Valor de venda (R$)": 3065.28,
+        "% do Total": 0.003259737420502527
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "117801-SR SERVICOS EM PERSONALIZACOES LTDA",
+        "Valor de venda (R$)": 2251.75,
+        "% do Total": 0.002394598123700466
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "179653-UP9 MARKETING E CONSULTORIA LTDA",
+        "Valor de venda (R$)": 2175.62,
+        "% do Total": 0.0023136385344222085
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "172691-PAPEH STUDIO CRIATIVO",
+        "Valor de venda (R$)": 1634.0,
+        "% do Total": 0.0017376588582775892
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "38165-ARTE FINAL BRINDES",
+        "Valor de venda (R$)": 1182.0,
+        "% do Total": 0.0012569845596597984
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "11749-R MINALE COMERCIO DE BRINDES",
+        "Valor de venda (R$)": 877.0,
+        "% do Total": 0.0009326357519641651
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "104558-50.409.384 ENEDI PEREIRA SPINELLI",
+        "Valor de venda (R$)": 744.6,
+        "% do Total": 0.0007918364662628476
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10215-HELDER DE ALENCAR GOMES",
+        "Valor de venda (R$)": 290.6,
+        "% do Total": 0.00030903529021754437
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "34789-PERSONALIZE DESIGN E MATERIAIS GRAFICOS LTDA",
+        "Valor de venda (R$)": 219.0,
+        "% do Total": 0.00023289307831260222
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "176848-INOVA MAIS LASER",
+        "Valor de venda (R$)": 32.5,
+        "% do Total": 3.4561758197075676e-05
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "44910-BRINDE LOVERS LTDA",
+        "Valor de venda (R$)": 13.5,
+        "% do Total": 1.4356422635708356e-05
+      }
+    ],
+    "8": [
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10770-WORLD PRESENTES LTDA",
+        "Valor de venda (R$)": 129312.08,
+        "% do Total": 0.16357825772272994
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12085-AMANDA GRAZIELA FERREIRA 4429204586",
+        "Valor de venda (R$)": 35190.1,
+        "% do Total": 0.044515061911374706
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11457-GRAFICA PATRICELLI LTDA EPP",
+        "Valor de venda (R$)": 31909.377,
+        "% do Total": 0.040364985967882905
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12681-MONACO BRINDES E MATERIAIS PROMOCIO",
+        "Valor de venda (R$)": 30382.499999999996,
+        "% do Total": 0.03843350455163077
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9152-POLYMARK COM IMPORTACAO E EXPO",
+        "Valor de venda (R$)": 24025.299999999996,
+        "% do Total": 0.030391721448343442
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9137-IDAPLAST INDUSTRIA E COMERCIO",
+        "Valor de venda (R$)": 22941.250500000002,
+        "% do Total": 0.029020411602463648
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14941-F. RODRIGUES DA SILVA PROMOCAO DE VENDAS",
+        "Valor de venda (R$)": 20426.66,
+        "% do Total": 0.025839484245358816
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11095-DONNA BRINDES E PRESENTES PERS",
+        "Valor de venda (R$)": 20205.7312,
+        "% do Total": 0.025560011916209262
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12643-AM ASSUNCAO BRINDES",
+        "Valor de venda (R$)": 18801.2,
+        "% do Total": 0.02378329649555239
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "14280-BIZ MARKETING DIRETO LTDA",
+        "Valor de venda (R$)": 15973.899999999998,
+        "% do Total": 0.02020679530510309
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9808-EP BRINDES LTDA",
+        "Valor de venda (R$)": 12780.239999999998,
+        "% do Total": 0.016166853030887305
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11368-LU&LU EMBALAGENS PERSONALIZADAS EIR",
+        "Valor de venda (R$)": 12002.6311,
+        "% do Total": 0.015183186933708388
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "5711-SUMPRO COMERCIO DE ARTIGOS PROMOCIO",
+        "Valor de venda (R$)": 11005.249999999996,
+        "% do Total": 0.01392151159275354
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12606-1 MAIS 99 COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 8207.29,
+        "% do Total": 0.010382125156637992
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "102404-ALIADO BRINDES PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 8139.7300000000005,
+        "% do Total": 0.010296662552589339
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13204-VANESSA APARECIDA GUIRRO",
+        "Valor de venda (R$)": 7798.82,
+        "% do Total": 0.009865415418986228
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9232-LIRA BRINDES EIRELI",
+        "Valor de venda (R$)": 7764.1,
+        "% do Total": 0.009821495028036418
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13085-CRIARTE PHELIPE TADEU DOS SANTOS",
+        "Valor de venda (R$)": 6650.9800000000005,
+        "% do Total": 0.00841341134214779
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "91700-FMB 3 NIEDZIELSKI COMERCIO DE BRINDES LTDA",
+        "Valor de venda (R$)": 5145.27,
+        "% do Total": 0.006508705931518778
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "13398-CHINEN EDITORA IMPRESSAO DIGITAL LT",
+        "Valor de venda (R$)": 5110.139999999999,
+        "% do Total": 0.00646426689539934
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9130-FLECHA BRINDES LTDA ME",
+        "Valor de venda (R$)": 4438.71,
+        "% do Total": 0.005614915855784383
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9323-BRINDERIA BRINDES COMERCIO LTD",
+        "Valor de venda (R$)": 3886.1,
+        "% do Total": 0.004915870716303541
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "30363-DANIELE DE OLIVEIRA FARIAS",
+        "Valor de venda (R$)": 2294.75,
+        "% do Total": 0.002902831714633579
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10282-MICHAEL FILIPE OLIVEIRA 385003",
+        "Valor de venda (R$)": 2099.8,
+        "% do Total": 0.002656222261417405
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "16154-THIAGO PARANHOS IBANHES",
+        "Valor de venda (R$)": 2021.515,
+        "% do Total": 0.002557192658724262
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10067-VALBERTO FORMIGAO BRUCKNER LTDA",
+        "Valor de venda (R$)": 1758.1,
+        "% do Total": 0.0022239757871216014
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "10563-TATIANA DONIZETE CASAROTO",
+        "Valor de venda (R$)": 1527.0,
+        "% do Total": 0.001931637009803018
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11248-CAMPINAS PROMOCIONAL LTDA",
+        "Valor de venda (R$)": 1466.8,
+        "% do Total": 0.0018554847190432656
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12790-CLAUDINEIDE MARIA SANTOS NASCIMENT",
+        "Valor de venda (R$)": 1212.8500000000001,
+        "% do Total": 0.0015342409609296597
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "39863-MAEDU ARTIGOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 1205.9900000000002,
+        "% do Total": 0.0015255631417500602
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "12888-LIMARI BRINDES PERSONALIZADOS LTD",
+        "Valor de venda (R$)": 1141.2999999999995,
+        "% do Total": 0.0014437310538887905
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "9634-A AMARAL DE LIMA BRINDES EPP",
+        "Valor de venda (R$)": 1127.64,
+        "% do Total": 0.001426451314822708
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "27145-ARS PRINT SIGN GIFT LTDA",
+        "Valor de venda (R$)": 812.8599999999999,
+        "% do Total": 0.0010282583233716313
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "98535-GUILHERME MANOEL MAGALHAES",
+        "Valor de venda (R$)": 655.07,
+        "% do Total": 0.0008286558323586529
+      },
+      {
+        "Classe": "Fiel",
+        "Cliente_Pai": "11233-MB BRINDES & PRESENTES LTDA",
+        "Valor de venda (R$)": 490.2,
+        "% do Total": 0.0006200972247579825
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13206-FERNANDO HERNANDES PROMOCIONAIS LTD",
+        "Valor de venda (R$)": 38615.36,
+        "% do Total": 0.048847975457018376
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5284-MARCA BRINDES DE INDAIATUBA LT",
+        "Valor de venda (R$)": 24934.47,
+        "% do Total": 0.0315418107870485
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "112273-62.304.341 THIAGO DO NASCIMENTO LIMA",
+        "Valor de venda (R$)": 18836.92,
+        "% do Total": 0.023828481874720798
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10001-APOENA PRODUCAO GRAFICA LTDA",
+        "Valor de venda (R$)": 12356.75,
+        "% do Total": 0.01563114317019217
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10404-LIDIANE DOS SANTOS LIMA 381181",
+        "Valor de venda (R$)": 9192.970000000001,
+        "% do Total": 0.011628998743948167
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "13050-48.087.279 EDUARDO DE ANDRADE GODOY",
+        "Valor de venda (R$)": 7378.9301,
+        "% do Total": 0.009334259642376871
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12828-RICCA BRINDES PRESENTES E PRODUTOS PERSONALIZADOS LTDA",
+        "Valor de venda (R$)": 6503.75,
+        "% do Total": 0.008227167126723233
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9276-S NARAZAKI BRINDES PROMOCIONAI",
+        "Valor de venda (R$)": 6184.07,
+        "% do Total": 0.007822775693001013
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "33618-TROVAO BRINDES LTDA",
+        "Valor de venda (R$)": 5818.4,
+        "% do Total": 0.007360207451105356
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10102-CARLOS RUSSEL ALVES PEREIRA 06",
+        "Valor de venda (R$)": 5626.25,
+        "% do Total": 0.007117139964901264
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10606-OFICINA DO CONVITE LTDA ME",
+        "Valor de venda (R$)": 5199.08,
+        "% do Total": 0.006576774947561673
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11289-ETC SOLUCOES LTDA",
+        "Valor de venda (R$)": 5187.5,
+        "% do Total": 0.0065621263839902785
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "127251-63.279.563 MAYARA FERNANDES RIBEIRO",
+        "Valor de venda (R$)": 4605.870000000001,
+        "% do Total": 0.0058263712864056495
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10418-MARCELO CARVALHO DA SILVA CONF",
+        "Valor de venda (R$)": 4562.18,
+        "% do Total": 0.005771103951134992
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "14183-GRUPO CM BUSINESS LTDA",
+        "Valor de venda (R$)": 3831.08,
+        "% do Total": 0.00484627106451614
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "159212-FERNANDO AUGUSTO ESTAMPARIA ME  ( PROSILK BRINDES )",
+        "Valor de venda (R$)": 3085.5,
+        "% do Total": 0.0039031211484919525
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19333-SELETO PRINT E EDITORA LTDA",
+        "Valor de venda (R$)": 2936.43,
+        "% do Total": 0.0037145493547451705
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11237-FLAVIO HENRIQUE CAMARGO MORILL",
+        "Valor de venda (R$)": 2701.2000000000003,
+        "% do Total": 0.0034169861760837673
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9426-PAULO FRANCISCO LEITE 30603316859",
+        "Valor de venda (R$)": 2059.0,
+        "% do Total": 0.0026046107420985027
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9324-SUGESTAO BRINDES E COMERCIO EI",
+        "Valor de venda (R$)": 2048.5,
+        "% do Total": 0.002591328365803197
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "123961-BARROS E BASTOS COMERCIO E SERVIÇOS LTDA",
+        "Valor de venda (R$)": 1924.9,
+        "% do Total": 0.002434975821984171
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "167141-ORIENTAVIDA  ASSOCIAÇÃO DE ASSISTENCIA E PROMOÇÃO COMUNITARIA",
+        "Valor de venda (R$)": 1685.6,
+        "% do Total": 0.0021322641412730627
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10214-VISUAL SERIGRAFIA SOROCABA LTD",
+        "Valor de venda (R$)": 1531.52,
+        "% do Total": 0.0019373547565510922
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34095-LUIZ HENRIQUE BULHER PEREIRA",
+        "Valor de venda (R$)": 1472.6609999999998,
+        "% do Total": 0.0018628988149924832
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "11580-LA PAPELETA COMERCIO DE BRINDE",
+        "Valor de venda (R$)": 1382.9601,
+        "% do Total": 0.0017494282332946186
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "9044-ARTHUR MARQUES ESCALERA 423514",
+        "Valor de venda (R$)": 1363.9115,
+        "% do Total": 0.0017253319787137844
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "122022-PINHA.INC LTDA",
+        "Valor de venda (R$)": 1293.6000000000001,
+        "% do Total": 0.001636388759581653
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36197-PIXEL GRAFICA, EDITORA E PRODUTOS DIGITAIS LTDA",
+        "Valor de venda (R$)": 1132.8,
+        "% do Total": 0.0014329786540306867
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "18029-AGATHA APARECIDA DAMACENA",
+        "Valor de venda (R$)": 1088.1399999999999,
+        "% do Total": 0.0013764842801879866
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "148229-ON GRAFICA E ACABAMENTOS GRÁFICOS LTDA",
+        "Valor de venda (R$)": 1087.92,
+        "% do Total": 0.0013762059827798947
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "36207-WR CONFECÇÃO",
+        "Valor de venda (R$)": 1043.04,
+        "% do Total": 0.0013194333115291025
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "34067-GUIMARAES OFICIAL CONSULTORIA E TREINAMENTO LTDA",
+        "Valor de venda (R$)": 702.0799999999999,
+        "% do Total": 0.000888122928515064
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "87919-RM INDUSTRIA E COMERCIO DE VESTUARIO E BRINDES LTDA",
+        "Valor de venda (R$)": 466.52000000000004,
+        "% do Total": 0.0005901423037415219
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "19351-LEANDRO PIRES RODRIGUES 41772502871",
+        "Valor de venda (R$)": 322.88,
+        "% do Total": 0.0004084393960217409
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "10143-LUANA DA CUNHA 30553126865",
+        "Valor de venda (R$)": 172.3,
+        "% do Total": 0.0002179574700648723
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "98162-MERCADO BRINDE CORPORATIVO LTDA",
+        "Valor de venda (R$)": 136.0,
+        "% do Total": 0.00017203839772967283
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "12192-39.804.434 KARINE PRADO MEDEIROS",
+        "Valor de venda (R$)": 24.0,
+        "% do Total": 3.0359717246412855e-05
+      },
+      {
+        "Classe": "Recorrente",
+        "Cliente_Pai": "5601-KATIA GISLENE DE CASTRO BRINDE",
+        "Valor de venda (R$)": 14.5,
+        "% do Total": 1.8342329169707765e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "20786-TRADICIONAL COMERCIO E SERVICOS LTDA",
+        "Valor de venda (R$)": 69044.38,
+        "% do Total": 0.08734032726057846
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14013-BEMDITO SERVICOS DE COMUNICACAO EMPRESARIAL LTDA",
+        "Valor de venda (R$)": 9402.9,
+        "% do Total": 0.011894557720678975
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "170037-GOHEAD360",
+        "Valor de venda (R$)": 2839.08,
+        "% do Total": 0.0035914027516644083
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12625-PEDRO HENRIQUE TEIXEIRA SOARES",
+        "Valor de venda (R$)": 2385.6,
+        "% do Total": 0.0030177558942934375
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10142-MGDIAS JUNIOR BRINDES ME",
+        "Valor de venda (R$)": 2103.0,
+        "% do Total": 0.0026602702237169262
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11818-LETICIA ORLOSKI DE CASTRO 4563",
+        "Valor de venda (R$)": 1970.0,
+        "% do Total": 0.002492026790643055
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "127252-63.280.402 MAYARA MIRELE DA SILVA",
+        "Valor de venda (R$)": 1934.4,
+        "% do Total": 0.002446993210060876
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "14208-TUDU PHOOTO SERVICOS E COMERCIO LTDA",
+        "Valor de venda (R$)": 1890.0,
+        "% do Total": 0.0023908277331550123
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "47397-BRINDES PARA TODAS OCASIOES LTDA",
+        "Valor de venda (R$)": 1802.85,
+        "% do Total": 0.0022805840099039756
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9915-SIMIONATTO COMERCIO DE BRINDES",
+        "Valor de venda (R$)": 1548.0,
+        "% do Total": 0.0019582017623936293
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "31302-49.656.925 TAINA GALVAO DE SOUSA",
+        "Valor de venda (R$)": 1239.04,
+        "% do Total": 0.0015673710023748075
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "35286-51.277.471 ANA PAULA VALADAO STORTI",
+        "Valor de venda (R$)": 1075.72,
+        "% do Total": 0.001360773126512968
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13134-LIVE MOTION BRINDES E EVENTOS LTDA",
+        "Valor de venda (R$)": 1049.8600000000001,
+        "% do Total": 0.0013280605311799584
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13043-T GOMES DA SILVA LTDA",
+        "Valor de venda (R$)": 1018.8,
+        "% do Total": 0.0012887699971102257
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "172690-SLM BRINDES CORPORATIVOS ATACADOS LTDA",
+        "Valor de venda (R$)": 912.25,
+        "% do Total": 0.0011539855024183387
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "71553-BRUNO HENRIQUE DIAS DA SILVA",
+        "Valor de venda (R$)": 896.5000000000001,
+        "% do Total": 0.0011340619379753803
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11925-VINCULO CERTO LTDA",
+        "Valor de venda (R$)": 847.2,
+        "% do Total": 0.0010716980187983737
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11633-PATRICIA RODRIGUES BENEDETTI 2",
+        "Valor de venda (R$)": 800.35,
+        "% do Total": 0.0010124333207569387
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11222-BRINDES RIO PRETO EIRELI ME",
+        "Valor de venda (R$)": 797.1,
+        "% do Total": 0.001008322109046487
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "27619-GRAFICA BOSQUEIRO LTDA",
+        "Valor de venda (R$)": 763.98,
+        "% do Total": 0.0009664256992464372
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11928-ROMAR COMÉRCIO E SERVIÇOS DE BRINDES E COMUNICAÇÃO VISUAL LT",
+        "Valor de venda (R$)": 709.8,
+        "% do Total": 0.0008978886375626601
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10731-EDIVALDO HENRIQUE CUBA ME",
+        "Valor de venda (R$)": 490.0,
+        "% do Total": 0.0006198442271142624
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "9833-BRINDES VALE DO PARAIBA LTDA",
+        "Valor de venda (R$)": 407.4,
+        "% do Total": 0.0005153562002578582
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "10959-MARINA LOCCI FURTADO ME",
+        "Valor de venda (R$)": 273.46,
+        "% do Total": 0.0003459236782585024
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11486-JOSE AUGUSTO MARQUESINI BOLSAS",
+        "Valor de venda (R$)": 244.4,
+        "% do Total": 0.0003091631206259709
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "39346-44.129.431 SANDREANY LAVINIA TEIXEIRA BAHIA",
+        "Valor de venda (R$)": 221.8,
+        "% do Total": 0.0002805743868855988
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "170025-TETTEO CRIATIVO",
+        "Valor de venda (R$)": 188.65,
+        "% do Total": 0.00023864002743899105
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "12836-TROCHMANN & CAMPOS COMERCIO DE BRIN",
+        "Valor de venda (R$)": 166.568,
+        "% do Total": 0.00021070655759585402
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11551-TNEWT BRINDES E CONFECCOES LTDA",
+        "Valor de venda (R$)": 81.12,
+        "% do Total": 0.00010261584429287545
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "13899-BRINDES COTIA LTDA",
+        "Valor de venda (R$)": 49.5,
+        "% do Total": 6.261691682072651e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11424-SOLANGE SOARES DE MORAES",
+        "Valor de venda (R$)": 16.05,
+        "% do Total": 2.0303060908538597e-05
+      },
+      {
+        "Classe": "Regular",
+        "Cliente_Pai": "11550-PUPUB LEMOS COMERCIAL E IMPORTADORA LTDA",
+        "Valor de venda (R$)": 0,
+        "% do Total": 0
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "180892-BRUNA ALVES CORDEIRO",
+        "Valor de venda (R$)": 6379.62,
+        "% do Total": 0.008070144139148349
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "182675-61.514.690 JONATAS DO NASCIMENTO COSTA",
+        "Valor de venda (R$)": 4133.1928000000025,
+        "% do Total": 0.005228440197204563
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "178705-DANILO MARCEL RODRIGUES MASCARA",
+        "Valor de venda (R$)": 3561.36,
+        "% do Total": 0.004505078442195203
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "185165-66.228.964 JEAN PIO",
+        "Valor de venda (R$)": 3554.8,
+        "% do Total": 0.004496780119481184
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10231-ANA CAROLINA DOS SANTOS TURCAT",
+        "Valor de venda (R$)": 3051.0,
+        "% do Total": 0.003859479054950234
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "179853-45.324.033 ANNA LUISA DE CARVALHO TAVARE",
+        "Valor de venda (R$)": 2481.0,
+        "% do Total": 0.003138435770347929
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "12663-ADEMILSON RODRIGUES SILVA JUNIOR",
+        "Valor de venda (R$)": 1851.02,
+        "% do Total": 0.002341518492393963
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "30043-BRINDES SPEED",
+        "Valor de venda (R$)": 1796.9,
+        "% do Total": 0.0022730573300033027
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "14187-ALEX FERNANDO MALVEZZI 17270665885",
+        "Valor de venda (R$)": 1762.76,
+        "% do Total": 0.00222987063222028
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "12895-JOICE DE SOUSA GOLFETTO",
+        "Valor de venda (R$)": 1523.59,
+        "% do Total": 0.00192732339997759
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "10517-BEATRIZ QUEIROZ PEREIRA YAMAYA",
+        "Valor de venda (R$)": 1160.0,
+        "% do Total": 0.0014673863335766212
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "59208-ATC BUSINESS & MATERIAL PUBLICITARIO LTDA",
+        "Valor de venda (R$)": 765.9381000000002,
+        "% do Total": 0.0009689026726772791
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "170031-PERSONIFIXA BRINDES PERSONALIZADOS",
+        "Valor de venda (R$)": 650.0,
+        "% do Total": 0.0008222423420903482
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "9759-SILK GRA COMERCIAL BRINDES LTD",
+        "Valor de venda (R$)": 590.4,
+        "% do Total": 0.0007468490442617562
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "102460-BONE PRESS CONFECCOES LTDA",
+        "Valor de venda (R$)": 544.6,
+        "% do Total": 0.0006889125838498517
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "30389-L R COPIAS LTDA",
+        "Valor de venda (R$)": 471.58000000000004,
+        "% do Total": 0.0005965431441276406
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "14381-SR2 GRAFICA DIGITAL E INFORMATICA LTDA",
+        "Valor de venda (R$)": 397.8,
+        "% do Total": 0.0005032123133592931
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "13969-PIETRA LEAL ANTAO",
+        "Valor de venda (R$)": 144.0,
+        "% do Total": 0.00018215830347847713
+      },
+      {
+        "Classe": "Pontual",
+        "Cliente_Pai": "184359-66.130.976 DAIANE DOS SANTOS SARMENTO SI",
+        "Valor de venda (R$)": 111.1,
+        "% do Total": 0.0001405401910865195
+      }
+    ]
+  },
+  "porSegmento": {
+    "1": [
+      {
+        "Separador": "Sacolas & Bolsas Térmicas",
+        "After_Tax_Amount": 121906.74309999993
+      },
+      {
+        "Separador": "Squeezes & Copos",
+        "After_Tax_Amount": 138186.3122
+      },
+      {
+        "Separador": "Escritório",
+        "After_Tax_Amount": 47041.786
+      },
+      {
+        "Separador": "Escrita",
+        "After_Tax_Amount": 40841.1394
+      },
+      {
+        "Separador": "Mochilas, Malas & Pastas",
+        "After_Tax_Amount": 144253.89489999998
+      },
+      {
+        "Separador": "Tecnologia",
+        "After_Tax_Amount": 53625.99019999999
+      },
+      {
+        "Separador": "Criança & Escolar",
+        "After_Tax_Amount": 18756.274999999998
+      },
+      {
+        "Separador": "Casa, Restaurante & Bar",
+        "After_Tax_Amount": 33535.5931
+      },
+      {
+        "Separador": "Pessoal & Viagem",
+        "After_Tax_Amount": 6542.210000000002
+      },
+      {
+        "Separador": "Sol & Chuva",
+        "After_Tax_Amount": 13719.535999999998
+      },
+      {
+        "Separador": "Esporte & Ar Livre",
+        "After_Tax_Amount": 12226.8
+      },
+      {
+        "Separador": "Outros",
+        "After_Tax_Amount": 10040.622
+      },
+      {
+        "Separador": "Chaveiros & Porta-Cartões",
+        "After_Tax_Amount": 12084.402
+      },
+      {
+        "Separador": "CopadoMundo",
+        "After_Tax_Amount": 4121.45
+      },
+      {
+        "Separador": "Agendas",
+        "After_Tax_Amount": 5087.05
+      },
+      {
+        "Separador": "SUCO",
+        "After_Tax_Amount": 691.52
+      },
+      {
+        "Separador": "Mochilas, Pastas & Sacolas",
+        "After_Tax_Amount": 29.9
+      }
+    ],
+    "2": [
+      {
+        "Separador": "Sacolas & Bolsas Térmicas",
+        "After_Tax_Amount": 107644.76719999999
+      },
+      {
+        "Separador": "Squeezes & Copos",
+        "After_Tax_Amount": 113793.20210000001
+      },
+      {
+        "Separador": "Escritório",
+        "After_Tax_Amount": 66767.05050000001
+      },
+      {
+        "Separador": "Pessoal & Viagem",
+        "After_Tax_Amount": 34781.17540000001
+      },
+      {
+        "Separador": "Tecnologia",
+        "After_Tax_Amount": 96586.28349999999
+      },
+      {
+        "Separador": "Sol & Chuva",
+        "After_Tax_Amount": 40841.705
+      },
+      {
+        "Separador": "Escrita",
+        "After_Tax_Amount": 22031.25
+      },
+      {
+        "Separador": "Mochilas, Malas & Pastas",
+        "After_Tax_Amount": 82253.96499999998
+      },
+      {
+        "Separador": "Esporte & Ar Livre",
+        "After_Tax_Amount": 9394.835199999998
+      },
+      {
+        "Separador": "Casa, Restaurante & Bar",
+        "After_Tax_Amount": 28914.199900000003
+      },
+      {
+        "Separador": "Chaveiros & Porta-Cartões",
+        "After_Tax_Amount": 14884.13
+      },
+      {
+        "Separador": "Criança & Escolar",
+        "After_Tax_Amount": 2942.0250000000005
+      },
+      {
+        "Separador": "Outros",
+        "After_Tax_Amount": 11866.703999999998
+      },
+      {
+        "Separador": "SUCO",
+        "After_Tax_Amount": 4885.449999999997
+      },
+      {
+        "Separador": "CopadoMundo",
+        "After_Tax_Amount": 1095.4499999999998
+      },
+      {
+        "Separador": "Mochilas, Pastas & Sacolas",
+        "After_Tax_Amount": 19868.24
+      }
+    ],
+    "3": [
+      {
+        "Separador": "Sacolas & Bolsas Térmicas",
+        "After_Tax_Amount": 173729.3213
+      },
+      {
+        "Separador": "Squeezes & Copos",
+        "After_Tax_Amount": 99404.02019999998
+      },
+      {
+        "Separador": "Escritório",
+        "After_Tax_Amount": 109213.6975
+      },
+      {
+        "Separador": "Sol & Chuva",
+        "After_Tax_Amount": 132047.45499999996
+      },
+      {
+        "Separador": "Escrita",
+        "After_Tax_Amount": 37361.3772
+      },
+      {
+        "Separador": "Pessoal & Viagem",
+        "After_Tax_Amount": 86401.1858
+      },
+      {
+        "Separador": "Tecnologia",
+        "After_Tax_Amount": 51129.8883
+      },
+      {
+        "Separador": "Esporte & Ar Livre",
+        "After_Tax_Amount": 36692.958000000006
+      },
+      {
+        "Separador": "Casa, Restaurante & Bar",
+        "After_Tax_Amount": 45125.89830000001
+      },
+      {
+        "Separador": "Mochilas, Malas & Pastas",
+        "After_Tax_Amount": 49607.73009999999
+      },
+      {
+        "Separador": "Criança & Escolar",
+        "After_Tax_Amount": 8850.915099999998
+      },
+      {
+        "Separador": "Outros",
+        "After_Tax_Amount": 12130.547999999999
+      },
+      {
+        "Separador": "Chaveiros & Porta-Cartões",
+        "After_Tax_Amount": 19729.869999999995
+      },
+      {
+        "Separador": "CopadoMundo",
+        "After_Tax_Amount": 97154.56509999999
+      },
+      {
+        "Separador": "SUCO",
+        "After_Tax_Amount": 1704.0800000000002
+      },
+      {
+        "Separador": "Mochilas, Pastas & Sacolas",
+        "After_Tax_Amount": 2987.3
+      }
+    ],
+    "4": [
+      {
+        "Separador": "Sacolas & Bolsas Térmicas",
+        "After_Tax_Amount": 135137.27780000007
+      },
+      {
+        "Separador": "Squeezes & Copos",
+        "After_Tax_Amount": 164542.77229999992
+      },
+      {
+        "Separador": "Escritório",
+        "After_Tax_Amount": 165267.86899999995
+      },
+      {
+        "Separador": "Pessoal & Viagem",
+        "After_Tax_Amount": 91806.31999999998
+      },
+      {
+        "Separador": "Tecnologia",
+        "After_Tax_Amount": 47239.75030000001
+      },
+      {
+        "Separador": "Escrita",
+        "After_Tax_Amount": 24071.923300000006
+      },
+      {
+        "Separador": "Sol & Chuva",
+        "After_Tax_Amount": 61634.15
+      },
+      {
+        "Separador": "Esporte & Ar Livre",
+        "After_Tax_Amount": 60529.17000000001
+      },
+      {
+        "Separador": "Mochilas, Malas & Pastas",
+        "After_Tax_Amount": 30177.92
+      },
+      {
+        "Separador": "Outros",
+        "After_Tax_Amount": 9511.3415
+      },
+      {
+        "Separador": "Casa, Restaurante & Bar",
+        "After_Tax_Amount": 15294.380000000003
+      },
+      {
+        "Separador": "SUCO",
+        "After_Tax_Amount": 14847.039999999995
+      },
+      {
+        "Separador": "Criança & Escolar",
+        "After_Tax_Amount": 14941.970000000001
+      },
+      {
+        "Separador": "Chaveiros & Porta-Cartões",
+        "After_Tax_Amount": 6592.750000000001
+      },
+      {
+        "Separador": "CopadoMundo",
+        "After_Tax_Amount": 11307.48
+      },
+      {
+        "Separador": "Novidades",
+        "After_Tax_Amount": 59.2
+      }
+    ],
+    "5": [
+      {
+        "Separador": "Sacolas & Bolsas Térmicas",
+        "After_Tax_Amount": 145334.5797000001
+      },
+      {
+        "Separador": "Squeezes & Copos",
+        "After_Tax_Amount": 94451.65769999995
+      },
+      {
+        "Separador": "Escritório",
+        "After_Tax_Amount": 68705.55350000001
+      },
+      {
+        "Separador": "Escrita",
+        "After_Tax_Amount": 24233.100699999995
+      },
+      {
+        "Separador": "Tecnologia",
+        "After_Tax_Amount": 68997.52000000002
+      },
+      {
+        "Separador": "Pessoal & Viagem",
+        "After_Tax_Amount": 49976.689999999995
+      },
+      {
+        "Separador": "Esporte & Ar Livre",
+        "After_Tax_Amount": 65673.00839999999
+      },
+      {
+        "Separador": "Casa, Restaurante & Bar",
+        "After_Tax_Amount": 20310.7049
+      },
+      {
+        "Separador": "Mochilas, Malas & Pastas",
+        "After_Tax_Amount": 37113.58
+      },
+      {
+        "Separador": "Sol & Chuva",
+        "After_Tax_Amount": 45582.78999999999
+      },
+      {
+        "Separador": "Chaveiros & Porta-Cartões",
+        "After_Tax_Amount": 31697.810000000016
+      },
+      {
+        "Separador": "Criança & Escolar",
+        "After_Tax_Amount": 10970.008
+      },
+      {
+        "Separador": "CopadoMundo",
+        "After_Tax_Amount": 14275.409999999998
+      },
+      {
+        "Separador": "Outros",
+        "After_Tax_Amount": 4756.187999999999
+      },
+      {
+        "Separador": "SUCO",
+        "After_Tax_Amount": 10866.679999999995
+      },
+      {
+        "Separador": "Novidades",
+        "After_Tax_Amount": 725.1999999999996
+      },
+      {
+        "Separador": "Mochilas, Pastas & Sacolas",
+        "After_Tax_Amount": 1230.8999999999999
+      }
+    ],
+    "6": [
+      {
+        "Separador": "Sacolas & Bolsas Térmicas",
+        "After_Tax_Amount": 143407.2548000001
+      },
+      {
+        "Separador": "Squeezes & Copos",
+        "After_Tax_Amount": 98956.01019999996
+      },
+      {
+        "Separador": "Escrita",
+        "After_Tax_Amount": 28770.488999999998
+      },
+      {
+        "Separador": "Escritório",
+        "After_Tax_Amount": 63954.92000000001
+      },
+      {
+        "Separador": "Pessoal & Viagem",
+        "After_Tax_Amount": 53408.9256
+      },
+      {
+        "Separador": "Mochilas, Malas & Pastas",
+        "After_Tax_Amount": 67335.1499
+      },
+      {
+        "Separador": "Tecnologia",
+        "After_Tax_Amount": 76698.38000000002
+      },
+      {
+        "Separador": "Chaveiros & Porta-Cartões",
+        "After_Tax_Amount": 23351.110999999997
+      },
+      {
+        "Separador": "Casa, Restaurante & Bar",
+        "After_Tax_Amount": 31959.41510000001
+      },
+      {
+        "Separador": "Esporte & Ar Livre",
+        "After_Tax_Amount": 15714.789999999999
+      },
+      {
+        "Separador": "Sol & Chuva",
+        "After_Tax_Amount": 18065.225
+      },
+      {
+        "Separador": "Outros",
+        "After_Tax_Amount": 14873.660999999998
+      },
+      {
+        "Separador": "Criança & Escolar",
+        "After_Tax_Amount": 8777.419999999998
+      },
+      {
+        "Separador": "SUCO",
+        "After_Tax_Amount": 8323.659999999998
+      },
+      {
+        "Separador": "CopadoMundo",
+        "After_Tax_Amount": 14604.0
+      },
+      {
+        "Separador": "Novidades",
+        "After_Tax_Amount": 5448.8
+      },
+      {
+        "Separador": "Mochilas, Pastas & Sacolas",
+        "After_Tax_Amount": 385.545
+      }
+    ],
+    "7": [
+      {
+        "Separador": "Sacolas & Bolsas Térmicas",
+        "After_Tax_Amount": 152980.71970000005
+      },
+      {
+        "Separador": "Squeezes & Copos",
+        "After_Tax_Amount": 190538.43950000004
+      },
+      {
+        "Separador": "Escritório",
+        "After_Tax_Amount": 49283.34000000001
+      },
+      {
+        "Separador": "Pessoal & Viagem",
+        "After_Tax_Amount": 73766.49
+      },
+      {
+        "Separador": "Tecnologia",
+        "After_Tax_Amount": 103047.88510000001
+      },
+      {
+        "Separador": "Escrita",
+        "After_Tax_Amount": 29311.6301
+      },
+      {
+        "Separador": "Casa, Restaurante & Bar",
+        "After_Tax_Amount": 23442.815000000006
+      },
+      {
+        "Separador": "Sol & Chuva",
+        "After_Tax_Amount": 107981.98
+      },
+      {
+        "Separador": "Chaveiros & Porta-Cartões",
+        "After_Tax_Amount": 27589.014999999992
+      },
+      {
+        "Separador": "Mochilas, Malas & Pastas",
+        "After_Tax_Amount": 98649.33
+      },
+      {
+        "Separador": "Esporte & Ar Livre",
+        "After_Tax_Amount": 25022.9851
+      },
+      {
+        "Separador": "Criança & Escolar",
+        "After_Tax_Amount": 8545.189
+      },
+      {
+        "Separador": "SUCO",
+        "After_Tax_Amount": 15065.585
+      },
+      {
+        "Separador": "Outros",
+        "After_Tax_Amount": 26713.08100000001
+      },
+      {
+        "Separador": "CopadoMundo",
+        "After_Tax_Amount": 4816.005100000002
+      },
+      {
+        "Separador": "Novidades",
+        "After_Tax_Amount": 838.2499999999999
+      },
+      {
+        "Separador": "Mochilas, Pastas & Sacolas",
+        "After_Tax_Amount": 2752.94
+      }
+    ],
+    "8": [
+      {
+        "Separador": "Sacolas & Bolsas Térmicas",
+        "After_Tax_Amount": 129799.85810000001
+      },
+      {
+        "Separador": "Squeezes & Copos",
+        "After_Tax_Amount": 158202.8452
+      },
+      {
+        "Separador": "Escritório",
+        "After_Tax_Amount": 76273.79450000003
+      },
+      {
+        "Separador": "Tecnologia",
+        "After_Tax_Amount": 98743.75930000002
+      },
+      {
+        "Separador": "Escrita",
+        "After_Tax_Amount": 34626.46889999997
+      },
+      {
+        "Separador": "Pessoal & Viagem",
+        "After_Tax_Amount": 53076.241000000016
+      },
+      {
+        "Separador": "Casa, Restaurante & Bar",
+        "After_Tax_Amount": 29727.0022
+      },
+      {
+        "Separador": "Mochilas, Malas & Pastas",
+        "After_Tax_Amount": 60832.2425
+      },
+      {
+        "Separador": "Sol & Chuva",
+        "After_Tax_Amount": 41802.51
+      },
+      {
+        "Separador": "Esporte & Ar Livre",
+        "After_Tax_Amount": 15618.494899999998
+      },
+      {
+        "Separador": "Outros",
+        "After_Tax_Amount": 26889.9268
+      },
+      {
+        "Separador": "Chaveiros & Porta-Cartões",
+        "After_Tax_Amount": 29686.690000000006
+      },
+      {
+        "Separador": "Criança & Escolar",
+        "After_Tax_Amount": 10555.070999999998
+      },
+      {
+        "Separador": "CopadoMundo",
+        "After_Tax_Amount": 15323.546999999995
+      },
+      {
+        "Separador": "SUCO",
+        "After_Tax_Amount": 8696.145000000004
+      },
+      {
+        "Separador": "Novidades",
+        "After_Tax_Amount": 317.1
+      },
+      {
+        "Separador": "Mochilas, Pastas & Sacolas",
+        "After_Tax_Amount": 349.5
+      }
+    ]
+  },
+  "porProduto": {
+    "1": [
+      {
+        "Produto": "92098",
+        "Valor de Venda": 47487.0
+      },
+      {
+        "Produto": "97199",
+        "Valor de Venda": 21750.0
+      },
+      {
+        "Produto": "94145",
+        "Valor de Venda": 8730.6
+      },
+      {
+        "Produto": "94250",
+        "Valor de Venda": 8443.9001
+      },
+      {
+        "Produto": "95086",
+        "Valor de Venda": 4082.5
+      },
+      {
+        "Produto": "92910",
+        "Valor de Venda": 2457.1399999999994
+      },
+      {
+        "Produto": "CP10224",
+        "Valor de Venda": 1654.4075
+      },
+      {
+        "Produto": "51979",
+        "Valor de Venda": 500.0
+      },
+      {
+        "Produto": "97167",
+        "Valor de Venda": 105.0
+      },
+      {
+        "Produto": "97214",
+        "Valor de Venda": 79.0
+      },
+      {
+        "Produto": "CP10223",
+        "Valor de Venda": 51.1675
+      }
+    ],
+    "2": [
+      {
+        "Produto": "97199",
+        "Valor de Venda": 36299.239
+      },
+      {
+        "Produto": "92839",
+        "Valor de Venda": 378.0
+      },
+      {
+        "Produto": "97167",
+        "Valor de Venda": 194.0
+      },
+      {
+        "Produto": "51979",
+        "Valor de Venda": 7.5
+      }
+    ],
+    "3": [
+      {
+        "Produto": "94250",
+        "Valor de Venda": 21682.88
+      },
+      {
+        "Produto": "97167",
+        "Valor de Venda": 13652.534
+      },
+      {
+        "Produto": "94145",
+        "Valor de Venda": 11602.2
+      },
+      {
+        "Produto": "93493",
+        "Valor de Venda": 5420.0
+      },
+      {
+        "Produto": "97188",
+        "Valor de Venda": 1750.0
+      },
+      {
+        "Produto": "22900",
+        "Valor de Venda": 1220.0
+      },
+      {
+        "Produto": "94294",
+        "Valor de Venda": 988.78
+      },
+      {
+        "Produto": "92380",
+        "Valor de Venda": 603.0
+      },
+      {
+        "Produto": "94651",
+        "Valor de Venda": 187.5
+      },
+      {
+        "Produto": "30504",
+        "Valor de Venda": 53.699999999999996
+      }
+    ],
+    "4": [
+      {
+        "Produto": "30504",
+        "Valor de Venda": 2130.35
+      },
+      {
+        "Produto": "91378",
+        "Valor de Venda": 2050.0
+      },
+      {
+        "Produto": "30508",
+        "Valor de Venda": 2008.08
+      },
+      {
+        "Produto": "22904",
+        "Valor de Venda": 1365.0
+      },
+      {
+        "Produto": "92717",
+        "Valor de Venda": 508.69
+      }
+    ],
+    "5": [
+      {
+        "Produto": "92572",
+        "Valor de Venda": 4303.35
+      },
+      {
+        "Produto": "93491",
+        "Valor de Venda": 2867.5
+      },
+      {
+        "Produto": "94078",
+        "Valor de Venda": 1822.51
+      },
+      {
+        "Produto": "22904",
+        "Valor de Venda": 1560.0
+      },
+      {
+        "Produto": "99149",
+        "Valor de Venda": 1315.2
+      },
+      {
+        "Produto": "91779",
+        "Valor de Venda": 1229.3
+      },
+      {
+        "Produto": "92270",
+        "Valor de Venda": 1067.1
+      },
+      {
+        "Produto": "92144",
+        "Valor de Venda": 270.0
+      },
+      {
+        "Produto": "92186",
+        "Valor de Venda": 270.0
+      },
+      {
+        "Produto": "92319",
+        "Valor de Venda": 260.0
+      },
+      {
+        "Produto": "92315",
+        "Valor de Venda": 195.0
+      },
+      {
+        "Produto": "92393",
+        "Valor de Venda": 195.0
+      },
+      {
+        "Produto": "93282",
+        "Valor de Venda": 195.0
+      },
+      {
+        "Produto": "97138",
+        "Valor de Venda": 175.0
+      },
+      {
+        "Produto": "92521",
+        "Valor de Venda": 163.8
+      },
+      {
+        "Produto": "97136",
+        "Valor de Venda": 159.0
+      },
+      {
+        "Produto": "92087",
+        "Valor de Venda": 125.0
+      },
+      {
+        "Produto": "92377",
+        "Valor de Venda": 125.0
+      },
+      {
+        "Produto": "97172",
+        "Valor de Venda": 125.0
+      },
+      {
+        "Produto": "94339",
+        "Valor de Venda": 115.0
+      }
+    ],
+    "6": [
+      {
+        "Produto": "CP10101",
+        "Valor de Venda": 1167.975
+      },
+      {
+        "Produto": "51979",
+        "Valor de Venda": 490.0
+      },
+      {
+        "Produto": "91383",
+        "Valor de Venda": 174.52499999999998
+      },
+      {
+        "Produto": "94250",
+        "Valor de Venda": -1335.2
+      }
+    ],
+    "7": [
+      {
+        "Produto": "92910",
+        "Valor de Venda": 2099.5
+      },
+      {
+        "Produto": "92635",
+        "Valor de Venda": 1611.0
+      },
+      {
+        "Produto": "92414",
+        "Valor de Venda": 1020.0
+      },
+      {
+        "Produto": "91791",
+        "Valor de Venda": 194.7
+      },
+      {
+        "Produto": "30508",
+        "Valor de Venda": -1772.54
+      },
+      {
+        "Produto": "30504",
+        "Valor de Venda": -1890.35
+      }
+    ],
+    "8": [
+      {
+        "Produto": "CP10161",
+        "Valor de Venda": 2851.14
+      },
+      {
+        "Produto": "22900",
+        "Valor de Venda": 2536.8
+      },
+      {
+        "Produto": "CP10163",
+        "Valor de Venda": 1355.46
+      },
+      {
+        "Produto": "22904",
+        "Valor de Venda": 663.5999999999999
+      },
+      {
+        "Produto": "CP10162",
+        "Valor de Venda": 514.14
+      },
+      {
+        "Produto": "97175",
+        "Valor de Venda": 125.0
+      },
+      {
+        "Produto": "97085",
+        "Valor de Venda": 55.0
+      },
+      {
+        "Produto": "92148",
+        "Valor de Venda": 32.5
+      },
+      {
+        "Produto": "97161",
+        "Valor de Venda": 24.0
+      },
+      {
+        "Produto": "94328",
+        "Valor de Venda": 19.5
+      },
+      {
+        "Produto": "94390",
+        "Valor de Venda": 17.5
+      },
+      {
+        "Produto": "53791",
+        "Valor de Venda": 4.95
+      },
+      {
+        "Produto": "93476",
+        "Valor de Venda": 3.4
+      },
+      {
+        "Produto": "81126",
+        "Valor de Venda": 2.95
+      },
+      {
+        "Produto": "81106",
+        "Valor de Venda": 1.35
+      }
+    ]
+  }
+}
