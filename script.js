@@ -771,7 +771,13 @@ const pluginValoresNativos = {
       // Com muitas barras (ex: Top 20 Produtos) não dá pra escrever um
       // rótulo em cima de cada uma sem sobrepor texto — nesses casos só o
       // eixo + tooltip (passar o mouse) mostram o valor exato.
-      const muitasBarras = chart.config.type !== 'doughnut' && meta.data.length > 10;
+      // Antes escondia o rótulo com mais de 10 barras (pra não sobrepor
+      // texto no Top 20 Produtos) — só que isso também apagava os rótulos
+      // do Histórico e do Budget, que têm 12 meses. Agora só esconde em
+      // gráficos realmente muito cheios (mais de 24 itens), que hoje não
+      // existe nenhum — todos os gráficos atuais (até 20 barras) mostram
+      // rótulo.
+      const muitasBarras = chart.config.type !== 'doughnut' && meta.data.length > 24;
       if (muitasBarras) return;
 
       meta.data.forEach((element, index) => {
@@ -779,7 +785,10 @@ const pluginValoresNativos = {
         if (value === null || value === undefined || value === 0) return;
 
         ctx.save();
-        ctx.font = 'bold 10px sans-serif';
+        // Com muitas barras (ex: Top 20 Produtos) o rótulo fica menor pra
+        // caber sem esbarrar no vizinho.
+        const fonteTamanho = meta.data.length > 12 ? 8 : 10;
+        ctx.font = `bold ${fonteTamanho}px sans-serif`;
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
 
@@ -860,6 +869,7 @@ function renderChartHistorico() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
         title: semNenhumDado
@@ -909,6 +919,7 @@ function renderChartBudget() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
         title: semDetalhePorCliente
@@ -1017,6 +1028,7 @@ function renderChartSegmentos() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
         title: semDetalhePorCliente
@@ -1073,6 +1085,7 @@ function renderChartTopProdutos() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
         title: tituloAviso
