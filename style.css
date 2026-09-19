@@ -302,6 +302,7 @@ body {
   position: relative;
   height: 260px;
   width: 100%;
+  overflow: hidden; /* rótulo de valor nunca vaza por cima do título do card */
 }
 
 /* Tables Section */
