@@ -211,6 +211,24 @@ function usarDadosMensaisFixos() {
 
 let charts = {};
 
+// Formata os tooltips (balão que aparece ao passar o mouse) de TODOS os
+// gráficos em R$ (ou %) já arredondado, em vez do número cru do
+// JavaScript (ex: "1.452,68999999999998"), que é o que aparecia antes.
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.plugins = Chart.defaults.plugins || {};
+  Chart.defaults.plugins.tooltip = Chart.defaults.plugins.tooltip || {};
+  Chart.defaults.plugins.tooltip.callbacks = Chart.defaults.plugins.tooltip.callbacks || {};
+  Chart.defaults.plugins.tooltip.callbacks.label = function (context) {
+    const rotulo = context.dataset && context.dataset.label ? context.dataset.label : (context.label || '');
+    let valor = context.parsed;
+    if (valor && typeof valor === 'object') valor = valor.y !== undefined ? valor.y : valor.r;
+    if (typeof valor !== 'number') return rotulo;
+    const ehPercentual = String(rotulo).includes('%') || String(rotulo).toLowerCase().includes('budget');
+    const formatado = ehPercentual ? `${valor.toFixed(2)}%` : formatBRL(valor);
+    return rotulo ? `${rotulo}: ${formatado}` : formatado;
+  };
+}
+
 const MAPA_MESES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // Elementos do DOM
@@ -516,29 +534,53 @@ function renderDashboard() {
   renderInatividadeTable();
 }
 
-function renderYTDBanner() {
-  const sheet = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal', 'Image-6', 'Geral']);
-  let lytd = 0, ytd = 0;
+// Soma o faturamento real de 2026: meses 1-8 vêm dos dados fixos (Jan-Ago,
+// mesmo que usa no Histórico de Faturamento) e os meses 9+ (mês corrente em
+// diante) vêm da planilha ao vivo (Image-6). Evita duplicar: cada mês só é
+// contado uma vez, priorizando o dado fixo quando ele existe.
+function calcularTotalAno2026() {
+  let total = 0;
+  const mesesComFixo = new Set();
 
-  if (sheet.length > 0) {
-    sheet.forEach(r => {
-      lytd += parseCurrency(r['2025'] || r['2025 (R$)']);
-      ytd += parseCurrency(r['2026'] || r['2026 (R$)']);
-    });
+  if (usarDadosMensaisFixos()) {
+    for (let m = 1; m <= 8; m++) {
+      const linhas = obterLinhasFixasMes('porCliente', m);
+      if (!linhas) continue;
+      total += linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
+      mesesComFixo.add(m);
+    }
   }
 
+  const sheetLive = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
+  sheetLive.forEach(r => {
+    const mes = Number(r['Mês'] || r['Mes']);
+    const ano = Number(r['Ano']);
+    if (ano === 2026 && mes && !mesesComFixo.has(mes)) {
+      total += parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
+    }
+  });
+
+  return total;
+}
+
+function renderYTDBanner() {
+  const carregado = algumaPlanilhaCarregada();
+  const ytd = carregado ? calcularTotalAno2026() : 0;
+
+  // A carteira só tem histórico de 2026 (é recente) — não existe uma base
+  // de 2025 pra comparar, então o "Ano Anterior" fica sem dado mesmo (não
+  // é bug). Deixamos isso explícito em vez de só mostrar "R$ 0,00".
   const elLytd = document.getElementById('kpiLytd');
   const elYtd = document.getElementById('kpiYtd');
   const elVar = document.getElementById('kpiVariacao');
 
-  const variacao = ytd - lytd;
-  const carregado = algumaPlanilhaCarregada();
-
-  // Antes de carregar qualquer planilha, mostra números de demonstração.
-  // Depois de carregar, mostra o valor real mesmo que seja zero.
-  if (elLytd) elLytd.textContent = formatBRL(carregado ? lytd : 6386614.16);
+  if (elLytd) elLytd.innerHTML = carregado
+    ? `R$ 0,00<br><span style="font-size:0.7rem;font-weight:400;color:#64748b;">Carteira nova — sem base de 2025</span>`
+    : formatBRL(6386614.16);
   if (elYtd) elYtd.textContent = formatBRL(carregado ? ytd : 6636963.60);
-  if (elVar) elVar.textContent = formatBRL(carregado ? variacao : 250349.43);
+  if (elVar) elVar.innerHTML = carregado
+    ? `<span style="font-size:0.9rem;color:#64748b;">N/A</span>`
+    : formatBRL(250349.43);
 }
 
 function renderKPIs() {
@@ -706,55 +748,65 @@ function renderKPIs() {
 }
 
 // Plugin nativo para desenhar os rótulos (números) diretamente nos gráficos
+// Formata um valor em R$ de forma compacta e sempre limpa (sem casas
+// decimais soltas tipo "1452.0899999996"), incluindo negativos (estornos/
+// devoluções), usados nos rótulos das barras.
+function formatValorCurto(value) {
+  const num = Number(value) || 0;
+  const abs = Math.abs(num);
+  const sinal = num < 0 ? '-' : '';
+  if (abs >= 1000) return `${sinal}R$ ${(abs / 1000).toFixed(1).replace('.', ',')}k`;
+  return `${sinal}R$ ${abs.toFixed(0)}`;
+}
+
 const pluginValoresNativos = {
   id: 'pluginValoresNativos',
   afterDatasetsDraw(chart, args, options) {
     const { ctx } = chart;
-    
+
     chart.data.datasets.forEach((dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);
-      if (!meta.hidden) {
-        meta.data.forEach((element, index) => {
-          const value = dataset.data[index];
-          if (value === null || value === undefined || value === 0) return;
+      if (meta.hidden) return;
 
-          ctx.save();
-          ctx.font = 'bold 10px sans-serif';
+      // Com muitas barras (ex: Top 20 Produtos) não dá pra escrever um
+      // rótulo em cima de cada uma sem sobrepor texto — nesses casos só o
+      // eixo + tooltip (passar o mouse) mostram o valor exato.
+      const muitasBarras = chart.config.type !== 'doughnut' && meta.data.length > 10;
+      if (muitasBarras) return;
+
+      meta.data.forEach((element, index) => {
+        const value = dataset.data[index];
+        if (value === null || value === undefined || value === 0) return;
+
+        ctx.save();
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+
+        let text = '';
+        if (chart.config.type === 'doughnut') {
+          const sum = dataset.data.reduce((a, b) => a + b, 0);
+          const pct = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '';
+          text = `${value} (${pct})`;
+          const position = element.tooltipPosition();
+          ctx.fillText(text, position.x, position.y);
+        } else {
+          const ehPercentual = String(dataset.label || '').includes('%') || String(dataset.label || '').includes('Budget');
+          text = ehPercentual ? `${Number(value).toFixed(1)}%` : formatValorCurto(value);
+
+          const { x, y } = element.tooltipPosition ? element.tooltipPosition() : { x: element.x, y: element.y };
+          const acimaDoZero = value >= 0;
+          const yTexto = acimaDoZero ? y - 6 : y + 16;
+
+          const textWidth = ctx.measureText(text).width;
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          ctx.fillRect(x - textWidth / 2 - 4, yTexto - 10, textWidth + 8, 14);
+
           ctx.fillStyle = '#ffffff';
-          ctx.textAlign = 'center';
-
-          let text = '';
-          if (chart.config.type === 'doughnut') {
-            const sum = dataset.data.reduce((a, b) => a + b, 0);
-            const pct = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '';
-            text = `${value} (${pct})`;
-            const position = element.tooltipPosition();
-            ctx.fillText(text, position.x, position.y);
-          } else {
-            if (chart.options.scales && chart.options.scales.y && chart.options.scales.y.type === 'linear') {
-              if (String(dataset.label).includes('%') || (value <= 100 && dataset.label && dataset.label.includes('Budget'))) {
-                text = `${Number(value).toFixed(1)}%`;
-              } else if (value >= 1000) {
-                text = `R$ ${(value / 1000).toFixed(0)}k`;
-              } else {
-                text = `${value}`;
-              }
-            } else {
-              text = `${value}`;
-            }
-
-            const { x, y } = element.tooltipPosition ? element.tooltipPosition() : { x: element.x, y: element.y };
-            
-            const textWidth = ctx.measureText(text).width;
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            ctx.fillRect(x - textWidth / 2 - 4, y - 16, textWidth + 8, 14);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(text, x, y - 6);
-          }
-          ctx.restore();
-        });
-      }
+          ctx.fillText(text, x, yTexto);
+        }
+        ctx.restore();
+      });
     });
   }
 };
@@ -876,6 +928,7 @@ function renderChartTipoEncomenda() {
   if (!ctx) return;
 
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  const mesSel = selectMes ? selectMes.value : 'ALL';
   const carregado = algumaPlanilhaCarregada();
   const sheetBruto = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
   const { linhas: sheet, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
@@ -891,6 +944,18 @@ function renderChartTipoEncomenda() {
 
     if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] ?? rowG['% gravação']);
     if (rowN) normal = parseCurrency(rowN['Sum of Valor'] ?? rowN['% gravação']);
+  }
+
+  // Esse indicador não está entre as 4 planilhas mês a mês que você mandou
+  // (Cliente/Segmento/Produto) — ele só existe na planilha "Análise de
+  // Carteira", que traz o acumulado, sem quebra por mês. Por isso não muda
+  // ao trocar o filtro de Mês; se quiser esse detalhe, precisa de uma 5ª
+  // planilha "Gravado x Normal mês a mês".
+  let titulo = null;
+  if (semDetalhePorCliente) {
+    titulo = 'Planilha não detalha o tipo de encomenda por cliente';
+  } else if (mesSel !== 'ALL' && carregado) {
+    titulo = 'Acumulado da carteira — esta planilha não vem quebrada por mês';
   }
 
   destroyChart('chartTipoEncomenda');
@@ -913,8 +978,8 @@ function renderChartTipoEncomenda() {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
-        title: semDetalhePorCliente
-          ? { display: true, text: 'Planilha não detalha o tipo de encomenda por cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+        title: titulo
+          ? { display: true, text: titulo, color: '#94a3b8', font: { size: 11, weight: 'normal' } }
           : { display: false }
       }
     }
@@ -979,9 +1044,18 @@ function renderChartTopProdutos() {
   const { linhas: sheetFiltrado, semDetalhePorCliente } = filtrarPorCliente(sheetCompleto, clienteSel);
   const sheet = [...sheetFiltrado]
     .sort((a, b) => parseCurrency(b['Valor de Venda'] || b['Valor de Venda (R$)']) - parseCurrency(a['Valor de Venda'] || a['Valor de Venda (R$)']))
-    .slice(0, 5);
+    .slice(0, 20);
   const labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
   const dataVals = sheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']));
+
+  // Se a planilha daquele mês tiver menos de 20 produtos cadastrados, o
+  // gráfico mostra só o que existe — e avisa, pra ficar claro que não é bug.
+  let tituloAviso = null;
+  if (semDetalhePorCliente) {
+    tituloAviso = 'Planilha não detalha produtos por cliente';
+  } else if (sheet.length > 0 && sheet.length < 20) {
+    tituloAviso = `Só ${sheet.length} produto${sheet.length > 1 ? 's' : ''} cadastrado${sheet.length > 1 ? 's' : ''} na planilha desse mês`;
+  }
 
   destroyChart('chartTopProdutos');
   charts['chartTopProdutos'] = new Chart(ctx.getContext('2d'), {
@@ -991,7 +1065,7 @@ function renderChartTopProdutos() {
       datasets: [{
         label: 'Valor de Venda (R$)',
         data: dataVals.length > 0 ? dataVals : [0],
-        backgroundColor: '#3b82f6',
+        backgroundColor: dataVals.map(v => v < 0 ? '#ef4444' : '#3b82f6'),
         borderRadius: 4
       }]
     },
@@ -1000,13 +1074,13 @@ function renderChartTopProdutos() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        title: semDetalhePorCliente
-          ? { display: true, text: 'Planilha não detalha produtos por cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+        legend: { display: false },
+        title: tituloAviso
+          ? { display: true, text: tituloAviso, color: '#94a3b8', font: { size: 11, weight: 'normal' } }
           : { display: false }
       },
       scales: {
-        x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
+        x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8', autoSkip: false, maxRotation: 90, minRotation: 60, font: { size: 9 } } },
         y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
       }
     }
