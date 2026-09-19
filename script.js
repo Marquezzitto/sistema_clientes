@@ -8,6 +8,207 @@ let dataStore = {
   analiseCarteira: {}
 };
 
+// ---------------------------------------------------------------------
+// Dados mensais FIXOS (Jan a Ago/2026): Vendas por Cliente, por Segmento e
+// Top Produtos, mês a mês. Isso resolve o problema de a planilha ao vivo
+// (Export_ReportSection / Export_...) só trazer o acumulado atual, sem
+// detalhar mês a mês por cliente/segmento/produto.
+//
+// Você mantém essas 4 planilhas atualizadas direto no Google Drive, então
+// o dashboard busca elas ao vivo (via o link de exportação do Drive) toda
+// vez que você carrega uma das planilhas "Export" — exatamente como pedido:
+// elas só valem como COMPLEMENTO de quando o Export já foi carregado.
+//
+// Se por qualquer motivo o navegador não conseguir buscar do Drive (link
+// mudou de permissão, sem internet, bloqueio de CORS etc.), cai para o
+// último snapshot salvo no localStorage e, se não houver nenhum, para o
+// arquivo historico_fixo.json que já vai junto com o site (uma foto de
+// Jan-Ago/2026 tirada em 19/09/2026) — assim o filtro de mês nunca fica
+// totalmente quebrado, só desatualizado.
+// ---------------------------------------------------------------------
+let dadosFixosMensais = null;
+let sincronizacaoDriveEmAndamento = false;
+
+const DRIVE_SHEET_IDS = {
+  cliente: '1AP_60koNw2moYQfoJbiXwepVl0EGgcb0',   // Vendas (R$) por Cliente MES A MES 2026
+  segmento: '1z2Xt-nouxE5JapG-pGTZTkjjKca1mW7k',   // Vendas em reais por Segmento MES A MES 2026
+  produto: '1lHcnnMJHKzlBt7El5GQ-qktMx897o0pR'     // 20 produtos mais vendidos mês a mês 2026
+};
+const MESES_FIXOS = [1, 2, 3, 4, 5, 6, 7, 8];
+
+function encontrarAbaMes(workbook, mes) {
+  const alvo = `MES ${mes}`;
+  if (workbook.SheetNames.includes(alvo)) return alvo;
+  return workbook.SheetNames.find(n => n.trim() === alvo) || null;
+}
+
+async function buscarWorkbookDrive(fileId) {
+  // Exporta a planilha inteira (todas as abas) como .xlsx direto do Drive.
+  // Só funciona se o arquivo estiver como "Qualquer pessoa com o link".
+  const url = `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} ao buscar planilha do Drive`);
+  const buf = await res.arrayBuffer();
+  return XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true });
+}
+
+function linhaVazia(row) {
+  return !row || row.every(c => c === null || c === undefined || c === '');
+}
+
+function extrairPorClienteDoWorkbook(workbook) {
+  const resultado = {};
+  MESES_FIXOS.forEach(mes => {
+    const aba = encontrarAbaMes(workbook, mes);
+    if (!aba) return;
+    const linhasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[aba], { header: 1, defval: null });
+    let classeAtual = null;
+    const linhas = [];
+    for (let i = 1; i < linhasRaw.length; i++) {
+      const row = linhasRaw[i];
+      if (linhaVazia(row)) continue;
+      const [classe, cod, nome] = row;
+      const valor = row[4];
+      const pct = row[5];
+      if (classe) classeAtual = classe;
+      if (classeAtual === 'Total') continue; // linha de total geral do mês
+      if (cod === null || cod === undefined || cod === '' || !nome) continue; // subtotal de classe
+      linhas.push({
+        Classe: classeAtual,
+        Cliente_Pai: `${Math.trunc(Number(cod))}-${String(nome).trim()}`,
+        'Valor de venda (R$)': Number(valor) || 0,
+        '% do Total': Number(pct) || 0
+      });
+    }
+    resultado[String(mes)] = linhas;
+  });
+  return resultado;
+}
+
+function extrairPorSegmentoDoWorkbook(workbook) {
+  const resultado = {};
+  MESES_FIXOS.forEach(mes => {
+    const aba = encontrarAbaMes(workbook, mes);
+    if (!aba) return;
+    const linhasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[aba], { header: 1, defval: null });
+    const linhas = [];
+    for (let i = 1; i < linhasRaw.length; i++) {
+      const row = linhasRaw[i];
+      if (linhaVazia(row)) continue;
+      const [sep, , , valor] = row;
+      if (sep !== null && String(sep).trim().toLowerCase() === 'total') continue;
+      linhas.push({
+        Separador: sep ? String(sep).trim() : 'Outros',
+        After_Tax_Amount: Number(valor) || 0
+      });
+    }
+    resultado[String(mes)] = linhas;
+  });
+  return resultado;
+}
+
+function extrairPorProdutoDoWorkbook(workbook) {
+  const resultado = {};
+  MESES_FIXOS.forEach(mes => {
+    const aba = encontrarAbaMes(workbook, mes);
+    if (!aba) return;
+    const linhasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[aba], { header: 1, defval: null });
+    const linhas = [];
+    for (let i = 1; i < linhasRaw.length; i++) {
+      const row = linhasRaw[i];
+      if (linhaVazia(row)) continue;
+      const [produto, , valor] = row;
+      if (produto === null || produto === undefined || produto === '') continue;
+      if (String(produto).trim().toLowerCase() === 'total') continue;
+      linhas.push({ Produto: String(produto).trim(), 'Valor de Venda': Number(valor) || 0 });
+    }
+    linhas.sort((a, b) => b['Valor de Venda'] - a['Valor de Venda']);
+    resultado[String(mes)] = linhas.slice(0, 20);
+  });
+  return resultado;
+}
+
+// Busca as 3 planilhas no Drive, monta o objeto no mesmo formato de sempre
+// e atualiza dadosFixosMensais + o cache local. Chamada automaticamente
+// sempre que uma planilha "Export" é carregada (ver readExcelFile).
+async function sincronizarPlanilhasDoDrive() {
+  if (sincronizacaoDriveEmAndamento) return;
+  sincronizacaoDriveEmAndamento = true;
+  try {
+    const [wbCliente, wbSegmento, wbProduto] = await Promise.all([
+      buscarWorkbookDrive(DRIVE_SHEET_IDS.cliente),
+      buscarWorkbookDrive(DRIVE_SHEET_IDS.segmento),
+      buscarWorkbookDrive(DRIVE_SHEET_IDS.produto)
+    ]);
+
+    const novosDados = {
+      meses_disponiveis: MESES_FIXOS,
+      ano: 2026,
+      porCliente: extrairPorClienteDoWorkbook(wbCliente),
+      porSegmento: extrairPorSegmentoDoWorkbook(wbSegmento),
+      porProduto: extrairPorProdutoDoWorkbook(wbProduto)
+    };
+
+    dadosFixosMensais = novosDados;
+    try {
+      localStorage.setItem('rca61_mensalDrive', JSON.stringify({
+        dados: novosDados,
+        atualizadoEm: new Date().toISOString()
+      }));
+    } catch (e) { /* ignora falha de storage */ }
+
+    console.info('[RCA 61] Planilhas mês a mês sincronizadas do Google Drive com sucesso.');
+    popularSelectClientes();
+    renderDashboard();
+  } catch (err) {
+    // Provável bloqueio de CORS, arquivo sem permissão pública, ou sem
+    // internet. Mantém o que já estava carregado (cache local ou o
+    // historico_fixo.json) e avisa só no console, sem travar a página.
+    console.warn('[RCA 61] Não consegui sincronizar as planilhas mês a mês do Drive. Usando o último snapshot disponível.', err);
+  } finally {
+    sincronizacaoDriveEmAndamento = false;
+  }
+}
+
+// Carrega, na ordem: 1) cache salvo no navegador (instantâneo) e, se não
+// houver, 2) o snapshot fixo que já vai junto com o site.
+function carregarDadosFixosMensais() {
+  try {
+    const cache = localStorage.getItem('rca61_mensalDrive');
+    if (cache) {
+      const parsed = JSON.parse(cache);
+      if (parsed && parsed.dados) {
+        dadosFixosMensais = parsed.dados;
+        return Promise.resolve();
+      }
+    }
+  } catch (e) { /* ignora cache corrompido */ }
+
+  return fetch('historico_fixo.json')
+    .then(r => { if (!r.ok) throw new Error('historico_fixo.json não encontrado'); return r.json(); })
+    .then(data => { dadosFixosMensais = data; })
+    .catch(err => {
+      console.warn('Não foi possível carregar historico_fixo.json (dados mensais fixos).', err);
+      dadosFixosMensais = null;
+    });
+}
+
+// Devolve as linhas fixas de um mês (1-8) para 'porCliente' | 'porSegmento' | 'porProduto',
+// ou null se aquele mês não estiver disponível.
+function obterLinhasFixasMes(tipo, mes) {
+  if (!dadosFixosMensais || !dadosFixosMensais[tipo]) return null;
+  const linhas = dadosFixosMensais[tipo][String(mes)];
+  return linhas && linhas.length > 0 ? linhas : null;
+}
+
+// Os dados mensais fixos (Jan-Ago) só devem "valer" depois que pelo menos
+// uma das planilhas Export (Relatório Geral / Análise de Carteira) tiver
+// sido carregada nesta sessão — como pedido: elas são complemento, não
+// substituem o upload.
+function usarDadosMensaisFixos() {
+  return algumaPlanilhaCarregada();
+}
+
 let charts = {};
 
 const MAPA_MESES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -73,6 +274,9 @@ function restaurarSessaoAtual() {
       // desenhar os gráficos — evita que eles fiquem em branco quando o
       // restauro acontece muito cedo (canvas ainda sem tamanho definido).
       requestAnimationFrame(() => renderDashboard());
+      // Já tinha Export carregado nesta aba: aproveita e busca a versão
+      // mais recente das 4 planilhas mensais no Drive também.
+      sincronizarPlanilhasDoDrive();
     }
     return temDados;
   } catch (err) {
@@ -81,9 +285,15 @@ function restaurarSessaoAtual() {
   }
 }
 
-// Ao abrir/voltar para esta página, tenta restaurar os dados já carregados
-// nesta mesma aba antes de pedir upload de novo.
-restaurarSessaoAtual();
+// Ao abrir/voltar para esta página, primeiro carrega os dados mensais fixos
+// (Jan-Ago/2026) — eles já deixam o dashboard e o filtro de mês funcionando
+// mesmo sem nenhum upload — e em seguida tenta restaurar as planilhas ao
+// vivo já carregadas nesta mesma aba.
+carregarDadosFixosMensais().then(() => {
+  popularSelectClientes();
+  renderDashboard();
+  restaurarSessaoAtual();
+});
 
 // Alguns navegadores restauram a página do "cache de navegação" (bfcache) ao
 // clicar em voltar, sem executar o script de novo. Nesse caso os dados em
@@ -124,6 +334,12 @@ function readExcelFile(file, fileNum) {
       renderDashboard();
       atualizarDadosVivosLocalStorage();
       salvarSessaoAtual();
+
+      // A partir do momento em que uma planilha Export é carregada, os
+      // dados mensais fixos (Jan-Ago) "entram em vigor" — e busca a versão
+      // mais recente delas direto do Google Drive em segundo plano (não
+      // trava a tela; quando terminar, o dashboard se atualiza sozinho).
+      sincronizarPlanilhasDoDrive();
     } catch (err) {
       console.error("Erro ao ler planilha:", err);
     }
@@ -184,7 +400,13 @@ function atualizarDadosVivosLocalStorage() {
 if (selectAno) selectAno.addEventListener('change', renderDashboard);
 if (selectMes) selectMes.addEventListener('change', renderDashboard);
 if (selectCliente) selectCliente.addEventListener('change', renderDashboard);
-if (searchInput) searchInput.addEventListener('input', renderVendasClienteTable);
+if (searchInput) searchInput.addEventListener('input', () => {
+  // A busca é compartilhada: filtra as duas tabelas (Vendas por Cliente e
+  // Inatividade) ao mesmo tempo, então achar o cliente em uma já "seleciona"
+  // ele na outra automaticamente.
+  renderVendasClienteTable();
+  renderInatividadeTable();
+});
 
 function popularSelectClientes() {
   if (!selectCliente) return;
@@ -195,6 +417,16 @@ function popularSelectClientes() {
     const nome = r['Cliente_Pai'] || r['Cliente'];
     if (nome) clientesUnicos.add(String(nome).trim());
   });
+
+  // Também inclui os clientes que só aparecem nos meses fixos (1-8), para
+  // que o filtro de cliente + mês funcione mesmo antes de qualquer upload.
+  if (dadosFixosMensais && dadosFixosMensais.porCliente) {
+    Object.values(dadosFixosMensais.porCliente).forEach(linhasMes => {
+      linhasMes.forEach(r => {
+        if (r.Cliente_Pai) clientesUnicos.add(String(r.Cliente_Pai).trim());
+      });
+    });
+  }
 
   const clienteAtual = selectCliente.value;
   selectCliente.innerHTML = '<option value="ALL">Todos os Clientes</option>';
@@ -217,6 +449,45 @@ function getSheet(dataObj, keywords) {
     if (found) return dataObj[found];
   }
   return [];
+}
+
+// true assim que pelo menos uma das duas planilhas foi carregada. Usado para
+// só exibir os números de demonstração (placeholder) ANTES do upload —
+// depois que o usuário carrega a planilha, tudo deve refletir o real,
+// inclusive quando o real for zero.
+function algumaPlanilhaCarregada() {
+  return (dataStore.reportSection && Object.keys(dataStore.reportSection).length > 0) ||
+         (dataStore.analiseCarteira && Object.keys(dataStore.analiseCarteira).length > 0);
+}
+
+// Verifica se a planilha tem uma coluna de Cliente (linha a linha), ou seja,
+// se dá pra saber qual linha pertence a qual cliente.
+function sheetTemColunaCliente(sheet) {
+  if (!sheet || sheet.length === 0) return false;
+  const primeira = sheet[0];
+  return Object.prototype.hasOwnProperty.call(primeira, 'Cliente_Pai') ||
+         Object.prototype.hasOwnProperty.call(primeira, 'Cliente');
+}
+
+// Filtra uma planilha pelo cliente selecionado no topo (selectCliente).
+// - "ALL": devolve tudo, sem restrição.
+// - Cliente específico + planilha TEM coluna de cliente: filtra normalmente.
+// - Cliente específico + planilha NÃO TEM coluna de cliente (é um dado
+//   agregado da carteira toda, ex: histórico mensal): não tem como saber a
+//   fatia desse cliente, então devolve vazio -> o gráfico/KPI fica zerado
+//   em vez de continuar mostrando o total da carteira (o que pareceria bug).
+function filtrarPorCliente(sheet, clienteSel) {
+  if (!clienteSel || clienteSel === 'ALL') {
+    return { linhas: sheet, semDetalhePorCliente: false };
+  }
+  if (!sheetTemColunaCliente(sheet)) {
+    return { linhas: [], semDetalhePorCliente: true };
+  }
+  const linhas = sheet.filter(r => {
+    const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
+    return nome === clienteSel;
+  });
+  return { linhas, semDetalhePorCliente: false };
 }
 
 // Conta quantos dias úteis (seg a sex, sem considerar feriados) faltam para
@@ -261,24 +532,35 @@ function renderYTDBanner() {
   const elVar = document.getElementById('kpiVariacao');
 
   const variacao = ytd - lytd;
+  const carregado = algumaPlanilhaCarregada();
 
-  if (elLytd) elLytd.textContent = formatBRL(lytd || 6386614.16);
-  if (elYtd) elYtd.textContent = formatBRL(ytd || 6636963.60);
-  if (elVar) elVar.textContent = formatBRL(variacao || 250349.43);
+  // Antes de carregar qualquer planilha, mostra números de demonstração.
+  // Depois de carregar, mostra o valor real mesmo que seja zero.
+  if (elLytd) elLytd.textContent = formatBRL(carregado ? lytd : 6386614.16);
+  if (elYtd) elYtd.textContent = formatBRL(carregado ? ytd : 6636963.60);
+  if (elVar) elVar.textContent = formatBRL(carregado ? variacao : 250349.43);
 }
 
 function renderKPIs() {
   const mesSel = selectMes ? selectMes.value : 'ALL';
   const anoSel = selectAno ? selectAno.value : '2026';
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  
+  const carregado = algumaPlanilhaCarregada();
+  const clienteEspecifico = clienteSel !== 'ALL';
+
   const anoNum = Number(anoSel);
   const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
 
+  // ---- Faturamento da Carteira (já é por cliente, então filtra normal) ----
+  // Se um mês específico (1-8) foi selecionado, usa os dados FIXOS daquele
+  // mês (que têm o detalhe por cliente); senão usa o acumulado da planilha
+  // ao vivo carregada no Dashboard (comportamento de antes).
   let totalFat = 0;
-  const sheetCliente = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+  const linhasFixasMes = (mesNum !== null && usarDadosMensaisFixos()) ? obterLinhasFixasMes('porCliente', mesNum) : null;
+  const usandoMesFixo = linhasFixasMes !== null;
+  const sheetCliente = usandoMesFixo ? linhasFixasMes : getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
 
-  if (clienteSel !== 'ALL') {
+  if (clienteEspecifico) {
     sheetCliente.forEach(r => {
       const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
       if (nome === clienteSel) {
@@ -287,19 +569,25 @@ function renderKPIs() {
     });
   } else {
     sheetCliente.forEach(r => totalFat += parseCurrency(r['Valor de venda (R$)'] || r['Valor']));
-    if (totalFat === 0) {
+    if (totalFat === 0 && !usandoMesFixo) {
       const sheetVenda = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal', 'Image-6']);
       sheetVenda.forEach(r => totalFat += parseCurrency(r[anoSel] || r[`${anoSel} (R$)`] || r['Vendas (R$)']));
     }
   }
 
   const elValor = document.getElementById('kpiValorMensal');
-  if (elValor) elValor.textContent = formatBRL(totalFat || 32766640.70);
+  // Mostra o valor real assim que houver alguma fonte de dado (planilha ao
+  // vivo OU mês fixo selecionado); só cai no número de demonstração se não
+  // tiver nenhuma das duas ainda.
+  if (elValor) elValor.textContent = formatBRL((carregado || usandoMesFixo) ? totalFat : 32766640.70);
 
-  const sheetBudget = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
+  // ---- % Budget Atingido (indicador da carteira toda; planilha não traz
+  // o budget quebrado por cliente, então zera quando um cliente é selecionado) ----
+  const sheetBudgetBruto = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
+  const { linhas: sheetBudget, semDetalhePorCliente: budgetSemDetalhe } = filtrarPorCliente(sheetBudgetBruto, clienteSel);
   let avgBudget = 0;
 
-  if (sheetBudget.length > 0) {
+  if (!budgetSemDetalhe && sheetBudget.length > 0) {
     if (mesNum !== null) {
       const row = sheetBudget.find(r => Number(r['Mês'] || r['Mes']) === mesNum);
       if (row) avgBudget = parsePct(row['% do Budget'] || row['Budget']);
@@ -316,88 +604,103 @@ function renderKPIs() {
   const elBudget = document.getElementById('kpiBudgetAtingido');
   if (elBudget) elBudget.textContent = `${avgBudget.toFixed(1)}%`;
 
-  const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
-  let positivados = 82;
-  let totalCarteira = 271;
-  let metaQtdPlanilha = null; // Meta em quantidade de clientes, vinda direto da planilha
-
-  if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
-    const row = sheetUltimaFatura[0];
-    const valPos = parseCurrency(row['Qtd_Positivados'] || row['Qtd_Positivado']);
-    const valCart = parseCurrency(row['Carteira']);
-    const valMeta = parseCurrency(row['Meta']);
-    if (valPos > 0) positivados = valPos;
-    if (valCart > 0) totalCarteira = valCart;
-    if (valMeta > 0) metaQtdPlanilha = valMeta;
-  }
-
-  // Se a planilha já traz a Meta (coluna "Meta"), usa ela. Senão, cai no
-  // padrão antigo de 60% da carteira, para não quebrar planilhas mais antigas.
-  const metaQtd = metaQtdPlanilha !== null ? metaQtdPlanilha : Math.round(totalCarteira * 0.60);
-  const metaPct = totalCarteira > 0 ? (metaQtd / totalCarteira) * 100 : 60;
-  const realPct = (positivados / totalCarteira) * 100;
-  const faltaQtd = metaQtd - positivados;
-  const faltaPct = metaPct - realPct;
-
+  // ---- Positivação da Carteira ----
+  // É um indicador da carteira inteira (quantos clientes compraram no
+  // período). Não faz sentido "por 1 cliente só", então quando um cliente
+  // específico está selecionado, o card fica zerado com um aviso — em vez
+  // de continuar mostrando o número da carteira toda (que parecia bug).
   const elPos = document.getElementById('kpiPositivacao');
   const elPosSub = document.getElementById('kpiPositivacaoSub');
-
-  // Alerta "corra atrás": liga na reta final do mês — quando restam 10 dias
-  // úteis ou menos para acabar e a meta ainda não foi batida.
-  const diasUteisRestantes = diasUteisRestantesNoMes();
-  const abaixoDaMeta = faltaQtd > 0;
-  const alertaPositivacao = abaixoDaMeta && diasUteisRestantes <= 10;
-
-  if (elPos) {
-    elPos.textContent = `${positivados} / ${totalCarteira}`;
-    elPos.style.color = alertaPositivacao ? '#ef4444' : '';
-  }
-  if (elPosSub) {
-    if (faltaQtd <= 0) {
-      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: <strong>${metaQtd} clientes (${metaPct.toFixed(1)}%)</strong> | <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
-    } else {
-      elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: <strong>${metaQtd} clientes (${metaPct.toFixed(1)}%)</strong> | Falta: <span style="color:#ef4444;font-weight:bold;">${faltaQtd} clientes (${faltaPct.toFixed(2)}%)</span>` +
-        (alertaPositivacao ? `<br><span style="display:inline-block; margin-top:6px; padding:4px 8px; border-radius:6px; background:rgba(239,68,68,0.15); color:#ef4444; font-weight:700;">🚨 Faltam ${diasUteisRestantes} dias úteis para o fim do mês — corra atrás da meta!</span>` : '');
-    }
-  }
-
-  // Destaca todo o card de Positivação em vermelho quando o alerta está ativo.
   const kpiCardPositivacao = elPosSub ? elPosSub.closest('.kpi-card') : null;
-  if (kpiCardPositivacao) {
-    if (alertaPositivacao) {
-      kpiCardPositivacao.style.borderColor = '#ef4444';
-      kpiCardPositivacao.style.boxShadow = '0 0 0 1px rgba(239,68,68,0.45)';
-    } else {
-      kpiCardPositivacao.style.borderColor = '';
-      kpiCardPositivacao.style.boxShadow = '';
+
+  if (clienteEspecifico) {
+    if (elPos) { elPos.textContent = '—'; elPos.style.color = ''; }
+    if (elPosSub) elPosSub.innerHTML = `Indicador de carteira — selecione "Todos os Clientes" para ver a positivação.`;
+    if (kpiCardPositivacao) { kpiCardPositivacao.style.borderColor = ''; kpiCardPositivacao.style.boxShadow = ''; }
+  } else {
+    const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
+    let positivados = carregado ? 0 : 82;
+    let totalCarteira = carregado ? 0 : 271;
+
+    if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
+      const row = sheetUltimaFatura[0];
+      const valPos = parseCurrency(row['Qtd_Positivados'] || row['Qtd_Positivado']);
+      const valCart = parseCurrency(row['Carteira']);
+      if (valPos > 0) positivados = valPos;
+      if (valCart > 0) totalCarteira = valCart;
+    }
+
+    // A meta é sempre 60% da carteira atual da planilha — não usa mais um
+    // valor de "Meta" fixo vindo da planilha, para não desalinhar do real.
+    const metaQtd = Math.round(totalCarteira * 0.60);
+    const metaPct = 60;
+    const realPct = totalCarteira > 0 ? (positivados / totalCarteira) * 100 : 0;
+    const faltaQtd = metaQtd - positivados;
+    const faltaPct = metaPct - realPct;
+
+    // Alerta "corra atrás": liga na reta final do mês — quando restam 10 dias
+    // úteis ou menos para acabar e a meta ainda não foi batida.
+    const diasUteisRestantes = diasUteisRestantesNoMes();
+    const abaixoDaMeta = faltaQtd > 0;
+    const alertaPositivacao = abaixoDaMeta && diasUteisRestantes <= 10;
+
+    if (elPos) {
+      elPos.textContent = `${positivados} / ${totalCarteira}`;
+      elPos.style.color = alertaPositivacao ? '#ef4444' : '';
+    }
+    if (elPosSub) {
+      if (faltaQtd <= 0) {
+        elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: <strong>${metaQtd} clientes (${metaPct.toFixed(1)}%)</strong> | <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
+      } else {
+        elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: <strong>${metaQtd} clientes (${metaPct.toFixed(1)}%)</strong> | Falta: <span style="color:#ef4444;font-weight:bold;">${faltaQtd} clientes (${faltaPct.toFixed(2)}%)</span>` +
+          (alertaPositivacao ? `<br><span style="display:inline-block; margin-top:6px; padding:4px 8px; border-radius:6px; background:rgba(239,68,68,0.15); color:#ef4444; font-weight:700;">🚨 Faltam ${diasUteisRestantes} dias úteis para o fim do mês — corra atrás da meta!</span>` : '');
+      }
+    }
+
+    // Destaca todo o card de Positivação em vermelho quando o alerta está ativo.
+    if (kpiCardPositivacao) {
+      if (alertaPositivacao) {
+        kpiCardPositivacao.style.borderColor = '#ef4444';
+        kpiCardPositivacao.style.boxShadow = '0 0 0 1px rgba(239,68,68,0.45)';
+      } else {
+        kpiCardPositivacao.style.borderColor = '';
+        kpiCardPositivacao.style.boxShadow = '';
+      }
     }
   }
 
-  const sheetGravados = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
-  let pctVal = 44.72;
+  // ---- % Encomendas Gravadas ----
+  // Mesma lógica: se a planilha não detalha por cliente, zera ao filtrar.
+  const sheetGravadosBruto = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
+  const { linhas: sheetGravados, semDetalhePorCliente: gravadosSemDetalhe } = filtrarPorCliente(sheetGravadosBruto, clienteSel);
+  let pctVal = carregado ? 0 : 44.72;
   const metaGravaçãoPct = 50.0;
 
-  if (sheetGravados.length > 0) {
+  if (!gravadosSemDetalhe && sheetGravados.length > 0) {
     let row = null;
     if (mesNum !== null) {
       row = sheetGravados.find(r => Number(r.Ano) === anoNum && Number(r.Mes) === mesNum && String(r.Tipo).trim().toLowerCase() === 'gravado');
     }
     if (!row) row = sheetGravados.find(r => String(r['Ano'] || r['Tipo']).toLowerCase().includes('total')) || sheetGravados[0];
 
-    const rawVal = row ? (row['% gravação'] || row['% Gravado'] || row['Total'] || row['Gravado'] || 0.4472) : 0.4472;
-    pctVal = parsePct(rawVal);
+    const rawVal = row ? (row['% gravação'] ?? row['% Gravado'] ?? row['Total'] ?? row['Gravado']) : undefined;
+    pctVal = rawVal !== undefined ? parsePct(rawVal) : 0;
   }
 
   const elGrav = document.getElementById('kpiPctGravadas');
   const elGravSub = document.getElementById('kpiPctGravadasSub');
   if (elGrav) elGrav.textContent = `${pctVal.toFixed(2)}%`;
-  
+
   if (elGravSub) {
-    const diffGrav = metaGravaçãoPct - pctVal;
-    if (diffGrav <= 0) {
-      elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
+    if (clienteEspecifico && gravadosSemDetalhe) {
+      elGravSub.innerHTML = `Indicador de carteira — selecione "Todos os Clientes" para ver este indicador.`;
     } else {
-      elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | Falta: <span style="color:#f59e0b;font-weight:bold;">${diffGrav.toFixed(2)}%</span> p/ a meta`;
+      const diffGrav = metaGravaçãoPct - pctVal;
+      if (diffGrav <= 0) {
+        elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
+      } else {
+        elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | Falta: <span style="color:#f59e0b;font-weight:bold;">${diffGrav.toFixed(2)}%</span> p/ a meta`;
+      }
     }
   }
 }
@@ -460,26 +763,37 @@ function renderChartHistorico() {
   const ctx = document.getElementById('chartHistoricoFaturamento');
   if (!ctx) return;
 
-  const sheet = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  
-  let v2024 = new Array(12).fill(null);
-  let v2025 = new Array(12).fill(null);
   let v2026 = new Array(12).fill(null);
+  let semNenhumDado = true;
 
-  if (sheet.length > 0) {
-    sheet.forEach(r => {
-      const idx = Number(r['Mês'] || r['Mes']) - 1;
-      const anoRow = Number(r['Ano']);
-      const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-      
-      if (idx >= 0 && idx < 12 && val > 0) {
-        if (anoRow === 2024) v2024[idx] = val;
-        if (anoRow === 2025) v2025[idx] = val;
-        if (anoRow === 2026) v2026[idx] = val;
-      }
-    });
+  // 1) Meses 1-8: sempre vêm dos dados FIXOS (Jan-Ago/2026), que já têm o
+  // detalhe por cliente — então o histórico muda de verdade ao selecionar
+  // um cliente específico.
+  for (let m = 1; m <= 8; m++) {
+    const linhasMes = usarDadosMensaisFixos() ? obterLinhasFixasMes('porCliente', m) : null;
+    if (!linhasMes) continue;
+    const { linhas } = filtrarPorCliente(linhasMes, clienteSel);
+    const total = linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
+    v2026[m - 1] = total;
+    semNenhumDado = false;
   }
+
+  // 2) Meses 9+ (mês corrente, ainda sem planilha fixa): usa a planilha ao
+  // vivo (Image-6), que só tem o total da carteira toda — por isso só
+  // preenche quando "Todos os Clientes" está selecionado.
+  const sheetBruto = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
+  const { linhas: sheetLive, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
+  sheetLive.forEach(r => {
+    const idx = Number(r['Mês'] || r['Mes']) - 1;
+    const anoRow = Number(r['Ano']);
+    const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
+    if (idx >= 8 && idx < 12 && anoRow === 2026 && val > 0) {
+      v2026[idx] = val;
+      semNenhumDado = false;
+    }
+  });
 
   destroyChart('chartHistoricoFaturamento');
   charts['chartHistoricoFaturamento'] = new Chart(ctx.getContext('2d'), {
@@ -487,16 +801,19 @@ function renderChartHistorico() {
     data: {
       labels: meses,
       datasets: [
-        { label: '2026', data: v2026, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', borderWidth: 3, fill: true, spanGaps: true },
-        { label: '2025', data: v2025, borderColor: '#6366f1', backgroundColor: 'transparent', borderWidth: 2, spanGaps: true },
-        { label: '2024', data: v2024, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 1, spanGaps: true }
+        { label: '2026', data: v2026, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', borderWidth: 3, fill: true, spanGaps: true }
       ]
     },
     plugins: [pluginValoresNativos],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
+      plugins: {
+        legend: { display: false },
+        title: semNenhumDado
+          ? { display: true, text: 'Sem dados para este cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+          : { display: false }
+      },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
         y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
@@ -509,7 +826,9 @@ function renderChartBudget() {
   const ctx = document.getElementById('chartBudget');
   if (!ctx) return;
 
-  const sheet = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  const sheetBruto = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
+  const { linhas: sheet, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
   const labels = mesesArray();
   let dataVals = new Array(12).fill(0);
 
@@ -538,7 +857,12 @@ function renderChartBudget() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8' } },
+        title: semDetalhePorCliente
+          ? { display: true, text: 'Planilha não detalha o budget por cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+          : { display: false }
+      },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
         y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
@@ -551,17 +875,22 @@ function renderChartTipoEncomenda() {
   const ctx = document.getElementById('chartTipoEncomenda');
   if (!ctx) return;
 
-  const sheet = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
-  
-  let gravado = 89;
-  let normal = 110;
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  const carregado = algumaPlanilhaCarregada();
+  const sheetBruto = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
+  const { linhas: sheet, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
+
+  // Antes de qualquer planilha carregada, mostra números de demonstração.
+  // Depois de carregada, mostra o real (que pode ser 0/0).
+  let gravado = carregado ? 0 : 89;
+  let normal = carregado ? 0 : 110;
 
   if (sheet.length > 0) {
     const rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
     const rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
 
-    if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] || rowG['% gravação']);
-    if (rowN) normal = parseCurrency(rowN['Sum of Valor'] || rowN['% gravação']);
+    if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] ?? rowG['% gravação']);
+    if (rowN) normal = parseCurrency(rowN['Sum of Valor'] ?? rowN['% gravação']);
   }
 
   destroyChart('chartTipoEncomenda');
@@ -575,11 +904,19 @@ function renderChartTipoEncomenda() {
         borderWidth: 0
       }]
     },
+    // O plugin nativo já calcula o percentual em cima do que existir no
+    // gráfico (gravado + normal), então mesmo com pouco volume (ex: só
+    // 35,16 no total) o rótulo mostra o percentual correto daquilo que tem.
     plugins: [pluginValoresNativos],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } }
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8' } },
+        title: semDetalhePorCliente
+          ? { display: true, text: 'Planilha não detalha o tipo de encomenda por cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+          : { display: false }
+      }
     }
   });
 }
@@ -588,7 +925,14 @@ function renderChartSegmentos() {
   const ctx = document.getElementById('chartSegmentos');
   if (!ctx) return;
 
-  const sheet = getSheet(dataStore.reportSection, ['Venda mensal em reais da', 'Separador Segmento', 'Segmento']);
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  const mesSel = selectMes ? selectMes.value : 'ALL';
+  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
+
+  const linhasFixas = (mesNum !== null && usarDadosMensaisFixos()) ? obterLinhasFixasMes('porSegmento', mesNum) : null;
+  const sheetBruto = linhasFixas || getSheet(dataStore.reportSection, ['Venda mensal em reais da', 'Separador Segmento', 'Segmento']);
+  const { linhas: sheetFiltrado, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
+  const sheet = [...sheetFiltrado].sort((a, b) => parseCurrency(b['After_Tax_Amount']) - parseCurrency(a['After_Tax_Amount']));
   const labels = sheet.map(r => r['Separador'] || r['Segmento'] || 'Outros').slice(0, 6);
   const dataVals = sheet.map(r => parseCurrency(r['After_Tax_Amount'] || r['Valor'])).slice(0, 6);
 
@@ -608,7 +952,12 @@ function renderChartSegmentos() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8' } },
+        title: semDetalhePorCliente
+          ? { display: true, text: 'Planilha não detalha segmentos por cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+          : { display: false }
+      },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
         y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
@@ -621,7 +970,16 @@ function renderChartTopProdutos() {
   const ctx = document.getElementById('chartTopProdutos');
   if (!ctx) return;
 
-  const sheet = getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']).slice(0, 5);
+  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  const mesSel = selectMes ? selectMes.value : 'ALL';
+  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
+
+  const linhasFixas = (mesNum !== null && usarDadosMensaisFixos()) ? obterLinhasFixasMes('porProduto', mesNum) : null;
+  const sheetCompleto = linhasFixas || getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']);
+  const { linhas: sheetFiltrado, semDetalhePorCliente } = filtrarPorCliente(sheetCompleto, clienteSel);
+  const sheet = [...sheetFiltrado]
+    .sort((a, b) => parseCurrency(b['Valor de Venda'] || b['Valor de Venda (R$)']) - parseCurrency(a['Valor de Venda'] || a['Valor de Venda (R$)']))
+    .slice(0, 5);
   const labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
   const dataVals = sheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']));
 
@@ -641,7 +999,12 @@ function renderChartTopProdutos() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: true, labels: { color: '#94a3b8' } } },
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8' } },
+        title: semDetalhePorCliente
+          ? { display: true, text: 'Planilha não detalha produtos por cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+          : { display: false }
+      },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
         y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
@@ -650,11 +1013,23 @@ function renderChartTopProdutos() {
   });
 }
 
+// Formata a célula "% do Total" da tabela: aceita tanto string pronta
+// ("15.29%", vinda da planilha ao vivo) quanto número puro (0.1529,
+// vindo dos dados fixos mensais).
+function formatPctCell(val) {
+  if (val === undefined || val === null || val === '') return '-';
+  if (typeof val === 'string' && val.includes('%')) return val;
+  return `${parsePct(val).toFixed(2)}%`;
+}
+
 function renderVendasClienteTable() {
   const tbody = document.getElementById('tbVendasCliente');
   if (!tbody) return;
 
-  const sheet = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
+  const mesSel = selectMes ? selectMes.value : 'ALL';
+  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
+  const linhasFixas = (mesNum !== null && usarDadosMensaisFixos()) ? obterLinhasFixasMes('porCliente', mesNum) : null;
+  const sheet = linhasFixas || getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
   const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
 
@@ -664,7 +1039,7 @@ function renderVendasClienteTable() {
     const matchBusca = nome.toLowerCase().includes(query);
     const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
     return matchBusca && matchFiltroTopo;
-  });
+  }).sort((a, b) => parseCurrency(b['Valor de venda (R$)'] || b['Valor']) - parseCurrency(a['Valor de venda (R$)'] || a['Valor']));
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
@@ -674,7 +1049,7 @@ function renderVendasClienteTable() {
   filtered.forEach(r => {
     const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
     const valorVenda = parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
-    const pctTotal = r['% do Total'] || '-';
+    const pctTotal = formatPctCell(r['% do Total']);
     const classe = r['Classe'] || 'Fiel';
 
     const tr = document.createElement('tr');
@@ -704,15 +1079,18 @@ function renderInatividadeTable() {
 
   const sheet = getSheet(dataStore.analiseCarteira, ['#Dias até primeira fatura', 'Clientes com ultima fatura', 'Ultima Fatura']);
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
   tbody.innerHTML = '';
 
   const filtered = sheet.filter(r => {
     const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    return clienteSel === 'ALL' || nome === clienteSel;
+    const matchBusca = nome.toLowerCase().includes(query);
+    const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
+    return matchBusca && matchFiltroTopo;
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Aguardando dados da planilha...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
     return;
   }
 
