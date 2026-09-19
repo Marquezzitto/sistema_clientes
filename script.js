@@ -861,7 +861,7 @@ function renderChartHistorico() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, labels: { color: '#94a3b8' } },
         title: semNenhumDado
           ? { display: true, text: 'Sem dados para este cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
           : { display: false }
@@ -1074,7 +1074,7 @@ function renderChartTopProdutos() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, labels: { color: '#94a3b8' } },
         title: tituloAviso
           ? { display: true, text: tituloAviso, color: '#94a3b8', font: { size: 11, weight: 'normal' } }
           : { display: false }
