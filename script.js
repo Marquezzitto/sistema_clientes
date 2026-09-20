@@ -203,6 +203,27 @@ function obterLinhasFixasMes(tipo, mes) {
 
 // Configuração de como ler cada tipo de linha (usada para o cálculo do mês
 // corrente por subtração, logo abaixo).
+// Normaliza uma chave de cliente/segmento/produto só para efeito de
+// COMPARAÇÃO entre a planilha ao vivo (Export) e as planilhas fixas do
+// Drive. Quando a chave começa com um código numérico (caso de cliente,
+// formato "12345-Nome Da Empresa"), usa SÓ o código — é o identificador
+// confiável; o nome pode vir formatado de forma levemente diferente entre
+// as duas planilhas (com/sem hífen no meio do nome, acento, espaço extra
+// etc.) e isso não deveria fazer o cliente "sumir" da comparação. Quando
+// não há código (segmento, produto), cai para o texto normalizado mesmo.
+function normalizarChaveComparacao(str) {
+  const s = String(str || '').trim();
+  const comCodigo = s.match(/^(\d+)\s*-/);
+  if (comCodigo) return comCodigo[1];
+
+  return s
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/-/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const CONFIG_TIPO_MENSAL = {
   porCliente: {
     chave: r => String(r['Cliente_Pai'] || r['Cliente'] || '').trim(),
@@ -241,31 +262,47 @@ function obterLinhasMesCorrentePorSubtracao(tipo, mes) {
   const sheetVivo = getSheet(dataStore.reportSection, cfg.liveKeywords);
   if (!sheetVivo || sheetVivo.length === 0) return null;
 
-  // Soma tudo que já está nos meses fixos (Jan-Ago), por chave (cliente,
-  // segmento ou produto).
+  // Soma tudo que já está nos meses fixos (Jan-Ago), por chave NORMALIZADA
+  // (maiúscula, sem acento) — evita não bater por causa de espaço a mais
+  // ou acento diferente entre a planilha do Drive e a planilha ao vivo.
   const somaFixa = {};
   for (let m = 1; m <= maxFixo; m++) {
     const linhasMes = obterLinhasFixasMes(tipo, m);
     if (!linhasMes) continue;
     linhasMes.forEach(r => {
-      const chave = cfg.chave(r);
+      const chave = normalizarChaveComparacao(cfg.chave(r));
       if (!chave) return;
       somaFixa[chave] = (somaFixa[chave] || 0) + cfg.valor(r);
     });
   }
 
+  let totalReconhecido = 0;
+  let totalNaoReconhecido = 0;
   const resultado = [];
   sheetVivo.forEach(r => {
-    const chave = cfg.chave(r);
-    if (!chave) return;
+    const chaveOriginal = cfg.chave(r);
+    const chaveNorm = normalizarChaveComparacao(chaveOriginal);
+    if (!chaveNorm) return;
     const totalVivo = cfg.valor(r);
-    const diferenca = totalVivo - (somaFixa[chave] || 0);
+    const temFixo = Object.prototype.hasOwnProperty.call(somaFixa, chaveNorm);
+    if (temFixo) totalReconhecido += totalVivo; else totalNaoReconhecido += totalVivo;
+    const diferenca = totalVivo - (somaFixa[chaveNorm] || 0);
     // Ignora ruído de arredondamento; só entra quem realmente comprou/
     // vendeu algo no mês corrente.
     if (Math.abs(diferenca) > 0.005) {
-      resultado.push(cfg.montarLinha(chave, diferenca, r['Classe']));
+      resultado.push(cfg.montarLinha(chaveOriginal, diferenca, r['Classe']));
     }
   });
+
+  // Se a maior parte do valor ao vivo não bateu com NENHUM registro dos
+  // meses fixos, é sinal de que os nomes/códigos estão em formatos
+  // diferentes entre as planilhas — melhor não usar esse cálculo (ele
+  // ficaria parecido com o total geral, o mesmo bug que estamos evitando)
+  // do que devolver um número errado sem avisar.
+  if (totalReconhecido + totalNaoReconhecido > 0 && totalNaoReconhecido > totalReconhecido) {
+    console.warn(`[RCA 61] Mês corrente (${tipo}) por subtração descartado: a maioria das chaves da planilha ao vivo não bateu com a planilha fixa (possível diferença de formatação nos nomes/códigos).`);
+    return null;
+  }
 
   return resultado.length > 0 ? resultado : null;
 }
@@ -647,22 +684,56 @@ function calcularTotalAno2026() {
 
 function renderYTDBanner() {
   const carregado = algumaPlanilhaCarregada();
-  const ytd = carregado ? calcularTotalAno2026() : 0;
-
-  // A carteira só tem histórico de 2026 (é recente) — não existe uma base
-  // de 2025 pra comparar, então o "Ano Anterior" fica sem dado mesmo (não
-  // é bug). Deixamos isso explícito em vez de só mostrar "R$ 0,00".
   const elLytd = document.getElementById('kpiLytd');
   const elYtd = document.getElementById('kpiYtd');
   const elVar = document.getElementById('kpiVariacao');
 
-  if (elLytd) elLytd.innerHTML = carregado
-    ? `R$ 0,00<br><span style="font-size:0.7rem;font-weight:400;color:#64748b;">Carteira nova — sem base de 2025</span>`
-    : formatBRL(6386614.16);
-  if (elYtd) elYtd.textContent = formatBRL(carregado ? ytd : 6636963.60);
-  if (elVar) elVar.innerHTML = carregado
-    ? `<span style="font-size:0.9rem;color:#64748b;">N/A</span>`
-    : formatBRL(250349.43);
+  if (!carregado) {
+    if (elLytd) elLytd.textContent = formatBRL(6386614.16);
+    if (elYtd) elYtd.textContent = formatBRL(6636963.60);
+    if (elVar) elVar.textContent = formatBRL(250349.43);
+    return;
+  }
+
+  const ytdCalculado = calcularTotalAno2026();
+
+  // O LYTD real (2025) vem da aba "Positivação de carteira" da planilha
+  // ANÁLISE DE CARTEIRA (a segunda que você carrega, não a Relatório
+  // Geral) — é o Power BI quem calcula. Antes eu tava sempre assumindo que
+  // não existia; na verdade só estava olhando a planilha errada.
+  const sheetPosCarteira = getSheet(dataStore.analiseCarteira, ['Positivação de carteira']);
+  let lytd = null;
+  let ytd = ytdCalculado;
+
+  if (sheetPosCarteira && sheetPosCarteira.length > 0) {
+    const row = sheetPosCarteira[0];
+    const brutoLytd = row['Vendas LYTD'];
+    const brutoYtd = row['Vendas YTD'];
+    if (brutoLytd !== null && brutoLytd !== undefined && String(brutoLytd).trim() !== '') {
+      const val = parseCurrency(brutoLytd);
+      if (val > 0) lytd = val;
+    }
+    if (brutoYtd !== null && brutoYtd !== undefined && String(brutoYtd).trim() !== '') {
+      const val = parseCurrency(brutoYtd);
+      if (val > 0) ytd = val; // usa o YTD oficial do Power BI quando disponível
+    }
+  }
+
+  if (lytd !== null) {
+    const variacao = ytd - lytd;
+    const variacaoPct = lytd > 0 ? (variacao / lytd) * 100 : 0;
+    if (elLytd) elLytd.textContent = formatBRL(lytd);
+    if (elYtd) elYtd.textContent = formatBRL(ytd);
+    if (elVar) elVar.innerHTML = `<span style="color:${variacao >= 0 ? '#10b981' : '#ef4444'};">${variacao >= 0 ? '+' : ''}${formatBRL(variacao)} (${variacaoPct >= 0 ? '+' : ''}${variacaoPct.toFixed(1)}%)</span>`;
+  } else {
+    // Ainda sem LYTD preenchido pelo Power BI (carteira nova/sem histórico
+    // de 2025 pra esse período) — assim que a aba "Positivação de
+    // carteira" trouxer o valor, aparece sozinho aqui, sem precisar mexer
+    // em código.
+    if (elLytd) elLytd.innerHTML = `R$ 0,00<br><span style="font-size:0.7rem;font-weight:400;color:#64748b;">Ainda sem base de 2025 na planilha</span>`;
+    if (elYtd) elYtd.textContent = formatBRL(ytd);
+    if (elVar) elVar.innerHTML = `<span style="font-size:0.9rem;color:#64748b;">N/A</span>`;
+  }
 }
 
 function renderKPIs() {
@@ -745,6 +816,42 @@ function renderKPIs() {
     if (elPosSub) elPosSub.innerHTML = `Indicador de carteira — selecione "Todos os Clientes" para ver a positivação.`;
     if (kpiCardPositivacao) { kpiCardPositivacao.style.borderColor = ''; kpiCardPositivacao.style.boxShadow = ''; }
   } else {
+    const mesHistorico = (mesNum !== null && mesNum <= 8 && usarDadosMensaisFixos(anoSel));
+
+    if (mesHistorico) {
+      // Mês fechado (Jan-Ago): não tem "corra atrás da meta" (já passou),
+      // só mostra se bateu (verde) ou não bateu (vermelho) naquele mês.
+      const linhasMesCliente = obterLinhasFixasMes('porCliente', mesNum) || [];
+      const positivadosMes = linhasMesCliente.length;
+
+      // Usa o mesmo tamanho de carteira da planilha ao vivo como
+      // referência (não muda mês a mês, é o total de clientes ativos).
+      const sheetUltimaFaturaRef = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
+      let totalCarteiraRef = 271;
+      if (sheetUltimaFaturaRef && sheetUltimaFaturaRef.length > 0) {
+        const valCart = parseCurrency(sheetUltimaFaturaRef[0]['Carteira']);
+        if (valCart > 0) totalCarteiraRef = valCart;
+      }
+
+      const metaQtdMes = Math.round(totalCarteiraRef * 0.60);
+      const realPctMes = totalCarteiraRef > 0 ? (positivadosMes / totalCarteiraRef) * 100 : 0;
+      const bateuMetaMes = positivadosMes >= metaQtdMes;
+
+      if (elPos) {
+        elPos.textContent = `${positivadosMes} / ${totalCarteiraRef}`;
+        elPos.style.color = bateuMetaMes ? '#10b981' : '#ef4444';
+      }
+      if (elPosSub) {
+        elPosSub.innerHTML = `Real: <strong>${realPctMes.toFixed(2)}%</strong> | Meta: <strong>${metaQtdMes} clientes (60%)</strong> | ` +
+          (bateuMetaMes
+            ? `<span style="color:#10b981;font-weight:bold;">✅ Meta batida nesse mês</span>`
+            : `<span style="color:#ef4444;font-weight:bold;">❌ Meta não batida nesse mês</span>`);
+      }
+      if (kpiCardPositivacao) {
+        kpiCardPositivacao.style.borderColor = bateuMetaMes ? '#10b981' : '#ef4444';
+        kpiCardPositivacao.style.boxShadow = `0 0 0 1px ${bateuMetaMes ? 'rgba(16,185,129,0.45)' : 'rgba(239,68,68,0.45)'}`;
+      }
+    } else {
     const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
     let positivados = carregado ? 0 : 82;
     let totalCarteira = carregado ? 0 : 271;
@@ -793,6 +900,7 @@ function renderKPIs() {
         kpiCardPositivacao.style.borderColor = '';
         kpiCardPositivacao.style.boxShadow = '';
       }
+    }
     }
   }
 
