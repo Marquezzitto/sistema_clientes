@@ -427,27 +427,22 @@
       btn.textContent = 'Salvando...';
 
       try {
-        // O Apps Script, na prática, não devolve o cabeçalho de CORS que o
-        // navegador exige pra deixar a página LER a resposta — por isso
-        // "mode: no-cors": o navegador ainda ENVIA o POST normalmente (e o
-        // Google grava na planilha), só não conseguimos ler de volta se
-        // deu certo ou não. Por isso mostramos "enviado" em vez de
-        // "confirmado".
-        await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({ mudancas })
-        });
+        // Sem headers customizados de propósito: assim o navegador manda
+        // como "text/plain", o que evita o preflight de CORS que o Apps
+        // Script não responde bem.
+        const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ mudancas }) });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.erro || (json.erros || []).join(', '));
 
         Object.assign(c, novo);
         const idx = baseElo.findIndex(x => x.codigo === c.codigo);
         if (idx > -1) baseElo[idx] = c;
         renderizarTabela(baseElo);
-        mostrarToast('Alterações enviadas para o Drive. Confira na planilha se salvou certinho.', true);
+        mostrarToast('Atendimento salvo no Drive com sucesso!', true);
         modal.style.display = 'none';
       } catch (err) {
         console.error(err);
-        mostrarToast('Não consegui enviar para o Drive (sem internet ou o link do Apps Script mudou). Suas respostas continuam no formulário — tente de novo.', false);
+        mostrarToast('Não consegui salvar no Drive. Suas respostas continuam no formulário — tente de novo.', false);
         btn.disabled = false;
         btn.textContent = 'Salvar no Drive';
       }
