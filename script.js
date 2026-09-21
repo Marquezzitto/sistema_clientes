@@ -1,356 +1,54 @@
-// Ativa ícones Lucide
-if (typeof lucide !== 'undefined') {
-  lucide.createIcons();
-}
+// ===== RCA 61 - script.js completo corrigido =====
+
+if (typeof lucide !== 'undefined') lucide.createIcons();
 
 let dataStore = {
   reportSection: {},
   analiseCarteira: {}
 };
 
-// ---------------------------------------------------------------------
-// Dados mensais FIXOS (Jan a Ago/2026): Vendas por Cliente, por Segmento e
-// Top Produtos, mês a mês. Isso resolve o problema de a planilha ao vivo
-// (Export_ReportSection / Export_...) só trazer o acumulado atual, sem
-// detalhar mês a mês por cliente/segmento/produto.
-//
-// Você mantém essas 4 planilhas atualizadas direto no Google Drive, então
-// o dashboard busca elas ao vivo (via o link de exportação do Drive) toda
-// vez que você carrega uma das planilhas "Export" — exatamente como pedido:
-// elas só valem como COMPLEMENTO de quando o Export já foi carregado.
-//
-// Se por qualquer motivo o navegador não conseguir buscar do Drive (link
-// mudou de permissão, sem internet, bloqueio de CORS etc.), cai para o
-// último snapshot salvo no localStorage e, se não houver nenhum, para o
-// arquivo historico_fixo.json que já vai junto com o site (uma foto de
-// Jan-Ago/2026 tirada em 19/09/2026) — assim o filtro de mês nunca fica
-// totalmente quebrado, só desatualizado.
-// ---------------------------------------------------------------------
 let dadosFixosMensais = null;
 let sincronizacaoDriveEmAndamento = false;
-
-const DRIVE_SHEET_IDS = {
-  cliente: '1AP_60koNw2moYQfoJbiXwepVl0EGgcb0',   // Vendas (R$) por Cliente MES A MES 2026
-  segmento: '1z2Xt-nouxE5JapG-pGTZTkjjKca1mW7k',   // Vendas em reais por Segmento MES A MES 2026
-  produto: '1lHcnnMJHKzlBt7El5GQ-qktMx897o0pR'     // 20 produtos mais vendidos mês a mês 2026
-};
-const MESES_FIXOS = [1, 2, 3, 4, 5, 6, 7, 8];
-
-function encontrarAbaMes(workbook, mes) {
-  const alvo = `MES ${mes}`;
-  if (workbook.SheetNames.includes(alvo)) return alvo;
-  return workbook.SheetNames.find(n => n.trim() === alvo) || null;
-}
-
-async function buscarWorkbookDrive(fileId) {
-  // Exporta a planilha inteira (todas as abas) como .xlsx direto do Drive.
-  // Só funciona se o arquivo estiver como "Qualquer pessoa com o link".
-  const url = `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} ao buscar planilha do Drive`);
-  const buf = await res.arrayBuffer();
-  return XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true });
-}
-
-function linhaVazia(row) {
-  return !row || row.every(c => c === null || c === undefined || c === '');
-}
-
-function extrairPorClienteDoWorkbook(workbook) {
-  const resultado = {};
-  MESES_FIXOS.forEach(mes => {
-    const aba = encontrarAbaMes(workbook, mes);
-    if (!aba) return;
-    const linhasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[aba], { header: 1, defval: null });
-    let classeAtual = null;
-    const linhas = [];
-    for (let i = 1; i < linhasRaw.length; i++) {
-      const row = linhasRaw[i];
-      if (linhaVazia(row)) continue;
-      const [classe, cod, nome] = row;
-      const valor = row[4];
-      const pct = row[5];
-      if (classe) classeAtual = classe;
-      if (classeAtual === 'Total') continue; // linha de total geral do mês
-      if (cod === null || cod === undefined || cod === '' || !nome) continue; // subtotal de classe
-      linhas.push({
-        Classe: classeAtual,
-        Cliente_Pai: `${Math.trunc(Number(cod))}-${String(nome).trim()}`,
-        'Valor de venda (R$)': Number(valor) || 0,
-        '% do Total': Number(pct) || 0
-      });
-    }
-    resultado[String(mes)] = linhas;
-  });
-  return resultado;
-}
-
-function extrairPorSegmentoDoWorkbook(workbook) {
-  const resultado = {};
-  MESES_FIXOS.forEach(mes => {
-    const aba = encontrarAbaMes(workbook, mes);
-    if (!aba) return;
-    const linhasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[aba], { header: 1, defval: null });
-    const linhas = [];
-    for (let i = 1; i < linhasRaw.length; i++) {
-      const row = linhasRaw[i];
-      if (linhaVazia(row)) continue;
-      const [sep, , , valor] = row;
-      if (sep !== null && String(sep).trim().toLowerCase() === 'total') continue;
-      linhas.push({
-        Separador: sep ? String(sep).trim() : 'Outros',
-        After_Tax_Amount: Number(valor) || 0
-      });
-    }
-    resultado[String(mes)] = linhas;
-  });
-  return resultado;
-}
-
-function extrairPorProdutoDoWorkbook(workbook) {
-  const resultado = {};
-  MESES_FIXOS.forEach(mes => {
-    const aba = encontrarAbaMes(workbook, mes);
-    if (!aba) return;
-    const linhasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[aba], { header: 1, defval: null });
-    const linhas = [];
-    for (let i = 1; i < linhasRaw.length; i++) {
-      const row = linhasRaw[i];
-      if (linhaVazia(row)) continue;
-      const [produto, , valor] = row;
-      if (produto === null || produto === undefined || produto === '') continue;
-      if (String(produto).trim().toLowerCase() === 'total') continue;
-      linhas.push({ Produto: String(produto).trim(), 'Valor de Venda': Number(valor) || 0 });
-    }
-    linhas.sort((a, b) => b['Valor de Venda'] - a['Valor de Venda']);
-    resultado[String(mes)] = linhas.slice(0, 20);
-  });
-  return resultado;
-}
-
-// Busca as 3 planilhas no Drive, monta o objeto no mesmo formato de sempre
-// e atualiza dadosFixosMensais + o cache local. Chamada automaticamente
-// sempre que uma planilha "Export" é carregada (ver readExcelFile).
-async function sincronizarPlanilhasDoDrive() {
-  if (sincronizacaoDriveEmAndamento) return;
-  sincronizacaoDriveEmAndamento = true;
-  try {
-    const [wbCliente, wbSegmento, wbProduto] = await Promise.all([
-      buscarWorkbookDrive(DRIVE_SHEET_IDS.cliente),
-      buscarWorkbookDrive(DRIVE_SHEET_IDS.segmento),
-      buscarWorkbookDrive(DRIVE_SHEET_IDS.produto)
-    ]);
-
-    const novosDados = {
-      meses_disponiveis: MESES_FIXOS,
-      ano: 2026,
-      porCliente: extrairPorClienteDoWorkbook(wbCliente),
-      porSegmento: extrairPorSegmentoDoWorkbook(wbSegmento),
-      porProduto: extrairPorProdutoDoWorkbook(wbProduto)
-    };
-
-    dadosFixosMensais = novosDados;
-    try {
-      localStorage.setItem('rca61_mensalDrive', JSON.stringify({
-        dados: novosDados,
-        atualizadoEm: new Date().toISOString()
-      }));
-    } catch (e) { /* ignora falha de storage */ }
-
-    console.info('[RCA 61] Planilhas mês a mês sincronizadas do Google Drive com sucesso.');
-    popularSelectClientes();
-    renderDashboard();
-  } catch (err) {
-    // Provável bloqueio de CORS, arquivo sem permissão pública, ou sem
-    // internet. Mantém o que já estava carregado (cache local ou o
-    // historico_fixo.json) e avisa só no console, sem travar a página.
-    console.warn('[RCA 61] Não consegui sincronizar as planilhas mês a mês do Drive. Usando o último snapshot disponível.', err);
-  } finally {
-    sincronizacaoDriveEmAndamento = false;
-  }
-}
-
-// Carrega, na ordem: 1) cache salvo no navegador (instantâneo) e, se não
-// houver, 2) o snapshot fixo que já vai junto com o site.
-function carregarDadosFixosMensais() {
-  try {
-    const cache = localStorage.getItem('rca61_mensalDrive');
-    if (cache) {
-      const parsed = JSON.parse(cache);
-      if (parsed && parsed.dados) {
-        dadosFixosMensais = parsed.dados;
-        return Promise.resolve();
-      }
-    }
-  } catch (e) { /* ignora cache corrompido */ }
-
-  return fetch('historico_fixo.json')
-    .then(r => { if (!r.ok) throw new Error('historico_fixo.json não encontrado'); return r.json(); })
-    .then(data => { dadosFixosMensais = data; })
-    .catch(err => {
-      console.warn('Não foi possível carregar historico_fixo.json (dados mensais fixos).', err);
-      dadosFixosMensais = null;
-    });
-}
-
-// Devolve as linhas fixas de um mês (1-8) para 'porCliente' | 'porSegmento' | 'porProduto',
-// ou null se aquele mês não estiver disponível.
-function obterLinhasFixasMes(tipo, mes) {
-  if (!dadosFixosMensais || !dadosFixosMensais[tipo]) return null;
-  const linhas = dadosFixosMensais[tipo][String(mes)];
-  return linhas && linhas.length > 0 ? linhas : null;
-}
-
-// Configuração de como ler cada tipo de linha (usada para o cálculo do mês
-// corrente por subtração, logo abaixo).
-// Normaliza uma chave de cliente/segmento/produto só para efeito de
-// COMPARAÇÃO entre a planilha ao vivo (Export) e as planilhas fixas do
-// Drive. Quando a chave começa com um código numérico (caso de cliente,
-// formato "12345-Nome Da Empresa"), usa SÓ o código — é o identificador
-// confiável; o nome pode vir formatado de forma levemente diferente entre
-// as duas planilhas (com/sem hífen no meio do nome, acento, espaço extra
-// etc.) e isso não deveria fazer o cliente "sumir" da comparação. Quando
-// não há código (segmento, produto), cai para o texto normalizado mesmo.
-function normalizarChaveComparacao(str) {
-  const s = String(str || '').trim();
-  const comCodigo = s.match(/^(\d+)\s*-/);
-  if (comCodigo) return comCodigo[1];
-
-  return s
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-    .replace(/-/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-const CONFIG_TIPO_MENSAL = {
-  porCliente: {
-    chave: r => String(r['Cliente_Pai'] || r['Cliente'] || '').trim(),
-    valor: r => parseCurrency(r['Valor de venda (R$)'] || r['Valor']),
-    liveKeywords: ['Vendas (R$) por Cliente', 'Cliente'],
-    montarLinha: (chave, valor, refClasse) => ({ Classe: refClasse || 'Fiel', Cliente_Pai: chave, 'Valor de venda (R$)': valor, '% do Total': 0 })
-  },
-  porSegmento: {
-    chave: r => String(r['Separador'] || r['Segmento'] || '').trim(),
-    valor: r => parseCurrency(r['After_Tax_Amount'] || r['Valor']),
-    liveKeywords: ['Venda mensal em reais da', 'Separador Segmento', 'Segmento'],
-    montarLinha: (chave, valor) => ({ Separador: chave, After_Tax_Amount: valor })
-  },
-  porProduto: {
-    chave: r => String(r['Produto'] || r['Cod'] || '').trim(),
-    valor: r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']),
-    liveKeywords: ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20'],
-    montarLinha: (chave, valor) => ({ Produto: chave, 'Valor de Venda': valor })
-  }
-};
-
-// O mês corrente (o que ainda não tem planilha fixa mês a mês, ex: Setembro
-// enquanto só temos Jan-Ago fixos) é calculado por SUBTRAÇÃO:
-//   valor do mês corrente = total acumulado da planilha ao vivo (Export)
-//                          − soma de tudo que já está fixo (Jan-Ago)
-// Isso só funciona certinho para o primeiro mês depois do último mês fixo
-// (hoje: mês 9). Para meses mais à frente que isso (ainda sem export nem
-// planilha fixa), devolve null — não tem como calcular.
-function obterLinhasMesCorrentePorSubtracao(tipo, mes) {
-  const cfg = CONFIG_TIPO_MENSAL[tipo];
-  if (!cfg) return null;
-
-  const maxFixo = Math.max(...MESES_FIXOS);
-  if (mes !== maxFixo + 1) return null;
-
-  const sheetVivo = getSheet(dataStore.reportSection, cfg.liveKeywords);
-  if (!sheetVivo || sheetVivo.length === 0) return null;
-
-  // Soma tudo que já está nos meses fixos (Jan-Ago), por chave NORMALIZADA
-  // (maiúscula, sem acento) — evita não bater por causa de espaço a mais
-  // ou acento diferente entre a planilha do Drive e a planilha ao vivo.
-  const somaFixa = {};
-  for (let m = 1; m <= maxFixo; m++) {
-    const linhasMes = obterLinhasFixasMes(tipo, m);
-    if (!linhasMes) continue;
-    linhasMes.forEach(r => {
-      const chave = normalizarChaveComparacao(cfg.chave(r));
-      if (!chave) return;
-      somaFixa[chave] = (somaFixa[chave] || 0) + cfg.valor(r);
-    });
-  }
-
-  let totalReconhecido = 0;
-  let totalNaoReconhecido = 0;
-  const resultado = [];
-  sheetVivo.forEach(r => {
-    const chaveOriginal = cfg.chave(r);
-    const chaveNorm = normalizarChaveComparacao(chaveOriginal);
-    if (!chaveNorm) return;
-    const totalVivo = cfg.valor(r);
-    const temFixo = Object.prototype.hasOwnProperty.call(somaFixa, chaveNorm);
-    if (temFixo) totalReconhecido += totalVivo; else totalNaoReconhecido += totalVivo;
-    const diferenca = totalVivo - (somaFixa[chaveNorm] || 0);
-    // Ignora ruído de arredondamento; só entra quem realmente comprou/
-    // vendeu algo no mês corrente.
-    if (Math.abs(diferenca) > 0.005) {
-      resultado.push(cfg.montarLinha(chaveOriginal, diferenca, r['Classe']));
-    }
-  });
-
-  // Se a maior parte do valor ao vivo não bateu com NENHUM registro dos
-  // meses fixos, é sinal de que os nomes/códigos estão em formatos
-  // diferentes entre as planilhas — melhor não usar esse cálculo (ele
-  // ficaria parecido com o total geral, o mesmo bug que estamos evitando)
-  // do que devolver um número errado sem avisar.
-  if (totalReconhecido + totalNaoReconhecido > 0 && totalNaoReconhecido > totalReconhecido) {
-    console.warn(`[RCA 61] Mês corrente (${tipo}) por subtração descartado: a maioria das chaves da planilha ao vivo não bateu com a planilha fixa (possível diferença de formatação nos nomes/códigos).`);
-    return null;
-  }
-
-  return resultado.length > 0 ? resultado : null;
-}
-
-// Ponto único usado pelos gráficos/KPIs: tenta o mês fixo primeiro
-// (detalhado, Jan-Ago) e, se não existir, tenta calcular o mês corrente
-// por subtração (ex: Setembro). Isso resolve o caso de "selecionei
-// Setembro e ele mostrou o acumulado geral" — agora mostra só a diferença
-// daquele mês.
-function obterLinhasDoMes(tipo, mes) {
-  return obterLinhasFixasMes(tipo, mes) || obterLinhasMesCorrentePorSubtracao(tipo, mes);
-}
-
-// Os dados mensais fixos (Jan-Ago) só devem "valer" depois que pelo menos
-// uma das planilhas Export (Relatório Geral / Análise de Carteira) tiver
-// sido carregada nesta sessão — como pedido: elas são complemento, não
-// substituem o upload. Além disso, só valem para o ano que a planilha fixa
-// realmente cobre (hoje: 2026) — se o filtro de Ano estiver em outro ano
-// (ex: 2025, que ainda não tem dado nenhum), não usa.
-function usarDadosMensaisFixos(anoSel) {
-  if (!algumaPlanilhaCarregada()) return false;
-  const anoFixo = String((dadosFixosMensais && dadosFixosMensais.ano) || 2026);
-  return !anoSel || anoSel === 'ALL' || anoSel === anoFixo;
-}
-
 let charts = {};
 
-// Formata os tooltips (balão que aparece ao passar o mouse) de TODOS os
-// gráficos em R$ (ou %) já arredondado, em vez do número cru do
-// JavaScript (ex: "1.452,68999999999998"), que é o que aparecia antes.
-if (typeof Chart !== 'undefined') {
-  Chart.defaults.plugins = Chart.defaults.plugins || {};
-  Chart.defaults.plugins.tooltip = Chart.defaults.plugins.tooltip || {};
-  Chart.defaults.plugins.tooltip.callbacks = Chart.defaults.plugins.tooltip.callbacks || {};
-  Chart.defaults.plugins.tooltip.callbacks.label = function (context) {
-    const rotulo = context.dataset && context.dataset.label ? context.dataset.label : (context.label || '');
-    let valor = context.parsed;
-    if (valor && typeof valor === 'object') valor = valor.y !== undefined ? valor.y : valor.r;
-    if (typeof valor !== 'number') return rotulo;
-    const ehPercentual = String(rotulo).includes('%') || String(rotulo).toLowerCase().includes('budget');
-    const formatado = ehPercentual ? `${valor.toFixed(2)}%` : formatBRL(valor);
-    return rotulo ? `${rotulo}: ${formatado}` : formatado;
-  };
-}
+const DRIVE_SHEET_IDS = {
+  cliente: '1AP_60koNw2moYQfoJbiXwepVl0EGgcb0',
+  segmento: '1z2Xt-nouxE5JapG-pGTZTkjjKca1mW7k',
+  produto: '1lHcnnMJHKzlBt7El5GQ-qktMx897o0pR'
+};
 
-const MAPA_MESES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MESES_FIXOS = [1, 2, 3, 4, 5, 6, 7, 8];
 
-// Elementos do DOM
+const NOMES_MESES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro'
+];
+
+const LABELS_MESES = [
+  'Jan',
+  'Fev',
+  'Mar',
+  'Abr',
+  'Mai',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Set',
+  'Out',
+  'Nov',
+  'Dez'
+];
+
 const fileInput1 = document.getElementById('fileInput1');
 const fileInput2 = document.getElementById('fileInput2');
 const dropZone1 = document.getElementById('dropZone1');
@@ -365,280 +63,4189 @@ const selectMes = document.getElementById('selectMes');
 const selectCliente = document.getElementById('selectCliente');
 const searchInput = document.getElementById('searchClientInput');
 
-// Listeners de Upload
-if (fileInput1) fileInput1.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 1));
-if (fileInput2) fileInput2.addEventListener('change', (e) => e.target.files.length > 0 && readExcelFile(e.target.files[0], 2));
-
-// Guarda as planilhas já lidas na sessão do navegador (sessionStorage), para
-// não precisar carregar de novo ao ir para a Base de Clientes e voltar.
-// Some sozinho quando a guia/aba é fechada (sessionStorage é por aba).
-function salvarSessaoAtual() {
-  try {
-    sessionStorage.setItem('rca61_sessaoPlanilhas', JSON.stringify({
-      dataStore: dataStore,
-      nomeArquivo1: labelFile1 ? labelFile1.textContent : '',
-      nomeArquivo2: labelFile2 ? labelFile2.textContent : '',
-      carregado1: dropZone1 ? dropZone1.classList.contains('loaded') : false,
-      carregado2: dropZone2 ? dropZone2.classList.contains('loaded') : false
-    }));
-  } catch (err) {
-    console.error('Não foi possível salvar a sessão das planilhas:', err);
+function parseCurrency(val) {
+  if (typeof val === 'number') {
+    return Number.isFinite(val) ? val : 0;
   }
+
+  if (val === null || val === undefined || val === '') {
+    return 0;
+  }
+
+  let s = String(val)
+    .replace(/R\$/g, '')
+    .replace(/\s/g, '')
+    .trim();
+
+  if (s.includes(',')) {
+    s = s
+      .replace(/\./g, '')
+      .replace(',', '.');
+  }
+
+  const n = Number.parseFloat(s);
+
+  return Number.isFinite(n) ? n : 0;
 }
 
-function restaurarSessaoAtual() {
-  try {
-    const raw = sessionStorage.getItem('rca61_sessaoPlanilhas');
-    if (!raw) return false;
-    const salvo = JSON.parse(raw);
-    if (!salvo || !salvo.dataStore) return false;
-
-    dataStore = salvo.dataStore;
-
-    if (salvo.carregado1 && dropZone1) dropZone1.classList.add('loaded');
-    if (salvo.carregado2 && dropZone2) dropZone2.classList.add('loaded');
-    if (salvo.nomeArquivo1 && labelFile1) labelFile1.textContent = salvo.nomeArquivo1;
-    if (salvo.nomeArquivo2 && labelFile2) labelFile2.textContent = salvo.nomeArquivo2;
-
-    const temDados = (dataStore.reportSection && Object.keys(dataStore.reportSection).length > 0) ||
-                      (dataStore.analiseCarteira && Object.keys(dataStore.analiseCarteira).length > 0);
-
-    if (temDados) {
-      if (statusBadge) statusBadge.classList.add('active');
-      if (badgeText) badgeText.textContent = "Dados Sincronizados";
-      popularSelectClientes();
-      // Espera o navegador terminar de montar o layout da página antes de
-      // desenhar os gráficos — evita que eles fiquem em branco quando o
-      // restauro acontece muito cedo (canvas ainda sem tamanho definido).
-      requestAnimationFrame(() => renderDashboard());
-      // Já tinha Export carregado nesta aba: aproveita e busca a versão
-      // mais recente das 4 planilhas mensais no Drive também.
-      sincronizarPlanilhasDoDrive();
-    }
-    return temDados;
-  } catch (err) {
-    console.error('Não foi possível restaurar a sessão das planilhas:', err);
-    return false;
+function parsePct(val) {
+  if (
+    val === null ||
+    val === undefined ||
+    val === ''
+  ) {
+    return 0;
   }
+
+  if (typeof val === 'number') {
+    return val <= 1 ? val * 100 : val;
+  }
+
+  const s = String(val)
+    .replace('%', '')
+    .replace(',', '.')
+    .trim();
+
+  const n = Number.parseFloat(s);
+
+  if (!Number.isFinite(n)) {
+    return 0;
+  }
+
+  return n <= 1 && s.includes('.')
+    ? n * 100
+    : n;
 }
 
-// Ao abrir/voltar para esta página, primeiro carrega os dados mensais fixos
-// (Jan-Ago/2026) — eles já deixam o dashboard e o filtro de mês funcionando
-// mesmo sem nenhum upload — e em seguida tenta restaurar as planilhas ao
-// vivo já carregadas nesta mesma aba.
-carregarDadosFixosMensais().then(() => {
-  popularSelectClientes();
-  renderDashboard();
-  restaurarSessaoAtual();
-});
-
-// Alguns navegadores restauram a página do "cache de navegação" (bfcache) ao
-// clicar em voltar, sem executar o script de novo. Nesse caso os dados em
-// memória continuam certos, mas os gráficos (canvas) podem ficar em branco.
-// Isso força o redesenho sempre que isso acontecer.
-window.addEventListener('pageshow', (event) => {
-  if (event.persisted) {
-    requestAnimationFrame(() => renderDashboard());
-  }
-});
-
-function readExcelFile(file, fileNum) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-      
-      let parsedSheets = {};
-      workbook.SheetNames.forEach(sheetName => {
-        parsedSheets[sheetName.trim()] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
-      });
-
-      if (fileNum === 1) {
-        dataStore.reportSection = parsedSheets;
-        if (dropZone1) dropZone1.classList.add('loaded');
-        if (labelFile1) labelFile1.textContent = `✔ ${file.name}`;
-      } else {
-        dataStore.analiseCarteira = parsedSheets;
-        if (dropZone2) dropZone2.classList.add('loaded');
-        if (labelFile2) labelFile2.textContent = `✔ ${file.name}`;
-      }
-
-      if (statusBadge) statusBadge.classList.add('active');
-      if (badgeText) badgeText.textContent = "Dados Sincronizados";
-
-      popularSelectClientes();
-      renderDashboard();
-      atualizarDadosVivosLocalStorage();
-      salvarSessaoAtual();
-
-      // A partir do momento em que uma planilha Export é carregada, os
-      // dados mensais fixos (Jan-Ago) "entram em vigor" — e busca a versão
-      // mais recente delas direto do Google Drive em segundo plano (não
-      // trava a tela; quando terminar, o dashboard se atualiza sozinho).
-      sincronizarPlanilhasDoDrive();
-    } catch (err) {
-      console.error("Erro ao ler planilha:", err);
+function formatBRL(val) {
+  return Number(val || 0).toLocaleString(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL'
     }
+  );
+}
+
+function formatCompactBRL(val) {
+  const n = Number(val || 0);
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+
+  if (abs >= 1000000) {
+    return `${sign}R$ ${(abs / 1000000)
+      .toFixed(1)
+      .replace('.', ',')} mi`;
+  }
+
+  if (abs >= 1000) {
+    return `${sign}R$ ${(abs / 1000)
+      .toFixed(1)
+      .replace('.', ',')}k`;
+  }
+
+  return `${sign}R$ ${abs.toFixed(0)}`;
+}
+
+function formatDate(val) {
+  if (!val) return '-';
+
+  if (val instanceof Date) {
+    return val.toISOString().split('T')[0];
+  }
+
+  return String(val).split('T')[0];
+}
+
+function getSheet(dataObj, keywords) {
+  if (!dataObj) return [];
+
+  const names = Object.keys(dataObj);
+
+  for (const kw of keywords) {
+    const found = names.find(
+      n =>
+        n
+          .toLowerCase()
+          .includes(kw.toLowerCase())
+    );
+
+    if (found) {
+      return Array.isArray(dataObj[found])
+        ? dataObj[found]
+        : [];
+    }
+  }
+
+  return [];
+}
+
+function algumaPlanilhaCarregada() {
+  return (
+    (
+      dataStore.reportSection &&
+      Object.keys(dataStore.reportSection).length > 0
+    ) ||
+    (
+      dataStore.analiseCarteira &&
+      Object.keys(dataStore.analiseCarteira).length > 0
+    )
+  );
+}
+
+function sheetTemColunaCliente(sheet) {
+  return !!(
+    sheet &&
+    sheet.length &&
+    (
+      Object.prototype.hasOwnProperty.call(
+        sheet[0],
+        'Cliente_Pai'
+      ) ||
+      Object.prototype.hasOwnProperty.call(
+        sheet[0],
+        'Cliente'
+      )
+    )
+  );
+}
+
+function filtrarPorCliente(
+  sheet,
+  cliente
+) {
+  const rows = Array.isArray(sheet)
+    ? sheet
+    : [];
+
+  if (!cliente || cliente === 'ALL') {
+    return {
+      linhas: rows,
+      semDetalhePorCliente: false
+    };
+  }
+
+  if (!sheetTemColunaCliente(rows)) {
+    return {
+      linhas: [],
+      semDetalhePorCliente: true
+    };
+  }
+
+  const alvo = String(cliente).trim();
+
+  return {
+    linhas: rows.filter(r =>
+      String(
+        r['Cliente_Pai'] ||
+        r['Cliente'] ||
+        ''
+      ).trim() === alvo
+    ),
+    semDetalhePorCliente: false
   };
-  reader.readAsArrayBuffer(file);
 }
 
-// Salva um resumo (faturamento e inatividade por cliente) no localStorage
-// para que a página "Base de Clientes" (clientes.html) possa exibir essas
-// informações somente quando as planilhas já tiverem sido carregadas aqui.
-// Isso não altera nada na interface do index.html.
+function diasUteisRestantesNoMes(
+  dataRef = new Date()
+) {
+  const ano = dataRef.getFullYear();
+  const mes = dataRef.getMonth();
+
+  const ultimo =
+    new Date(
+      ano,
+      mes + 1,
+      0
+    ).getDate();
+
+  let total = 0;
+
+  for (
+    let d = dataRef.getDate();
+    d <= ultimo;
+    d++
+  ) {
+    const dow =
+      new Date(
+        ano,
+        mes,
+        d
+      ).getDay();
+
+    if (
+      dow !== 0 &&
+      dow !== 6
+    ) {
+      total++;
+    }
+  }
+
+  return total;
+}
+
 function normalizarNome(str) {
   return String(str || '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
     .replace(/[^A-Z0-9 ]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
+function normalizarChave(str) {
+  const s =
+    String(str || '')
+      .trim();
+
+  const cod =
+    s.match(/^(\d+)\s*-/);
+
+  if (cod) {
+    return cod[1];
+  }
+
+  return normalizarNome(s);
+}
+
+function destruirGrafico(id) {
+  if (charts[id]) {
+    charts[id].destroy();
+    charts[id] = null;
+  }
+
+  const canvas =
+    document.getElementById(id);
+
+  if (
+    canvas &&
+    typeof Chart !== 'undefined' &&
+    Chart.getChart
+  ) {
+    const chart =
+      Chart.getChart(canvas);
+
+    if (chart) {
+      chart.destroy();
+    }
+  }
+}
+
+function linhaVazia(row) {
+  return (
+    !row ||
+    row.every(
+      v =>
+        v === null ||
+        v === undefined ||
+        v === ''
+    )
+  );
+}
+
+function encontrarAbaMes(
+  workbook,
+  mes
+) {
+  const alvo =
+    `MES ${mes}`;
+
+  return workbook.SheetNames.includes(
+    alvo
+  )
+    ? alvo
+    : workbook.SheetNames.find(
+        n => n.trim() === alvo
+      ) || null;
+}
+
+async function buscarWorkbookDrive(
+  fileId
+) {
+  const url =
+    `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
+
+  const res =
+    await fetch(url);
+
+  if (!res.ok) {
+    throw new Error(
+      `HTTP ${res.status}`
+    );
+  }
+
+  const buf =
+    await res.arrayBuffer();
+
+  return XLSX.read(
+    new Uint8Array(buf),
+    {
+      type: 'array',
+      cellDates: true
+    }
+  );
+}
+
+function extrairPorCliente(
+  workbook
+) {
+  const out = {};
+
+  MESES_FIXOS.forEach(
+    mes => {
+      const aba =
+        encontrarAbaMes(
+          workbook,
+          mes
+        );
+
+      if (!aba) return;
+
+      const raw =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[aba],
+          {
+            header: 1,
+            defval: null
+          }
+        );
+
+      let classeAtual = null;
+
+      const linhas = [];
+
+      for (
+        let i = 1;
+        i < raw.length;
+        i++
+      ) {
+        const row =
+          raw[i];
+
+        if (
+          linhaVazia(row)
+        ) {
+          continue;
+        }
+
+        const [
+          classe,
+          cod,
+          nome
+        ] = row;
+
+        const valor = row[4];
+        const pct = row[5];
+
+        if (classe) {
+          classeAtual =
+            classe;
+        }
+
+        if (
+          classeAtual ===
+          'Total'
+        ) {
+          continue;
+        }
+
+        if (
+          cod === null ||
+          cod === undefined ||
+          cod === '' ||
+          !nome
+        ) {
+          continue;
+        }
+
+        linhas.push({
+          Classe:
+            classeAtual,
+
+          Cliente_Pai:
+            `${Math.trunc(
+              Number(cod)
+            )}-${String(nome).trim()}`,
+
+          'Valor de venda (R$)':
+            Number(valor) || 0,
+
+          '% do Total':
+            Number(pct) || 0
+        });
+      }
+
+      out[String(mes)] =
+        linhas;
+    }
+  );
+
+  return out;
+}
+
+function extrairPorSegmento(
+  workbook
+) {
+  const out = {};
+
+  MESES_FIXOS.forEach(
+    mes => {
+      const aba =
+        encontrarAbaMes(
+          workbook,
+          mes
+        );
+
+      if (!aba) return;
+
+      const raw =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[aba],
+          {
+            header: 1,
+            defval: null
+          }
+        );
+
+      const linhas = [];
+
+      for (
+        let i = 1;
+        i < raw.length;
+        i++
+      ) {
+        const row =
+          raw[i];
+
+        if (
+          linhaVazia(row)
+        ) {
+          continue;
+        }
+
+        const [
+          segmento,
+          ,
+          ,
+          valor
+        ] = row;
+
+        if (
+          String(
+            segmento || ''
+          )
+            .trim()
+            .toLowerCase() ===
+          'total'
+        ) {
+          continue;
+        }
+
+        linhas.push({
+          Separador:
+            segmento
+              ? String(segmento).trim()
+              : 'Outros',
+
+          After_Tax_Amount:
+            Number(valor) || 0
+        });
+      }
+
+      out[String(mes)] =
+        linhas;
+    }
+  );
+
+  return out;
+}
+
+function extrairPorProduto(
+  workbook
+) {
+  const out = {};
+
+  MESES_FIXOS.forEach(
+    mes => {
+      const aba =
+        encontrarAbaMes(
+          workbook,
+          mes
+        );
+
+      if (!aba) return;
+
+      const raw =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[aba],
+          {
+            header: 1,
+            defval: null
+          }
+        );
+
+      const linhas = [];
+
+      for (
+        let i = 1;
+        i < raw.length;
+        i++
+      ) {
+        const row =
+          raw[i];
+
+        if (
+          linhaVazia(row)
+        ) {
+          continue;
+        }
+
+        const produto =
+          row[0];
+
+        const valor =
+          row[2];
+
+        if (
+          produto === null ||
+          produto === undefined ||
+          produto === ''
+        ) {
+          continue;
+        }
+
+        if (
+          String(produto)
+            .trim()
+            .toLowerCase() ===
+          'total'
+        ) {
+          continue;
+        }
+
+        linhas.push({
+          Produto:
+            String(
+              produto
+            ).trim(),
+
+          'Valor de Venda':
+            Number(valor) || 0
+        });
+      }
+
+      linhas.sort(
+        (a, b) =>
+          b[
+            'Valor de Venda'
+          ] -
+          a[
+            'Valor de Venda'
+          ]
+      );
+
+      out[String(mes)] =
+        linhas.slice(0, 20);
+    }
+  );
+
+  return out;
+}
+
+async function sincronizarPlanilhasDoDrive() {
+  if (
+    sincronizacaoDriveEmAndamento
+  ) {
+    return;
+  }
+
+  sincronizacaoDriveEmAndamento =
+    true;
+
+  try {
+    const [
+      wbCliente,
+      wbSegmento,
+      wbProduto
+    ] =
+      await Promise.all([
+        buscarWorkbookDrive(
+          DRIVE_SHEET_IDS.cliente
+        ),
+
+        buscarWorkbookDrive(
+          DRIVE_SHEET_IDS.segmento
+        ),
+
+        buscarWorkbookDrive(
+          DRIVE_SHEET_IDS.produto
+        )
+      ]);
+
+    dadosFixosMensais = {
+      ano: 2026,
+
+      meses_disponiveis:
+        MESES_FIXOS,
+
+      porCliente:
+        extrairPorCliente(
+          wbCliente
+        ),
+
+      porSegmento:
+        extrairPorSegmento(
+          wbSegmento
+        ),
+
+      porProduto:
+        extrairPorProduto(
+          wbProduto
+        )
+    };
+
+    try {
+      localStorage.setItem(
+        'rca61_mensalDrive',
+        JSON.stringify({
+          dados:
+            dadosFixosMensais,
+
+          atualizadoEm:
+            new Date()
+              .toISOString()
+        })
+      );
+    } catch (e) {}
+
+    popularSelectClientes();
+    renderDashboard();
+
+  } catch (e) {
+    console.warn(
+      '[RCA 61] Drive mensal indisponível:',
+      e
+    );
+  } finally {
+    sincronizacaoDriveEmAndamento =
+      false;
+  }
+}
+
+async function carregarDadosFixosMensais() {
+  try {
+    const cache =
+      localStorage.getItem(
+        'rca61_mensalDrive'
+      );
+
+    if (cache) {
+      const obj =
+        JSON.parse(cache);
+
+      if (
+        obj &&
+        obj.dados
+      ) {
+        dadosFixosMensais =
+          obj.dados;
+
+        return;
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const res =
+      await fetch(
+        'historico_fixo.json'
+      );
+
+    if (!res.ok) {
+      throw new Error(
+        'historico_fixo.json não encontrado'
+      );
+    }
+
+    dadosFixosMensais =
+      await res.json();
+
+  } catch (e) {
+    dadosFixosMensais =
+      null;
+
+    console.warn(
+      '[RCA 61] Não foi possível carregar historico_fixo.json',
+      e
+    );
+  }
+}
+
+function obterLinhasFixas(
+  tipo,
+  mes
+) {
+  if (
+    !dadosFixosMensais ||
+    !dadosFixosMensais[tipo]
+  ) {
+    return null;
+  }
+
+  const rows =
+    dadosFixosMensais[
+      tipo
+    ][String(mes)];
+
+  return (
+    Array.isArray(rows) &&
+    rows.length
+  )
+    ? rows
+    : null;
+}
+
+function montarFatiaMesCorrente(
+  tipo,
+  mes
+) {
+  if (mes !== 9) {
+    return null;
+  }
+
+  const configs = {
+
+    porCliente: {
+      keys: [
+        'Vendas (R$) por Cliente',
+        'Cliente'
+      ],
+
+      key: r =>
+        String(
+          r['Cliente_Pai'] ||
+          r['Cliente'] ||
+          ''
+        ).trim(),
+
+      value: r =>
+        parseCurrency(
+          r[
+            'Valor de venda (R$)'
+          ] ||
+          r['Valor']
+        ),
+
+      make:
+        (
+          key,
+          value,
+          classe
+        ) => ({
+          Classe:
+            classe ||
+            'Fiel',
+
+          Cliente_Pai:
+            key,
+
+          'Valor de venda (R$)':
+            value
+        })
+    },
+
+    porSegmento: {
+      keys: [
+        'Venda mensal em reais da',
+        'Separador Segmento',
+        'Segmento'
+      ],
+
+      key: r =>
+        String(
+          r['Separador'] ||
+          r['Segmento'] ||
+          ''
+        ).trim(),
+
+      value: r =>
+        parseCurrency(
+          r[
+            'After_Tax_Amount'
+          ] ||
+          r['Valor']
+        ),
+
+      make:
+        (
+          key,
+          value
+        ) => ({
+          Separador:
+            key,
+
+          After_Tax_Amount:
+            value
+        })
+    },
+
+    porProduto: {
+      keys: [
+        'Imagem-7',
+        'Image-7',
+        'Top 20 Produtos Mais Vendidos',
+        'Top 20'
+      ],
+
+      key: r =>
+        String(
+          r['Produto'] ||
+          r['Cod'] ||
+          ''
+        ).trim(),
+
+      value: r =>
+        parseCurrency(
+          r['Valor de Venda'] ||
+          r[
+            'Valor de Venda (R$)'
+          ] ||
+          r['Valor']
+        ),
+
+      make:
+        (
+          key,
+          value
+        ) => ({
+          Produto:
+            key,
+
+          'Valor de Venda':
+            value
+        })
+    }
+  };
+
+  const cfg =
+    configs[tipo];
+
+  if (!cfg) {
+    return null;
+  }
+
+  const live =
+    getSheet(
+      dataStore.reportSection,
+      cfg.keys
+    );
+
+  if (!live.length) {
+    return null;
+  }
+
+  const somaFixa = {};
+
+  for (
+    const m of MESES_FIXOS
+  ) {
+    const rows =
+      obterLinhasFixas(
+        tipo,
+        m
+      );
+
+    if (!rows) {
+      continue;
+    }
+
+    rows.forEach(
+      r => {
+        const k =
+          normalizarChave(
+            cfg.key(r)
+          );
+
+        if (!k) return;
+
+        somaFixa[k] =
+          (
+            somaFixa[k] ||
+            0
+          ) +
+          cfg.value(r);
+      }
+    );
+  }
+
+  let reconhecido = 0;
+  let naoReconhecido = 0;
+
+  const out = [];
+
+  live.forEach(
+    r => {
+      const original =
+        cfg.key(r);
+
+      const k =
+        normalizarChave(
+          original
+        );
+
+      if (!k) return;
+
+      const acumulado =
+        cfg.value(r);
+
+      if (
+        Object.prototype.hasOwnProperty.call(
+          somaFixa,
+          k
+        )
+      ) {
+        reconhecido +=
+          acumulado;
+      } else {
+        naoReconhecido +=
+          acumulado;
+      }
+
+      const mesValor =
+        acumulado -
+        (
+          somaFixa[k] ||
+          0
+        );
+
+      if (
+        Math.abs(mesValor) >
+        0.005
+      ) {
+        out.push(
+          cfg.make(
+            original,
+            mesValor,
+            r['Classe']
+          )
+        );
+      }
+    }
+  );
+
+  const base =
+    reconhecido +
+    naoReconhecido;
+
+  if (
+    base > 0 &&
+    naoReconhecido >
+      reconhecido
+  ) {
+    return null;
+  }
+
+  return out.length
+    ? out
+    : null;
+}
+
+function obterLinhasDoMes(
+  tipo,
+  mes
+) {
+  return (
+    obterLinhasFixas(
+      tipo,
+      mes
+    ) ||
+    montarFatiaMesCorrente(
+      tipo,
+      mes
+    )
+  );
+}
+
+function usarDadosMensaisFixos(
+  ano
+) {
+  const anoFixo =
+    String(
+      (
+        dadosFixosMensais &&
+        dadosFixosMensais.ano
+      ) ||
+      2026
+    );
+
+  return !!dadosFixosMensais &&
+    (
+      !ano ||
+      ano === 'ALL' ||
+      String(ano) === anoFixo
+    );
+}
+
+function salvarSessaoAtual() {
+  try {
+    sessionStorage.setItem(
+      'rca61_sessaoPlanilhas',
+      JSON.stringify({
+        dataStore,
+
+        nomeArquivo1:
+          labelFile1
+            ? labelFile1.textContent
+            : '',
+
+        nomeArquivo2:
+          labelFile2
+            ? labelFile2.textContent
+            : '',
+
+        carregado1:
+          !!(
+            dropZone1 &&
+            dropZone1.classList.contains(
+              'loaded'
+            )
+          ),
+
+        carregado2:
+          !!(
+            dropZone2 &&
+            dropZone2.classList.contains(
+              'loaded'
+            )
+          )
+      })
+    );
+  } catch (e) {}
+}
+
+function restaurarSessaoAtual() {
+  try {
+    const raw =
+      sessionStorage.getItem(
+        'rca61_sessaoPlanilhas'
+      );
+
+    if (!raw) {
+      return false;
+    }
+
+    const saved =
+      JSON.parse(raw);
+
+    if (
+      !saved ||
+      !saved.dataStore
+    ) {
+      return false;
+    }
+
+    dataStore =
+      saved.dataStore;
+
+    if (
+      saved.carregado1 &&
+      dropZone1
+    ) {
+      dropZone1.classList.add(
+        'loaded'
+      );
+    }
+
+    if (
+      saved.carregado2 &&
+      dropZone2
+    ) {
+      dropZone2.classList.add(
+        'loaded'
+      );
+    }
+
+    if (
+      saved.nomeArquivo1 &&
+      labelFile1
+    ) {
+      labelFile1.textContent =
+        saved.nomeArquivo1;
+    }
+
+    if (
+      saved.nomeArquivo2 &&
+      labelFile2
+    ) {
+      labelFile2.textContent =
+        saved.nomeArquivo2;
+    }
+
+    if (
+      algumaPlanilhaCarregada()
+    ) {
+      if (statusBadge) {
+        statusBadge.classList.add(
+          'active'
+        );
+      }
+
+      if (badgeText) {
+        badgeText.textContent =
+          'Dados Sincronizados';
+      }
+
+      popularSelectClientes();
+
+      requestAnimationFrame(
+        renderDashboard
+      );
+
+      sincronizarPlanilhasDoDrive();
+    }
+
+    return true;
+
+  } catch (e) {
+    console.warn(
+      '[RCA 61] Sessão não restaurada',
+      e
+    );
+
+    return false;
+  }
+}
+
+function readExcelFile(
+  file,
+  fileNum
+) {
+  const reader =
+    new FileReader();
+
+  reader.onload =
+    e => {
+      try {
+        const workbook =
+          XLSX.read(
+            new Uint8Array(
+              e.target.result
+            ),
+            {
+              type: 'array',
+              cellDates: true
+            }
+          );
+
+        const parsed = {};
+
+        workbook.SheetNames.forEach(
+          name => {
+            parsed[name.trim()] =
+              XLSX.utils.sheet_to_json(
+                workbook.Sheets[name],
+                {
+                  defval: ''
+                }
+              );
+          }
+        );
+
+        if (
+          fileNum === 1
+        ) {
+          dataStore.reportSection =
+            parsed;
+
+          if (dropZone1) {
+            dropZone1.classList.add(
+              'loaded'
+            );
+          }
+
+          if (labelFile1) {
+            labelFile1.textContent =
+              `✔ ${file.name}`;
+          }
+
+        } else {
+          dataStore.analiseCarteira =
+            parsed;
+
+          if (dropZone2) {
+            dropZone2.classList.add(
+              'loaded'
+            );
+          }
+
+          if (labelFile2) {
+            labelFile2.textContent =
+              `✔ ${file.name}`;
+          }
+        }
+
+        if (statusBadge) {
+          statusBadge.classList.add(
+            'active'
+          );
+        }
+
+        if (badgeText) {
+          badgeText.textContent =
+            'Dados Sincronizados';
+        }
+
+        popularSelectClientes();
+
+        renderDashboard();
+
+        atualizarDadosVivosLocalStorage();
+
+        salvarSessaoAtual();
+
+        sincronizarPlanilhasDoDrive();
+
+      } catch (err) {
+        console.error(
+          '[RCA 61] Erro ao ler planilha:',
+          err
+        );
+      }
+    };
+
+  reader.readAsArrayBuffer(
+    file
+  );
+}
+
+function popularSelectClientes() {
+  if (!selectCliente) {
+    return;
+  }
+
+  const nomes =
+    new Set();
+
+  const live =
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Vendas (R$) por Cliente',
+        'Cliente'
+      ]
+    );
+
+  live.forEach(
+    r => {
+      const nome =
+        r['Cliente_Pai'] ||
+        r['Cliente'];
+
+      if (nome) {
+        nomes.add(
+          String(nome).trim()
+        );
+      }
+    }
+  );
+
+  if (
+    dadosFixosMensais &&
+    dadosFixosMensais.porCliente
+  ) {
+    Object.values(
+      dadosFixosMensais.porCliente
+    ).forEach(
+      rows => {
+        rows.forEach(
+          r => {
+            if (
+              r.Cliente_Pai
+            ) {
+              nomes.add(
+                String(
+                  r.Cliente_Pai
+                ).trim()
+              );
+            }
+          }
+        );
+      }
+    );
+  }
+
+  const atual =
+    selectCliente.value ||
+    'ALL';
+
+  selectCliente.innerHTML =
+    '<option value="ALL">Todos os Clientes</option>';
+
+  [
+    ...nomes
+  ]
+    .sort()
+    .forEach(
+      nome => {
+        const opt =
+          document.createElement(
+            'option'
+          );
+
+        opt.value =
+          nome;
+
+        opt.textContent =
+          nome;
+
+        selectCliente.appendChild(
+          opt
+        );
+      }
+    );
+
+  selectCliente.value =
+    [
+      ...selectCliente.options
+    ].some(
+      o =>
+        o.value === atual
+    )
+      ? atual
+      : 'ALL';
+}
+
 function atualizarDadosVivosLocalStorage() {
   try {
     const mapa = {};
 
-    const sheetVendas = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
-    sheetVendas.forEach(r => {
-      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-      if (!nome) return;
-      const chave = normalizarNome(nome);
-      if (!chave) return;
-      if (!mapa[chave]) mapa[chave] = { nome };
-      mapa[chave].faturamento = parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
-      if (r['Classe']) mapa[chave].classe = r['Classe'];
-    });
+    const vendas =
+      getSheet(
+        dataStore.reportSection,
+        [
+          'Vendas (R$) por Cliente',
+          'Cliente'
+        ]
+      );
 
-    const sheetInativ = getSheet(dataStore.analiseCarteira, ['#Dias até primeira fatura', 'Clientes com ultima fatura', 'Ultima Fatura']);
-    sheetInativ.forEach(r => {
-      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-      if (!nome) return;
-      const chave = normalizarNome(nome);
-      if (!chave) return;
-      if (!mapa[chave]) mapa[chave] = { nome };
-      mapa[chave].diasInativo = parseInt(r['#dias desde a ultima fat'] || r['Dias Inativo'] || r['Dias'] || 0, 10);
-      mapa[chave].ultimaFatura = formatDate(r['Ultima fat'] || r['Última Fatura']);
-      if (r['Classe']) mapa[chave].classe = r['Classe'];
-    });
+    vendas.forEach(
+      r => {
+        const nome =
+          String(
+            r['Cliente_Pai'] ||
+            r['Cliente'] ||
+            ''
+          ).trim();
 
-    localStorage.setItem('rca61_dadosVivos', JSON.stringify({
-      clientes: mapa,
-      atualizadoEm: new Date().toISOString()
-    }));
-  } catch (err) {
-    console.error('Erro ao salvar dados vivos para a Base de Clientes:', err);
+        if (!nome) return;
+
+        const chave =
+          normalizarNome(
+            nome
+          );
+
+        if (!mapa[chave]) {
+          mapa[chave] = {
+            nome
+          };
+        }
+
+        mapa[chave].faturamento =
+          parseCurrency(
+            r[
+              'Valor de venda (R$)'
+            ] ||
+            r['Valor']
+          );
+
+        if (r['Classe']) {
+          mapa[chave].classe =
+            r['Classe'];
+        }
+      }
+    );
+
+    const inativ =
+      getSheet(
+        dataStore.analiseCarteira,
+        [
+          '#Dias até primeira fatura',
+          'Clientes com ultima fatura',
+          'Ultima Fatura'
+        ]
+      );
+
+    inativ.forEach(
+      r => {
+        const nome =
+          String(
+            r['Cliente_Pai'] ||
+            r['Cliente'] ||
+            ''
+          ).trim();
+
+        if (!nome) return;
+
+        const chave =
+          normalizarNome(
+            nome
+          );
+
+        if (!mapa[chave]) {
+          mapa[chave] = {
+            nome
+          };
+        }
+
+        mapa[chave].diasInativo =
+          parseInt(
+            r[
+              '#dias desde a ultima fat'
+            ] ||
+            r['Dias Inativo'] ||
+            r['Dias'] ||
+            0,
+            10
+          );
+
+        mapa[chave].ultimaFatura =
+          formatDate(
+            r['Ultima fat'] ||
+            r['Última Fatura']
+          );
+
+        if (r['Classe']) {
+          mapa[chave].classe =
+            r['Classe'];
+        }
+      }
+    );
+
+    localStorage.setItem(
+      'rca61_dadosVivos',
+      JSON.stringify({
+        clientes: mapa,
+        atualizadoEm:
+          new Date().toISOString()
+      })
+    );
+
+  } catch (e) {
+    console.warn(
+      '[RCA 61] Não foi possível salvar dados vivos',
+      e
+    );
   }
 }
 
-// Event Listeners
-if (selectAno) selectAno.addEventListener('change', renderDashboard);
-if (selectMes) selectMes.addEventListener('change', renderDashboard);
-if (selectCliente) selectCliente.addEventListener('change', renderDashboard);
-if (searchInput) searchInput.addEventListener('input', () => {
-  // A busca é compartilhada: filtra as duas tabelas (Vendas por Cliente e
-  // Inatividade) ao mesmo tempo, então achar o cliente em uma já "seleciona"
-  // ele na outra automaticamente.
-  renderVendasClienteTable();
-  renderInatividadeTable();
-});
+function calcularTotalAno2026() {
+  let total = 0;
 
-function popularSelectClientes() {
-  if (!selectCliente) return;
-  const sheetCliente = getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
-  const clientesUnicos = new Set();
+  const mesesFixos =
+    new Set();
 
-  sheetCliente.forEach(r => {
-    const nome = r['Cliente_Pai'] || r['Cliente'];
-    if (nome) clientesUnicos.add(String(nome).trim());
-  });
+  if (
+    usarDadosMensaisFixos(
+      '2026'
+    )
+  ) {
+    for (
+      let m = 1;
+      m <= 8;
+      m++
+    ) {
+      const rows =
+        obterLinhasFixas(
+          'porCliente',
+          m
+        );
 
-  // Também inclui os clientes que só aparecem nos meses fixos (1-8), para
-  // que o filtro de cliente + mês funcione mesmo antes de qualquer upload.
-  if (dadosFixosMensais && dadosFixosMensais.porCliente) {
-    Object.values(dadosFixosMensais.porCliente).forEach(linhasMes => {
-      linhasMes.forEach(r => {
-        if (r.Cliente_Pai) clientesUnicos.add(String(r.Cliente_Pai).trim());
-      });
-    });
+      if (!rows) {
+        continue;
+      }
+
+      total +=
+        rows.reduce(
+          (
+            s,
+            r
+          ) =>
+            s +
+            parseCurrency(
+              r[
+                'Valor de venda (R$)'
+              ] ||
+              r['Valor']
+            ),
+          0
+        );
+
+      mesesFixos.add(m);
+    }
   }
 
-  const clienteAtual = selectCliente.value;
-  selectCliente.innerHTML = '<option value="ALL">Todos os Clientes</option>';
-  
-  Array.from(clientesUnicos).sort().forEach(cliente => {
-    const opt = document.createElement('option');
-    opt.value = cliente;
-    opt.textContent = cliente;
-    selectCliente.appendChild(opt);
-  });
+  const fat =
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Imagem-6',
+        'Image-6',
+        'Venda Mensal em Reais',
+        'Venda Mensal'
+      ]
+    );
 
-  selectCliente.value = clienteAtual || 'ALL';
+  fat.forEach(
+    r => {
+      const mes =
+        Number(
+          r['Mês'] ||
+          r['Mes']
+        );
+
+      const ano =
+        Number(
+          r['Ano']
+        );
+
+      if (
+        ano === 2026 &&
+        mes &&
+        !mesesFixos.has(
+          mes
+        )
+      ) {
+        total +=
+          parseCurrency(
+            r[
+              'Vendas (R$)'
+            ] ||
+            r['Vendas'] ||
+            r['Valor']
+          );
+      }
+    }
+  );
+
+  return total;
 }
 
-function getSheet(dataObj, keywords) {
-  if (!dataObj) return [];
-  const sheetNames = Object.keys(dataObj);
-  for (let kw of keywords) {
-    const found = sheetNames.find(s => s.toLowerCase().includes(kw.toLowerCase()));
-    if (found) return dataObj[found];
+function renderYTDBanner() {
+  const elLytd =
+    document.getElementById(
+      'kpiLytd'
+    );
+
+  const elYtd =
+    document.getElementById(
+      'kpiYtd'
+    );
+
+  const elVar =
+    document.getElementById(
+      'kpiVariacao'
+    );
+
+  if (
+    !algumaPlanilhaCarregada()
+  ) {
+    if (elLytd) {
+      elLytd.textContent =
+        formatBRL(
+          6386614.16
+        );
+    }
+
+    if (elYtd) {
+      elYtd.textContent =
+        formatBRL(
+          6636963.60
+        );
+    }
+
+    if (elVar) {
+      elVar.textContent =
+        formatBRL(
+          250349.43
+        );
+    }
+
+    return;
   }
-  return [];
-}
 
-// true assim que pelo menos uma das duas planilhas foi carregada. Usado para
-// só exibir os números de demonstração (placeholder) ANTES do upload —
-// depois que o usuário carrega a planilha, tudo deve refletir o real,
-// inclusive quando o real for zero.
-function algumaPlanilhaCarregada() {
-  return (dataStore.reportSection && Object.keys(dataStore.reportSection).length > 0) ||
-         (dataStore.analiseCarteira && Object.keys(dataStore.analiseCarteira).length > 0);
-}
+  let ytd =
+    calcularTotalAno2026();
 
-// Verifica se a planilha tem uma coluna de Cliente (linha a linha), ou seja,
-// se dá pra saber qual linha pertence a qual cliente.
-function sheetTemColunaCliente(sheet) {
-  if (!sheet || sheet.length === 0) return false;
-  const primeira = sheet[0];
-  return Object.prototype.hasOwnProperty.call(primeira, 'Cliente_Pai') ||
-         Object.prototype.hasOwnProperty.call(primeira, 'Cliente');
-}
+  let lytd =
+    null;
 
-// Filtra uma planilha pelo cliente selecionado no topo (selectCliente).
-// - "ALL": devolve tudo, sem restrição.
-// - Cliente específico + planilha TEM coluna de cliente: filtra normalmente.
-// - Cliente específico + planilha NÃO TEM coluna de cliente (é um dado
-//   agregado da carteira toda, ex: histórico mensal): não tem como saber a
-//   fatia desse cliente, então devolve vazio -> o gráfico/KPI fica zerado
-//   em vez de continuar mostrando o total da carteira (o que pareceria bug).
-function filtrarPorCliente(sheet, clienteSel) {
-  if (!clienteSel || clienteSel === 'ALL') {
-    return { linhas: sheet, semDetalhePorCliente: false };
+  const sheet =
+    getSheet(
+      dataStore.analiseCarteira,
+      [
+        'Positivação de carteira'
+      ]
+    );
+
+  if (sheet.length) {
+    const row =
+      sheet[0];
+
+    const a =
+      parseCurrency(
+        row['Vendas LYTD']
+      );
+
+    const b =
+      parseCurrency(
+        row['Vendas YTD']
+      );
+
+    if (a > 0) {
+      lytd = a;
+    }
+
+    if (b > 0) {
+      ytd = b;
+    }
   }
-  if (!sheetTemColunaCliente(sheet)) {
-    return { linhas: [], semDetalhePorCliente: true };
+
+  if (elYtd) {
+    elYtd.textContent =
+      formatBRL(ytd);
   }
-  const linhas = sheet.filter(r => {
-    const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    return nome === clienteSel;
-  });
-  return { linhas, semDetalhePorCliente: false };
+
+  if (
+    lytd !== null
+  ) {
+    const variacao =
+      ytd - lytd;
+
+    const pct =
+      lytd > 0
+        ? (variacao / lytd) *
+          100
+        : 0;
+
+    if (elLytd) {
+      elLytd.textContent =
+        formatBRL(
+          lytd
+        );
+    }
+
+    if (elVar) {
+      elVar.innerHTML =
+        `<span style="color:${
+          variacao >= 0
+            ? '#10b981'
+            : '#ef4444'
+        };">${
+          variacao >= 0
+            ? '+'
+            : ''
+        }${formatBRL(
+          variacao
+        )} (${
+          pct >= 0
+            ? '+'
+            : ''
+        }${pct.toFixed(
+          1
+        )}%)</span>`;
+    }
+
+  } else {
+
+    if (elLytd) {
+      elLytd.innerHTML =
+        'R$ 0,00<br>' +
+        '<span style="font-size:.7rem;font-weight:400;color:#64748b;">' +
+        'Ainda sem base de 2025 na planilha' +
+        '</span>';
+    }
+
+    if (elVar) {
+      elVar.innerHTML =
+        '<span style="font-size:.9rem;color:#64748b;">N/A</span>';
+    }
+  }
 }
 
-// Conta quantos dias úteis (seg a sex, sem considerar feriados) faltam para
-// acabar o mês atual, contando o dia de hoje se ainda for dia útil.
-function diasUteisRestantesNoMes(dataRef = new Date()) {
-  const ano = dataRef.getFullYear();
-  const mes = dataRef.getMonth();
-  const ultimoDia = new Date(ano, mes + 1, 0).getDate();
-  let count = 0;
-  for (let dia = dataRef.getDate(); dia <= ultimoDia; dia++) {
-    const diaSemana = new Date(ano, mes, dia).getDay(); // 0 = domingo, 6 = sábado
-    if (diaSemana !== 0 && diaSemana !== 6) count++;
+function rw(
+  row,
+  keys
+) {
+  if (!row) {
+    return undefined;
   }
-  return count;
+
+  for (
+    const key of keys
+  ) {
+    if (
+      row[key] !== undefined &&
+      row[key] !== null &&
+      row[key] !== ''
+    ) {
+      return row[key];
+    }
+  }
+
+  return undefined;
+}
+
+function renderKPIs() {
+  const mesSel =
+    selectMes
+      ? selectMes.value
+      : 'ALL';
+
+  const anoSel =
+    selectAno
+      ? selectAno.value
+      : '2026';
+
+  const clienteSel =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const clienteEspecifico =
+    clienteSel !== 'ALL';
+
+  const carregado =
+    algumaPlanilhaCarregada();
+
+  const mesNum =
+    mesSel !== 'ALL'
+      ? parseInt(
+          mesSel,
+          10
+        )
+      : null;
+
+  const anoTemDados =
+    anoSel === '2026' ||
+    anoSel === 'ALL';
+
+  // ----------------------------------
+  // FATURAMENTO
+  // ----------------------------------
+
+  let totalFat = 0;
+
+  const sheetFaturamento =
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Imagem-6',
+        'Image-6',
+        'Venda Mensal em Reais',
+        'Venda Mensal'
+      ]
+    );
+
+  if (
+    anoTemDados &&
+    mesNum !== null
+  ) {
+
+    if (
+      !clienteEspecifico
+    ) {
+
+      const rowMes =
+        sheetFaturamento.find(
+          r =>
+            Number(
+              r['Ano']
+            ) ===
+              Number(
+                anoSel
+              ) &&
+            Number(
+              r['Mês'] ||
+              r['Mes']
+            ) ===
+              mesNum
+        );
+
+      if (rowMes) {
+        totalFat =
+          parseCurrency(
+            rowMes[
+              'Vendas (R$)'
+            ] ||
+            rowMes[
+              'Vendas'
+            ] ||
+            rowMes[
+              'Valor'
+            ]
+          );
+      }
+
+      if (
+        totalFat === 0 &&
+        usarDadosMensaisFixos(
+          anoSel
+        )
+      ) {
+        const rows =
+          obterLinhasFixas(
+            'porCliente',
+            mesNum
+          );
+
+        if (rows) {
+          totalFat =
+            rows.reduce(
+              (
+                s,
+                r
+              ) =>
+                s +
+                parseCurrency(
+                  r[
+                    'Valor de venda (R$)'
+                  ] ||
+                  r['Valor']
+                ),
+              0
+            );
+        }
+      }
+
+    } else {
+
+      const rows =
+        obterLinhasDoMes(
+          'porCliente',
+          mesNum
+        ) || [];
+
+      totalFat =
+        rows
+          .filter(
+            r =>
+              String(
+                r[
+                  'Cliente_Pai'
+                ] ||
+                r[
+                  'Cliente'
+                ] ||
+                ''
+              ).trim() ===
+              String(
+                clienteSel
+              ).trim()
+          )
+          .reduce(
+            (
+              s,
+              r
+            ) =>
+              s +
+              parseCurrency(
+                r[
+                  'Valor de venda (R$)'
+                ] ||
+                r['Valor']
+              ),
+            0
+          );
+    }
+
+  } else if (
+    anoTemDados
+  ) {
+
+    totalFat =
+      calcularTotalAno2026();
+  }
+
+  const elFat =
+    document.getElementById(
+      'kpiValorMensal'
+    );
+
+  const elFatSub =
+    elFat
+      ? elFat.parentElement.querySelector(
+          '.kpi-sub'
+        )
+      : null;
+
+  if (elFat) {
+    elFat.textContent =
+      (
+        carregado ||
+        totalFat > 0
+      ) &&
+      anoTemDados
+        ? formatBRL(
+            totalFat
+          )
+        : 'R$ 0,00';
+  }
+
+  if (elFatSub) {
+    elFatSub.textContent =
+      mesNum !== null &&
+      anoTemDados
+        ? `Faturamento de ${
+            NOMES_MESES[
+              mesNum - 1
+            ]
+          }/${anoSel}`
+        : 'Total acumulado 2026';
+  }
+
+  // ----------------------------------
+  // BUDGET
+  // ----------------------------------
+
+  const budget =
+    getSheet(
+      dataStore.reportSection,
+      [
+        '% do Budget atingida por',
+        '% Budget Atingida',
+        'Budget'
+      ]
+    );
+
+  const budgetFiltrado =
+    filtrarPorCliente(
+      budget,
+      clienteSel
+    );
+
+  let budgetPct = 0;
+
+  if (
+    !budgetFiltrado.semDetalhePorCliente &&
+    budgetFiltrado.linhas.length
+  ) {
+
+    if (
+      mesNum !== null
+    ) {
+
+      const row =
+        budgetFiltrado.linhas.find(
+          r =>
+            Number(
+              r['Mês'] ||
+              r['Mes']
+            ) ===
+              mesNum
+        );
+
+      if (row) {
+        budgetPct =
+          parsePct(
+            rw(
+              row,
+              [
+                '% do Budget',
+                'Budget'
+              ]
+            )
+          );
+      }
+
+    } else {
+
+      const vals =
+        budgetFiltrado.linhas
+          .map(
+            r =>
+              parsePct(
+                rw(
+                  r,
+                  [
+                    '% do Budget',
+                    'Budget'
+                  ]
+                )
+              )
+          )
+          .filter(
+            v =>
+              v > 0
+          );
+
+      if (vals.length) {
+        budgetPct =
+          vals.reduce(
+            (
+              a,
+              b
+            ) =>
+              a + b,
+            0
+          ) /
+          vals.length;
+      }
+    }
+  }
+
+  const elBudget =
+    document.getElementById(
+      'kpiBudgetAtingido'
+    );
+
+  if (elBudget) {
+    elBudget.textContent =
+      `${budgetPct.toFixed(
+        1
+      )}%`;
+  }
+
+  // ----------------------------------
+  // POSITIVAÇÃO
+  // ----------------------------------
+
+  const elPos =
+    document.getElementById(
+      'kpiPositivacao'
+    );
+
+  const elPosSub =
+    document.getElementById(
+      'kpiPositivacaoSub'
+    );
+
+  const posCard =
+    elPosSub
+      ? elPosSub.closest(
+          '.kpi-card'
+        )
+      : null;
+
+  if (
+    clienteEspecifico
+  ) {
+
+    if (elPos) {
+      elPos.textContent =
+        '—';
+    }
+
+    if (elPosSub) {
+      elPosSub.innerHTML =
+        'Indicador de carteira — ' +
+        'selecione "Todos os Clientes" ' +
+        'para ver a positivação.';
+    }
+
+    if (posCard) {
+      posCard.style.borderColor =
+        '';
+
+      posCard.style.boxShadow =
+        '';
+    }
+
+  } else {
+
+    const ultima =
+      getSheet(
+        dataStore.analiseCarteira,
+        [
+          'Ultima fatura',
+          'Última fatura'
+        ]
+      );
+
+    const rowPos =
+      ultima[0] ||
+      {};
+
+    const positivados =
+      parseCurrency(
+        rw(
+          rowPos,
+          [
+            'Qtd_Positivados',
+            'Qtd_Positivado'
+          ]
+        )
+      ) ||
+      (
+        carregado
+          ? 0
+          : 82
+      );
+
+    const carteira =
+      parseCurrency(
+        rowPos[
+          'Carteira'
+        ]
+      ) ||
+      (
+        carregado
+          ? 0
+          : 271
+      );
+
+    const metaOficial =
+      parseCurrency(
+        rowPos[
+          'Meta'
+        ]
+      );
+
+    const faltaOficial =
+      parseCurrency(
+        rowPos[
+          'Qtd_Falta'
+        ]
+      );
+
+    const pctOficial =
+      parsePct(
+        rowPos[
+          '%Positivados'
+        ]
+      );
+
+    const meta =
+      metaOficial > 0
+        ? metaOficial
+        : Math.round(
+            carteira *
+              0.60
+          );
+
+    const metaPct =
+      carteira > 0
+        ? (
+            meta /
+            carteira
+          ) *
+          100
+        : 60;
+
+    const realPct =
+      pctOficial > 0
+        ? pctOficial
+        : (
+            carteira > 0
+              ? (
+                  positivados /
+                  carteira
+                ) *
+                100
+              : 0
+          );
+
+    const falta =
+      faltaOficial >= 0
+        ? faltaOficial
+        : Math.max(
+            meta -
+              positivados,
+            0
+          );
+
+    const faltaPct =
+      Math.max(
+        metaPct -
+          realPct,
+        0
+      );
+
+    const alerta =
+      falta > 0 &&
+      diasUteisRestantesNoMes() <=
+        10;
+
+    if (elPos) {
+      elPos.textContent =
+        `${positivados} / ${carteira}`;
+
+      elPos.style.color =
+        alerta
+          ? '#ef4444'
+          : '';
+    }
+
+    if (elPosSub) {
+
+      if (falta <= 0) {
+
+        elPosSub.innerHTML =
+          `Real: <strong>${realPct.toFixed(
+            2
+          )}%</strong> | ` +
+          `Meta: <strong>${meta} clientes (${metaPct.toFixed(
+            1
+          )}%)</strong> | ` +
+          `<span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
+
+      } else {
+
+        elPosSub.innerHTML =
+          `Real: <strong>${realPct.toFixed(
+            2
+          )}%</strong> | ` +
+          `Meta: <strong>${meta} clientes (${metaPct.toFixed(
+            1
+          )}%)</strong> | ` +
+          `Falta: <span style="color:#ef4444;font-weight:bold;">${falta} clientes (${faltaPct.toFixed(
+            2
+          )}%)</span>` +
+          (
+            alerta
+              ? `<br><span style="display:inline-block;margin-top:6px;padding:4px 8px;border-radius:6px;background:rgba(239,68,68,.15);color:#ef4444;font-weight:700;">🚨 Faltam ${diasUteisRestantesNoMes()} dias úteis para o fim do mês</span>`
+              : ''
+          );
+      }
+    }
+
+    if (posCard) {
+      posCard.style.borderColor =
+        alerta
+          ? '#ef4444'
+          : '';
+
+      posCard.style.boxShadow =
+        alerta
+          ? '0 0 0 1px rgba(239,68,68,.45)'
+          : '';
+    }
+  }
+
+  // ----------------------------------
+  // ENCOMENDAS GRAVADAS
+  // ----------------------------------
+
+  const gravSheet =
+    getSheet(
+      dataStore.analiseCarteira,
+      [
+        '% de encomendas gravadas',
+        'Encomendas Gravadas',
+        'Gravado'
+      ]
+    );
+
+  const grav =
+    filtrarPorCliente(
+      gravSheet,
+      clienteSel
+    );
+
+  let pctGrav =
+    carregado
+      ? 0
+      : 44.72;
+
+  if (
+    !grav.semDetalhePorCliente &&
+    grav.linhas.length
+  ) {
+
+    const row =
+      mesNum !== null
+
+        ? grav.linhas.find(
+            r =>
+              Number(
+                r['Ano']
+              ) ===
+                Number(
+                  anoSel
+                ) &&
+              Number(
+                r['Mes']
+              ) ===
+                mesNum &&
+              String(
+                r['Tipo'] ||
+                  ''
+              )
+                .toLowerCase() ===
+                'gravado'
+          )
+
+        : null;
+
+    const alvo =
+      row ||
+      grav.linhas.find(
+        r =>
+          String(
+            r['Ano'] ||
+              r['Tipo']
+          )
+            .toLowerCase()
+            .includes(
+              'total'
+            )
+      ) ||
+      grav.linhas[0];
+
+    pctGrav =
+      parsePct(
+        rw(
+          alvo,
+          [
+            '% gravação',
+            '% Gravado',
+            'Total',
+            'Gravado'
+          ]
+        )
+      );
+  }
+
+  const elGrav =
+    document.getElementById(
+      'kpiPctGravadas'
+    );
+
+  const elGravSub =
+    document.getElementById(
+      'kpiPctGravadasSub'
+    );
+
+  if (elGrav) {
+    elGrav.textContent =
+      `${pctGrav.toFixed(
+        2
+      )}%`;
+  }
+
+  if (elGravSub) {
+
+    const diff =
+      40 -
+      pctGrav;
+
+    elGravSub.innerHTML =
+      grav.semDetalhePorCliente &&
+      clienteEspecifico
+        ? 'Indicador de carteira — selecione "Todos os Clientes".'
+
+        : diff <= 0
+          ? 'Meta: 40% | ' +
+            '<span style="color:#10b981;font-weight:bold;">' +
+            'Meta Atingida!' +
+            '</span>'
+
+          : `Meta: 40% | ` +
+            `Falta: <span style="color:#f59e0b;font-weight:bold;">${diff.toFixed(
+              2
+            )}%</span> p/ a meta`;
+  }
+}
+
+const pluginValoresNativos = {
+  id: 'pluginValoresNativos',
+
+  afterDatasetsDraw(
+    chart
+  ) {
+    if (
+      !chart ||
+      !chart.data ||
+      !chart.data.datasets
+    ) {
+      return;
+    }
+
+    chart.data.datasets.forEach(
+      (
+        dataset,
+        dsIndex
+      ) => {
+
+        const meta =
+          chart.getDatasetMeta(
+            dsIndex
+          );
+
+        if (meta.hidden) {
+          return;
+        }
+
+        if (
+          chart.config.type !==
+            'doughnut' &&
+          meta.data.length >
+            24
+        ) {
+          return;
+        }
+
+        meta.data.forEach(
+          (
+            element,
+            index
+          ) => {
+
+            const value =
+              dataset.data[
+                index
+              ];
+
+            if (
+              value === null ||
+              value === undefined ||
+              value === 0
+            ) {
+              return;
+            }
+
+            const ctx =
+              chart.ctx;
+
+            ctx.save();
+
+            const horizontal =
+              chart.options
+                .indexAxis ===
+              'y';
+
+            if (
+              chart.config.type ===
+              'doughnut'
+            ) {
+
+              const nums =
+                dataset.data.filter(
+                  v =>
+                    typeof v ===
+                    'number'
+                );
+
+              const total =
+                nums.reduce(
+                  (
+                    a,
+                    b
+                  ) =>
+                    a + b,
+                  0
+                );
+
+              const pct =
+                total > 0
+                  ? `${(
+                      (
+                        value /
+                        total
+                      ) *
+                      100
+                    ).toFixed(
+                      1
+                    )}%`
+                  : '';
+
+              const p =
+                element.tooltipPosition();
+
+              ctx.font =
+                'bold 10px sans-serif';
+
+              ctx.fillStyle =
+                '#fff';
+
+              ctx.textAlign =
+                'center';
+
+              ctx.fillText(
+                `${value} (${pct})`,
+                p.x,
+                p.y
+              );
+
+            } else {
+
+              const isPct =
+                String(
+                  dataset.label ||
+                    ''
+                )
+                  .includes('%') ||
+                String(
+                  dataset.label ||
+                    ''
+                )
+                  .toLowerCase()
+                  .includes(
+                    'budget'
+                  );
+
+              const text =
+                isPct
+                  ? `${Number(
+                      value
+                    ).toFixed(
+                      1
+                    )}%`
+                  : formatCompactBRL(
+                      value
+                    );
+
+              ctx.font =
+                `bold ${
+                  meta.data
+                    .length >
+                    12
+                    ? 8
+                    : 10
+                }px sans-serif`;
+
+              ctx.fillStyle =
+                '#fff';
+
+              const p =
+                element.tooltipPosition
+                  ? element.tooltipPosition()
+                  : {
+                      x: element.x,
+                      y: element.y
+                    };
+
+              const w =
+                ctx.measureText(
+                  text
+                ).width;
+
+              ctx.fillStyle =
+                'rgba(15,23,42,.85)';
+
+              if (horizontal) {
+
+                ctx.fillRect(
+                  p.x + 2,
+                  p.y - 7,
+                  w + 8,
+                  14
+                );
+
+                ctx.fillStyle =
+                  '#fff';
+
+                ctx.textAlign =
+                  'left';
+
+                ctx.fillText(
+                  text,
+                  p.x + 6,
+                  p.y
+                );
+
+              } else {
+
+                ctx.fillRect(
+                  p.x -
+                    w / 2 -
+                    4,
+                  p.y -
+                    16,
+                  w + 8,
+                  14
+                );
+
+                ctx.fillStyle =
+                  '#fff';
+
+                ctx.textAlign =
+                  'center';
+
+                ctx.fillText(
+                  text,
+                  p.x,
+                  p.y - 6
+                );
+              }
+            }
+
+            ctx.restore();
+          }
+        );
+      }
+    );
+  }
+};
+
+function renderChartHistorico() {
+  const ctx =
+    document.getElementById(
+      'chartHistoricoFaturamento'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const fat =
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Imagem-6',
+        'Image-6',
+        'Venda Mensal em Reais',
+        'Venda Mensal'
+      ]
+    );
+
+  const serie2026 =
+    new Array(
+      12
+    ).fill(null);
+
+  for (
+    let m = 1;
+    m <= 8;
+    m++
+  ) {
+
+    const rows =
+      usarDadosMensaisFixos(
+        '2026'
+      )
+        ? obterLinhasFixas(
+            'porCliente',
+            m
+          )
+        : null;
+
+    if (!rows) {
+      continue;
+    }
+
+    const flt =
+      filtrarPorCliente(
+        rows,
+        cliente
+      ).linhas;
+
+    const total =
+      flt.reduce(
+        (
+          s,
+          r
+        ) =>
+          s +
+          parseCurrency(
+            r[
+              'Valor de venda (R$)'
+            ] ||
+            r['Valor']
+          ),
+        0
+      );
+
+    if (total > 0) {
+      serie2026[m - 1] =
+        total;
+    }
+  }
+
+  fat.forEach(
+    r => {
+      const m =
+        Number(
+          r['Mês'] ||
+          r['Mes']
+        );
+
+      const a =
+        Number(
+          r['Ano']
+        );
+
+      const v =
+        parseCurrency(
+          r[
+            'Vendas (R$)'
+          ] ||
+          r['Vendas'] ||
+          r['Valor']
+        );
+
+      if (
+        a === 2026 &&
+        m >= 9 &&
+        m <= 12 &&
+        v > 0 &&
+        serie2026[
+          m - 1
+        ] === null
+      ) {
+        serie2026[
+          m - 1
+        ] = v;
+      }
+    }
+  );
+
+  if (
+    cliente !== 'ALL'
+  ) {
+
+    for (
+      let m = 9;
+      m <= 12;
+      m++
+    ) {
+
+      if (
+        serie2026[
+          m - 1
+        ] !== null
+      ) {
+        continue;
+      }
+
+      const rows =
+        obterLinhasDoMes(
+          'porCliente',
+          m
+        );
+
+      if (!rows) {
+        continue;
+      }
+
+      const total =
+        filtrarPorCliente(
+          rows,
+          cliente
+        ).linhas.reduce(
+          (
+            s,
+            r
+          ) =>
+            s +
+            parseCurrency(
+              r[
+                'Valor de venda (R$)'
+              ] ||
+              r['Valor']
+            ),
+          0
+        );
+
+      if (total > 0) {
+        serie2026[
+          m - 1
+        ] = total;
+      }
+    }
+  }
+
+  const series = {
+    2023:
+      new Array(
+        12
+      ).fill(null),
+
+    2024:
+      new Array(
+        12
+      ).fill(null),
+
+    2025:
+      new Array(
+        12
+      ).fill(null),
+
+    2026:
+      serie2026
+  };
+
+  if (
+    cliente === 'ALL'
+  ) {
+
+    fat.forEach(
+      r => {
+
+        const m =
+          Number(
+            r['Mês'] ||
+            r['Mes']
+          );
+
+        const a =
+          Number(
+            r['Ano']
+          );
+
+        const v =
+          parseCurrency(
+            r[
+              'Vendas (R$)'
+            ] ||
+            r['Vendas'] ||
+            r['Valor']
+          );
+
+        if (
+          m < 1 ||
+          m > 12 ||
+          !series[a] ||
+          v < 0
+        ) {
+          return;
+        }
+
+        if (
+          a === 2026 &&
+          series[2026][
+            m - 1
+          ] !== null
+        ) {
+          return;
+        }
+
+        series[a][
+          m - 1
+        ] = v;
+      }
+    );
+  }
+
+  destruirGrafico(
+    'chartHistoricoFaturamento'
+  );
+
+  charts.chartHistoricoFaturamento =
+    new Chart(
+      ctx.getContext(
+        '2d'
+      ),
+      {
+        type:
+          'line',
+
+        data: {
+          labels:
+            LABELS_MESES,
+
+          datasets:
+            Object.keys(
+              series
+            ).map(
+              ano => ({
+                label:
+                  ano,
+
+                data:
+                  series[
+                    ano
+                  ],
+
+                borderColor:
+                  ano === '2026'
+                    ? '#facc15'
+                    : ano === '2025'
+                      ? '#f59e0b'
+                      : ano === '2024'
+                        ? '#ec4899'
+                        : '#64748b',
+
+                backgroundColor:
+                  'transparent',
+
+                borderWidth:
+                  ano ===
+                  '2026'
+                    ? 3.5
+                    : 2,
+
+                pointRadius:
+                  ano ===
+                  '2026'
+                    ? 3
+                    : 2,
+
+                tension:
+                  0.25,
+
+                spanGaps:
+                  true
+              })
+            )
+        },
+
+        options: {
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          interaction: {
+            mode:
+              'index',
+
+            intersect:
+              false
+          },
+
+          plugins: {
+
+            legend: {
+              position:
+                'top',
+
+              labels: {
+                color:
+                  '#cbd5e1',
+
+                usePointStyle:
+                  true,
+
+                padding:
+                  16
+              }
+            },
+
+            title: {
+              display:
+                true,
+
+              text:
+                'Passe o mouse sobre cada mês para ver os valores',
+
+              color:
+                '#94a3b8',
+
+              font: {
+                size:
+                  10,
+
+                weight:
+                  'normal'
+              }
+            },
+
+            tooltip: {
+
+              callbacks: {
+
+                label:
+                  c =>
+                    `${c.dataset.label}: ${formatBRL(
+                      c.parsed.y
+                    )}`
+              }
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              grid: {
+                color:
+                  'rgba(148,163,184,.08)'
+              },
+
+              ticks: {
+                color:
+                  '#94a3b8'
+              }
+            },
+
+            y: {
+
+              beginAtZero:
+                false,
+
+              grid: {
+                color:
+                  'rgba(148,163,184,.08)'
+              },
+
+              ticks: {
+                color:
+                  '#94a3b8',
+
+                callback:
+                  v =>
+                    formatCompactBRL(
+                      v
+                    )
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function renderChartBudget() {
+  const ctx =
+    document.getElementById(
+      'chartBudget'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const sheet =
+    filtrarPorCliente(
+      getSheet(
+        dataStore.reportSection,
+        [
+          '% do Budget atingida por',
+          '% Budget Atingida',
+          'Budget'
+        ]
+      ),
+      cliente
+    );
+
+  const vals =
+    new Array(
+      12
+    ).fill(0);
+
+  sheet.linhas.forEach(
+    r => {
+
+      const idx =
+        Number(
+          r['Mês'] ||
+          r['Mes']
+        ) - 1;
+
+      if (
+        idx >= 0 &&
+        idx < 12
+      ) {
+        vals[idx] =
+          parsePct(
+            rw(
+              r,
+              [
+                '% do Budget',
+                'Budget'
+              ]
+            )
+          );
+      }
+    }
+  );
+
+  destruirGrafico(
+    'chartBudget'
+  );
+
+  ctx.parentElement.style.height =
+    '280px';
+
+  charts.chartBudget =
+    new Chart(
+      ctx.getContext('2d'),
+      {
+        type:
+          'bar',
+
+        data: {
+          labels:
+            LABELS_MESES,
+
+          datasets: [
+            {
+              label:
+                '% Budget Atingido',
+
+              data:
+                vals,
+
+              backgroundColor:
+                '#6366f1',
+
+              borderRadius:
+                4
+            }
+          ]
+        },
+
+        plugins: [
+          pluginValoresNativos
+        ],
+
+        options: {
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          indexAxis:
+            'y',
+
+          plugins: {
+
+            legend: {
+              display:
+                true,
+
+              labels: {
+                color:
+                  '#94a3b8'
+              }
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              beginAtZero:
+                true,
+
+              grid: {
+                color:
+                  '#1f293d'
+              },
+
+              ticks: {
+
+                color:
+                  '#94a3b8',
+
+                callback:
+                  v =>
+                    `${v}%`
+              }
+            },
+
+            y: {
+
+              grid: {
+                display:
+                  false
+              },
+
+              ticks: {
+                color:
+                  '#94a3b8'
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function renderChartTipoEncomenda() {
+  const ctx =
+    document.getElementById(
+      'chartTipoEncomenda'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const sheet =
+    filtrarPorCliente(
+      getSheet(
+        dataStore.analiseCarteira,
+        [
+          'Clientes recentes que já',
+          '% de encomendas gravadas',
+          'Encomenda por Tipo'
+        ]
+      ),
+      cliente
+    ).linhas;
+
+  let gravado =
+    algumaPlanilhaCarregada()
+      ? 0
+      : 89;
+
+  let normal =
+    algumaPlanilhaCarregada()
+      ? 0
+      : 110;
+
+  const rg =
+    sheet.find(
+      r =>
+        String(
+          r.Tipo ||
+            ''
+        )
+          .toLowerCase()
+          .includes(
+            'gravado'
+          )
+    );
+
+  const rn =
+    sheet.find(
+      r =>
+        String(
+          r.Tipo ||
+            ''
+        )
+          .toLowerCase()
+          .includes(
+            'normal'
+          )
+    );
+
+  if (rg) {
+    gravado =
+      parseCurrency(
+        rg[
+          'Sum of Valor'
+        ] ??
+        rg[
+          'Valor'
+        ] ??
+        rg[
+          '% gravação'
+        ]
+      );
+  }
+
+  if (rn) {
+    normal =
+      parseCurrency(
+        rn[
+          'Sum of Valor'
+        ] ??
+        rn[
+          'Valor'
+        ] ??
+        rn[
+          '% gravação'
+        ]
+      );
+  }
+
+  destruirGrafico(
+    'chartTipoEncomenda'
+  );
+
+  charts.chartTipoEncomenda =
+    new Chart(
+      ctx.getContext(
+        '2d'
+      ),
+      {
+        type:
+          'doughnut',
+
+        data: {
+          labels: [
+            'Gravado',
+            'Normal'
+          ],
+
+          datasets: [
+            {
+              data: [
+                gravado,
+                normal
+              ],
+
+              backgroundColor: [
+                '#10b981',
+                '#ef4444'
+              ],
+
+              borderWidth:
+                0
+            }
+          ]
+        },
+
+        plugins: [
+          pluginValoresNativos
+        ],
+
+        options: {
+
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          plugins: {
+
+            legend: {
+              display:
+                true,
+
+              labels: {
+                color:
+                  '#94a3b8'
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function renderChartSegmentos() {
+  const ctx =
+    document.getElementById(
+      'chartSegmentos'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const mes =
+    selectMes &&
+    selectMes.value !==
+      'ALL'
+      ? parseInt(
+          selectMes.value,
+          10
+        )
+      : null;
+
+  const ano =
+    selectAno
+      ? selectAno.value
+      : '2026';
+
+  const rowsFixos =
+    mes !== null &&
+    usarDadosMensaisFixos(
+      ano
+    )
+      ? obterLinhasDoMes(
+          'porSegmento',
+          mes
+        )
+      : null;
+
+  const sheet =
+    filtrarPorCliente(
+      rowsFixos ||
+      getSheet(
+        dataStore.reportSection,
+        [
+          'Venda mensal em reais da',
+          'Separador Segmento',
+          'Segmento'
+        ]
+      ),
+      cliente
+    ).linhas;
+
+  const data =
+    [
+      ...sheet
+    ]
+      .map(
+        r => ({
+          label:
+            String(
+              r[
+                'Separador'
+              ] ||
+              r[
+                'Segmento'
+              ] ||
+              'Outros'
+            ),
+
+          value:
+            parseCurrency(
+              r[
+                'After_Tax_Amount'
+              ] ||
+              r['Valor']
+            )
+        })
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          b.value -
+          a.value
+      );
+
+  destruirGrafico(
+    'chartSegmentos'
+  );
+
+  ctx.parentElement.style.height =
+    Math.max(
+      300,
+      data.length * 26
+    ) + 'px';
+
+  charts.chartSegmentos =
+    new Chart(
+      ctx.getContext(
+        '2d'
+      ),
+      {
+
+        type:
+          'bar',
+
+        data: {
+
+          labels:
+            data.length
+              ? data.map(
+                  x =>
+                    x.label
+                )
+              : [
+                  'Sem Dados'
+                ],
+
+          datasets: [
+            {
+              label:
+                'Vendas (R$)',
+
+              data:
+                data.length
+                  ? data.map(
+                      x =>
+                        x.value
+                    )
+                  : [0],
+
+              backgroundColor:
+                '#10b981',
+
+              borderRadius:
+                4
+            }
+          ]
+        },
+
+        plugins: [
+          pluginValoresNativos
+        ],
+
+        options: {
+
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          indexAxis:
+            'y',
+
+          plugins: {
+
+            legend: {
+              display:
+                true,
+
+              labels: {
+                color:
+                  '#94a3b8'
+              }
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              beginAtZero:
+                true,
+
+              grid: {
+                color:
+                  '#1f293d'
+              },
+
+              ticks: {
+
+                color:
+                  '#94a3b8',
+
+                callback:
+                  v =>
+                    formatCompactBRL(
+                      v
+                    )
+              }
+            },
+
+            y: {
+
+              grid: {
+                display:
+                  false
+              },
+
+              ticks: {
+
+                color:
+                  '#94a3b8',
+
+                autoSkip:
+                  false,
+
+                font: {
+                  size:
+                    9
+                }
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function renderChartTopProdutos() {
+  const ctx =
+    document.getElementById(
+      'chartTopProdutos'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const mes =
+    selectMes &&
+    selectMes.value !==
+      'ALL'
+      ? parseInt(
+          selectMes.value,
+          10
+        )
+      : null;
+
+  const ano =
+    selectAno
+      ? selectAno.value
+      : '2026';
+
+  const rowsFixos =
+    mes !== null &&
+    mes <= 8 &&
+    usarDadosMensaisFixos(
+      ano
+    )
+      ? obterLinhasFixas(
+          'porProduto',
+          mes
+        )
+      : null;
+
+  const raw =
+    rowsFixos ||
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Imagem-7',
+        'Image-7',
+        'Top 20 Produtos Mais Vendidos',
+        'Top 20'
+      ]
+    );
+
+  const filtrado =
+    filtrarPorCliente(
+      raw,
+      cliente
+    );
+
+  const data =
+    filtrado.linhas
+      .map(
+        r => ({
+          label:
+            String(
+              r[
+                'Produto'
+              ] ||
+              r[
+                'Descrição'
+              ] ||
+              r[
+                'Descricao'
+              ] ||
+              r[
+                'Cod'
+              ] ||
+              ''
+            ).trim(),
+
+          value:
+            parseCurrency(
+              r[
+                'Valor de Venda'
+              ] ||
+              r[
+                'Valor de Venda (R$)'
+              ] ||
+              r[
+                'Valor'
+              ] ||
+              r[
+                'Vendas (R$)'
+              ]
+            )
+        })
+      )
+      .filter(
+        x =>
+          x.label &&
+          Number.isFinite(
+            x.value
+          )
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          b.value -
+          a.value
+      )
+      .slice(
+        0,
+        20
+      );
+
+  destruirGrafico(
+    'chartTopProdutos'
+  );
+
+  ctx.parentElement.style.height =
+    '430px';
+
+  charts.chartTopProdutos =
+    new Chart(
+      ctx.getContext(
+        '2d'
+      ),
+      {
+
+        type:
+          'bar',
+
+        data: {
+
+          labels:
+            data.length
+              ? data.map(
+                  x =>
+                    x.label
+                )
+              : [
+                  'Sem Dados'
+                ],
+
+          datasets: [
+            {
+              label:
+                'Valor de Venda (R$)',
+
+              data:
+                data.length
+                  ? data.map(
+                      x =>
+                        x.value
+                    )
+                  : [0],
+
+              backgroundColor:
+                '#3b82f6',
+
+              borderRadius:
+                4,
+
+              barPercentage:
+                0.72,
+
+              categoryPercentage:
+                0.82
+            }
+          ]
+        },
+
+        plugins: [
+          pluginValoresNativos
+        ],
+
+        options: {
+
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          indexAxis:
+            'y',
+
+          plugins: {
+
+            legend: {
+              display:
+                true,
+
+              labels: {
+                color:
+                  '#94a3b8'
+              }
+            },
+
+            tooltip: {
+
+              callbacks: {
+
+                label:
+                  c =>
+                    formatBRL(
+                      c.parsed.x
+                    )
+              }
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              beginAtZero:
+                true,
+
+              grid: {
+                color:
+                  'rgba(148,163,184,.08)'
+              },
+
+              ticks: {
+
+                color:
+                  '#94a3b8',
+
+                callback:
+                  v =>
+                    formatCompactBRL(
+                      v
+                    )
+              }
+            },
+
+            y: {
+
+              grid: {
+                display:
+                  false
+              },
+
+              ticks: {
+
+                color:
+                  '#cbd5e1',
+
+                autoSkip:
+                  false,
+
+                font: {
+                  size:
+                    8.5
+                }
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function formatPctCell(
+  val
+) {
+  if (
+    val === undefined ||
+    val === null ||
+    val === ''
+  ) {
+    return '-';
+  }
+
+  if (
+    typeof val ===
+      'string' &&
+    val.includes('%')
+  ) {
+    return val;
+  }
+
+  return `${parsePct(
+    val
+  ).toFixed(
+    2
+  )}%`;
+}
+
+function renderVendasClienteTable() {
+  const tbody =
+    document.getElementById(
+      'tbVendasCliente'
+    );
+
+  if (!tbody) {
+    return;
+  }
+
+  const mes =
+    selectMes &&
+    selectMes.value !==
+      'ALL'
+      ? parseInt(
+          selectMes.value,
+          10
+        )
+      : null;
+
+  const ano =
+    selectAno
+      ? selectAno.value
+      : '2026';
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const query =
+    searchInput
+      ? searchInput.value
+          .toLowerCase()
+          .trim()
+      : '';
+
+  const rows =
+    mes !== null &&
+    usarDadosMensaisFixos(
+      ano
+    )
+      ? obterLinhasDoMes(
+          'porCliente',
+          mes
+        )
+      : getSheet(
+          dataStore.reportSection,
+          [
+            'Vendas (R$) por Cliente',
+            'Cliente'
+          ]
+        );
+
+  const filtered =
+    rows
+      .filter(
+        r => {
+
+          const nome =
+            String(
+              r[
+                'Cliente_Pai'
+              ] ||
+              r[
+                'Cliente'
+              ] ||
+              ''
+            ).trim();
+
+          return (
+            nome
+              .toLowerCase()
+              .includes(
+                query
+              ) &&
+            (
+              cliente ===
+                'ALL' ||
+              nome ===
+                cliente
+            )
+          );
+        }
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          parseCurrency(
+            b[
+              'Valor de venda (R$)'
+            ] ||
+            b['Valor']
+          ) -
+          parseCurrency(
+            a[
+              'Valor de venda (R$)'
+            ] ||
+            a['Valor']
+          )
+      );
+
+  tbody.innerHTML =
+    '';
+
+  if (!filtered.length) {
+
+    tbody.innerHTML =
+      '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
+
+    return;
+  }
+
+  filtered.forEach(
+    r => {
+
+      const nome =
+        r[
+          'Cliente_Pai'
+        ] ||
+        r[
+          'Cliente'
+        ] ||
+        '-';
+
+      const valor =
+        parseCurrency(
+          r[
+            'Valor de venda (R$)'
+          ] ||
+          r['Valor']
+        );
+
+      const tr =
+        document.createElement(
+          'tr'
+        );
+
+      tr.className =
+        'clickable-row';
+
+      tr.style.cursor =
+        'pointer';
+
+      tr.innerHTML =
+        `<td>${
+          r['Classe'] ||
+          'Fiel'
+        }</td>` +
+
+        `<td><strong>${nome}</strong></td>` +
+
+        `<td>${formatBRL(
+          valor
+        )}</td>` +
+
+        `<td>${formatPctCell(
+          r[
+            '% do Total'
+          ]
+        )}</td>`;
+
+      tbody.appendChild(
+        tr
+      );
+    }
+  );
+}
+
+function renderInatividadeTable() {
+  const tbody =
+    document.getElementById(
+      'tbInatividade'
+    );
+
+  if (!tbody) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const query =
+    searchInput
+      ? searchInput.value
+          .toLowerCase()
+          .trim()
+      : '';
+
+  const rows =
+    getSheet(
+      dataStore.analiseCarteira,
+      [
+        '#Dias até primeira fatura',
+        'Clientes com ultima fatura',
+        'Ultima Fatura'
+      ]
+    );
+
+  const filtered =
+    rows.filter(
+      r => {
+
+        const nome =
+          String(
+            r[
+              'Cliente_Pai'
+            ] ||
+            r[
+              'Cliente'
+            ] ||
+            ''
+          ).trim();
+
+        return (
+          nome
+            .toLowerCase()
+            .includes(
+              query
+            ) &&
+          (
+            cliente ===
+              'ALL' ||
+            nome ===
+              cliente
+          )
+        );
+      }
+    );
+
+  tbody.innerHTML =
+    '';
+
+  if (!filtered.length) {
+
+    tbody.innerHTML =
+      '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
+
+    return;
+  }
+
+  filtered.forEach(
+    r => {
+
+      const nome =
+        r[
+          'Cliente_Pai'
+        ] ||
+        r[
+          'Cliente'
+        ] ||
+        '-';
+
+      const dias =
+        parseInt(
+          r[
+            '#dias desde a ultima fat'
+          ] ||
+          r[
+            'Dias Inativo'
+          ] ||
+          r[
+            'Dias'
+          ] ||
+          0,
+          10
+        );
+
+      const data =
+        formatDate(
+          r[
+            'Ultima fat'
+          ] ||
+          r[
+            'Última Fatura'
+          ]
+        );
+
+      const tr =
+        document.createElement(
+          'tr'
+        );
+
+      tr.className =
+        'clickable-row';
+
+      tr.style.cursor =
+        'pointer';
+
+      tr.innerHTML =
+        `<td>${
+          r['Classe'] ||
+          'Pontual'
+        }</td>` +
+
+        `<td><strong>${nome}</strong></td>` +
+
+        `<td>${data}</td>` +
+
+        `<td><span style="color:${
+          dias >= 60
+            ? '#ef4444'
+            : '#10b981'
+        };font-weight:700;">${dias} dias</span></td>`;
+
+      tbody.appendChild(
+        tr
+      );
+    }
+  );
 }
 
 function renderDashboard() {
@@ -653,1027 +4260,220 @@ function renderDashboard() {
   renderInatividadeTable();
 }
 
-// Soma o faturamento real de 2026: meses 1-8 vêm dos dados fixos (Jan-Ago,
-// mesmo que usa no Histórico de Faturamento) e os meses 9+ (mês corrente em
-// diante) vêm da planilha ao vivo (Image-6). Evita duplicar: cada mês só é
-// contado uma vez, priorizando o dado fixo quando ele existe.
-function calcularTotalAno2026() {
-  let total = 0;
-  const mesesComFixo = new Set();
-
-  if (usarDadosMensaisFixos()) {
-    for (let m = 1; m <= 8; m++) {
-      const linhas = obterLinhasFixasMes('porCliente', m);
-      if (!linhas) continue;
-      total += linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
-      mesesComFixo.add(m);
-    }
-  }
-
-  const sheetLive = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
-  sheetLive.forEach(r => {
-    const mes = Number(r['Mês'] || r['Mes']);
-    const ano = Number(r['Ano']);
-    if (ano === 2026 && mes && !mesesComFixo.has(mes)) {
-      total += parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-    }
-  });
-
-  return total;
+if (fileInput1) {
+  fileInput1.addEventListener(
+    'change',
+    e =>
+      e.target.files.length &&
+      readExcelFile(
+        e.target.files[0],
+        1
+      )
+  );
 }
 
-function renderYTDBanner() {
-  const carregado = algumaPlanilhaCarregada();
-  const elLytd = document.getElementById('kpiLytd');
-  const elYtd = document.getElementById('kpiYtd');
-  const elVar = document.getElementById('kpiVariacao');
-
-  if (!carregado) {
-    if (elLytd) elLytd.textContent = formatBRL(6386614.16);
-    if (elYtd) elYtd.textContent = formatBRL(6636963.60);
-    if (elVar) elVar.textContent = formatBRL(250349.43);
-    return;
-  }
-
-  const ytdCalculado = calcularTotalAno2026();
-
-  // O LYTD real (2025) vem da aba "Positivação de carteira" da planilha
-  // ANÁLISE DE CARTEIRA (a segunda que você carrega, não a Relatório
-  // Geral) — é o Power BI quem calcula. Antes eu tava sempre assumindo que
-  // não existia; na verdade só estava olhando a planilha errada.
-  const sheetPosCarteira = getSheet(dataStore.analiseCarteira, ['Positivação de carteira']);
-  let lytd = null;
-  let ytd = ytdCalculado;
-
-  if (sheetPosCarteira && sheetPosCarteira.length > 0) {
-    const row = sheetPosCarteira[0];
-    const brutoLytd = row['Vendas LYTD'];
-    const brutoYtd = row['Vendas YTD'];
-    if (brutoLytd !== null && brutoLytd !== undefined && String(brutoLytd).trim() !== '') {
-      const val = parseCurrency(brutoLytd);
-      if (val > 0) lytd = val;
-    }
-    if (brutoYtd !== null && brutoYtd !== undefined && String(brutoYtd).trim() !== '') {
-      const val = parseCurrency(brutoYtd);
-      if (val > 0) ytd = val; // usa o YTD oficial do Power BI quando disponível
-    }
-  }
-
-  if (lytd !== null) {
-    const variacao = ytd - lytd;
-    const variacaoPct = lytd > 0 ? (variacao / lytd) * 100 : 0;
-    if (elLytd) elLytd.textContent = formatBRL(lytd);
-    if (elYtd) elYtd.textContent = formatBRL(ytd);
-    if (elVar) elVar.innerHTML = `<span style="color:${variacao >= 0 ? '#10b981' : '#ef4444'};">${variacao >= 0 ? '+' : ''}${formatBRL(variacao)} (${variacaoPct >= 0 ? '+' : ''}${variacaoPct.toFixed(1)}%)</span>`;
-  } else {
-    // Ainda sem LYTD preenchido pelo Power BI (carteira nova/sem histórico
-    // de 2025 pra esse período) — assim que a aba "Positivação de
-    // carteira" trouxer o valor, aparece sozinho aqui, sem precisar mexer
-    // em código.
-    if (elLytd) elLytd.innerHTML = `R$ 0,00<br><span style="font-size:0.7rem;font-weight:400;color:#64748b;">Ainda sem base de 2025 na planilha</span>`;
-    if (elYtd) elYtd.textContent = formatBRL(ytd);
-    if (elVar) elVar.innerHTML = `<span style="font-size:0.9rem;color:#64748b;">N/A</span>`;
-  }
+if (fileInput2) {
+  fileInput2.addEventListener(
+    'change',
+    e =>
+      e.target.files.length &&
+      readExcelFile(
+        e.target.files[0],
+        2
+      )
+  );
 }
 
-function renderKPIs() {
-  const mesSel = selectMes ? selectMes.value : 'ALL';
-  const anoSel = selectAno ? selectAno.value : '2026';
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const carregado = algumaPlanilhaCarregada();
-  const clienteEspecifico = clienteSel !== 'ALL';
-
-  const anoNum = Number(anoSel);
-  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
-
-  // ---- Faturamento da Carteira (já é por cliente, então filtra normal) ----
-  // Se um mês específico (1-8, ou o mês corrente) foi selecionado, usa os
-  // dados detalhados daquele mês; senão usa o acumulado da planilha ao
-  // vivo carregada no Dashboard. Como hoje só existe planilha (fixa ou ao
-  // vivo) para 2026, selecionar outro ano zera tudo em vez de reaproveitar
-  // por engano o número de 2026.
-  let totalFat = 0;
-  const anoTemDados = anoSel === '2026' || anoSel === 'ALL';
-  const linhasFixasMes = (anoTemDados && mesNum !== null && usarDadosMensaisFixos(anoSel)) ? obterLinhasDoMes('porCliente', mesNum) : null;
-  const usandoMesFixo = linhasFixasMes !== null;
-  const sheetCliente = !anoTemDados ? [] : (usandoMesFixo ? linhasFixasMes : getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']));
-
-  if (clienteEspecifico) {
-    sheetCliente.forEach(r => {
-      const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-      if (nome === clienteSel) {
-        totalFat += parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
-      }
-    });
-  } else {
-    sheetCliente.forEach(r => totalFat += parseCurrency(r['Valor de venda (R$)'] || r['Valor']));
-    if (totalFat === 0 && !usandoMesFixo && anoTemDados) {
-      const sheetVenda = getSheet(dataStore.reportSection, ['Venda Mensal em Reais', 'Venda Mensal', 'Image-6']);
-      sheetVenda.forEach(r => totalFat += parseCurrency(r[anoSel] || r[`${anoSel} (R$)`] || r['Vendas (R$)']));
-    }
-  }
-
-  const elValor = document.getElementById('kpiValorMensal');
-  // Mostra o valor real assim que houver alguma fonte de dado (planilha ao
-  // vivo OU mês fixo selecionado); só cai no número de demonstração se não
-  // tiver nenhuma das duas ainda.
-  if (elValor) elValor.textContent = formatBRL((carregado || usandoMesFixo) && anoTemDados ? totalFat : (anoTemDados ? 32766640.70 : 0));
-
-  // ---- % Budget Atingido (indicador da carteira toda; planilha não traz
-  // o budget quebrado por cliente, então zera quando um cliente é selecionado) ----
-  const sheetBudgetBruto = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
-  const { linhas: sheetBudget, semDetalhePorCliente: budgetSemDetalhe } = filtrarPorCliente(sheetBudgetBruto, clienteSel);
-  let avgBudget = 0;
-
-  if (!budgetSemDetalhe && sheetBudget.length > 0) {
-    if (mesNum !== null) {
-      const row = sheetBudget.find(r => Number(r['Mês'] || r['Mes']) === mesNum);
-      if (row) avgBudget = parsePct(row['% do Budget'] || row['Budget']);
-    } else {
-      let sum = 0, count = 0;
-      sheetBudget.forEach(r => {
-        const val = parsePct(r['% do Budget'] || r['Budget']);
-        if (val > 0) { sum += val; count++; }
-      });
-      avgBudget = count > 0 ? (sum / count) : 0;
-    }
-  }
-
-  const elBudget = document.getElementById('kpiBudgetAtingido');
-  if (elBudget) elBudget.textContent = `${avgBudget.toFixed(1)}%`;
-
-  // ---- Positivação da Carteira ----
-  // É um indicador da carteira inteira (quantos clientes compraram no
-  // período). Não faz sentido "por 1 cliente só", então quando um cliente
-  // específico está selecionado, o card fica zerado com um aviso — em vez
-  // de continuar mostrando o número da carteira toda (que parecia bug).
-  const elPos = document.getElementById('kpiPositivacao');
-  const elPosSub = document.getElementById('kpiPositivacaoSub');
-  const kpiCardPositivacao = elPosSub ? elPosSub.closest('.kpi-card') : null;
-
-  if (clienteEspecifico) {
-    if (elPos) { elPos.textContent = '—'; elPos.style.color = ''; }
-    if (elPosSub) elPosSub.innerHTML = `Indicador de carteira — selecione "Todos os Clientes" para ver a positivação.`;
-    if (kpiCardPositivacao) { kpiCardPositivacao.style.borderColor = ''; kpiCardPositivacao.style.boxShadow = ''; }
-  } else {
-    const mesHistorico = (mesNum !== null && mesNum <= 8 && usarDadosMensaisFixos(anoSel));
-
-    if (mesHistorico) {
-      // Mês fechado (Jan-Ago): não tem "corra atrás da meta" (já passou),
-      // só mostra se bateu (verde) ou não bateu (vermelho) naquele mês.
-      const linhasMesCliente = obterLinhasFixasMes('porCliente', mesNum) || [];
-      const positivadosMes = linhasMesCliente.length;
-
-      // Usa o mesmo tamanho de carteira da planilha ao vivo como
-      // referência (não muda mês a mês, é o total de clientes ativos).
-      const sheetUltimaFaturaRef = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
-      let totalCarteiraRef = 271;
-      if (sheetUltimaFaturaRef && sheetUltimaFaturaRef.length > 0) {
-        const valCart = parseCurrency(sheetUltimaFaturaRef[0]['Carteira']);
-        if (valCart > 0) totalCarteiraRef = valCart;
-      }
-
-      const metaQtdMes = Math.round(totalCarteiraRef * 0.60);
-      const realPctMes = totalCarteiraRef > 0 ? (positivadosMes / totalCarteiraRef) * 100 : 0;
-      const bateuMetaMes = positivadosMes >= metaQtdMes;
-
-      if (elPos) {
-        elPos.textContent = `${positivadosMes} / ${totalCarteiraRef}`;
-        elPos.style.color = bateuMetaMes ? '#10b981' : '#ef4444';
-      }
-      if (elPosSub) {
-        elPosSub.innerHTML = `Real: <strong>${realPctMes.toFixed(2)}%</strong> | Meta: <strong>${metaQtdMes} clientes (60%)</strong> | ` +
-          (bateuMetaMes
-            ? `<span style="color:#10b981;font-weight:bold;">✅ Meta batida nesse mês</span>`
-            : `<span style="color:#ef4444;font-weight:bold;">❌ Meta não batida nesse mês</span>`);
-      }
-      if (kpiCardPositivacao) {
-        kpiCardPositivacao.style.borderColor = bateuMetaMes ? '#10b981' : '#ef4444';
-        kpiCardPositivacao.style.boxShadow = `0 0 0 1px ${bateuMetaMes ? 'rgba(16,185,129,0.45)' : 'rgba(239,68,68,0.45)'}`;
-      }
-    } else {
-    const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
-    let positivados = carregado ? 0 : 82;
-    let totalCarteira = carregado ? 0 : 271;
-    let metaQtd = 0; // Inicializa a meta
-
-    if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
-      const row = sheetUltimaFatura[0];
-      const valPos = parseCurrency(row['Qtd_Positivados'] || row['Qtd_Positivado']);
-      const valCart = parseCurrency(row['Carteira']);
-      // Pega o valor da meta diretamente da planilha
-      const valMeta = parseCurrency(row['Meta']);
-
-      if (valPos > 0) positivados = valPos;
-      if (valCart > 0) totalCarteira = valCart;
-      if (valMeta > 0) metaQtd = valMeta;
-    }
-
-    // Se a meta não veio da planilha, calcula como fallback (60%)
-    if (metaQtd === 0) {
-      metaQtd = Math.round(totalCarteira * 0.60);
-    }
-
-    const metaPct = 60;
-    const realPct = totalCarteira > 0 ? (positivados / totalCarteira) * 100 : 0;
-    const faltaQtd = metaQtd - positivados;
-    const faltaPct = metaPct - realPct;
-
-    // Alerta "corra atrás": liga na reta final do mês — quando restam 10 dias
-    // úteis ou menos para acabar e a meta ainda não foi batida.
-    const diasUteisRestantes = diasUteisRestantesNoMes();
-    const abaixoDaMeta = faltaQtd > 0;
-    const alertaPositivacao = abaixoDaMeta && diasUteisRestantes <= 10;
-
-    if (elPos) {
-      elPos.textContent = `${positivados} / ${totalCarteira}`;
-      elPos.style.color = alertaPositivacao ? '#ef4444' : '';
-    }
-    if (elPosSub) {
-      if (faltaQtd <= 0) {
-        elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: <strong>${metaQtd} clientes (${metaPct.toFixed(1)}%)</strong> | <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
-      } else {
-        elPosSub.innerHTML = `Real: <strong>${realPct.toFixed(2)}%</strong> | Meta: <strong>${metaQtd} clientes (${metaPct.toFixed(1)}%)</strong> | Falta: <span style="color:#ef4444;font-weight:bold;">${faltaQtd} clientes (${faltaPct.toFixed(2)}%)</span>` +
-          (alertaPositivacao ? `<br><span style="display:inline-block; margin-top:6px; padding:4px 8px; border-radius:6px; background:rgba(239,68,68,0.15); color:#ef4444; font-weight:700;">🚨 Faltam ${diasUteisRestantes} dias úteis para o fim do mês — corra atrás da meta!</span>` : '');
-      }
-    }
-
-    // Destaca todo o card de Positivação em vermelho quando o alerta está ativo.
-    if (kpiCardPositivacao) {
-      if (alertaPositivacao) {
-        kpiCardPositivacao.style.borderColor = '#ef4444';
-        kpiCardPositivacao.style.boxShadow = '0 0 0 1px rgba(239,68,68,0.45)';
-      } else {
-        kpiCardPositivacao.style.borderColor = '';
-        kpiCardPositivacao.style.boxShadow = '';
-      }
-    }
-    }
-  }
-
-  // ---- % Encomendas Gravadas ----
-  // Mesma lógica: se a planilha não detalha por cliente, zera ao filtrar.
-  const sheetGravadosBruto = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomendas Gravadas', 'Gravado']);
-  const { linhas: sheetGravados, semDetalhePorCliente: gravadosSemDetalhe } = filtrarPorCliente(sheetGravadosBruto, clienteSel);
-  let pctVal = carregado ? 0 : 44.72;
-  const metaGravaçãoPct = 40.0;
-
-  if (!gravadosSemDetalhe && sheetGravados.length > 0) {
-    let row = null;
-    if (mesNum !== null) {
-      row = sheetGravados.find(r => Number(r.Ano) === anoNum && Number(r.Mes) === mesNum && String(r.Tipo).trim().toLowerCase() === 'gravado');
-    }
-    if (!row) row = sheetGravados.find(r => String(r['Ano'] || r['Tipo']).toLowerCase().includes('total')) || sheetGravados[0];
-
-    const rawVal = row ? (row['% gravação'] ?? row['% Gravado'] ?? row['Total'] ?? row['Gravado']) : undefined;
-    pctVal = rawVal !== undefined ? parsePct(rawVal) : 0;
-  }
-
-  const elGrav = document.getElementById('kpiPctGravadas');
-  const elGravSub = document.getElementById('kpiPctGravadasSub');
-  const kpiCardGravadas = elGravSub ? elGravSub.closest('.kpi-card') : null;
-  if (elGrav) elGrav.textContent = `${pctVal.toFixed(2)}%`;
-
-  if (elGravSub) {
-    if (clienteEspecifico && gravadosSemDetalhe) {
-      elGravSub.innerHTML = `Indicador de carteira — selecione "Todos os Clientes" para ver este indicador.`;
-      if (kpiCardGravadas) { kpiCardGravadas.style.borderColor = ''; kpiCardGravadas.style.boxShadow = ''; }
-    } else {
-      const diffGrav = metaGravaçãoPct - pctVal;
-      const abaixoDaMetaGrav = diffGrav > 0;
-      // Mesmo critério de urgência do card de Positivação: alerta forte só
-      // quando faltam 10 dias úteis ou menos pro fim do mês e ainda está
-      // abaixo da meta.
-      const diasUteisRestantesGrav = diasUteisRestantesNoMes();
-      const alertaGravadas = abaixoDaMetaGrav && diasUteisRestantesGrav <= 10;
-
-      if (!abaixoDaMetaGrav) {
-        elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | <span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
-      } else {
-        elGravSub.innerHTML = `Meta: ${metaGravaçãoPct}% | Falta: <span style="color:#f59e0b;font-weight:bold;">${diffGrav.toFixed(2)}%</span> p/ a meta` +
-          (alertaGravadas ? `<br><span style="display:inline-block; margin-top:6px; padding:4px 8px; border-radius:6px; background:rgba(239,68,68,0.15); color:#ef4444; font-weight:700;">🚨 Faltam ${diasUteisRestantesGrav} dias úteis para o fim do mês — corra atrás da meta!</span>` : '');
-      }
-
-      if (kpiCardGravadas) {
-        if (alertaGravadas) {
-          kpiCardGravadas.style.borderColor = '#ef4444';
-          kpiCardGravadas.style.boxShadow = '0 0 0 1px rgba(239,68,68,0.45)';
-        } else {
-          kpiCardGravadas.style.borderColor = '';
-          kpiCardGravadas.style.boxShadow = '';
-        }
-      }
-    }
-  }
+if (selectAno) {
+  selectAno.addEventListener(
+    'change',
+    renderDashboard
+  );
 }
 
-// Plugin nativo para desenhar os rótulos (números) diretamente nos gráficos
-// Formata um valor em R$ de forma compacta e sempre limpa (sem casas
-// decimais soltas tipo "1452.0899999996"), incluindo negativos (estornos/
-// devoluções), usados nos rótulos das barras.
-function formatValorCurto(value) {
-  const num = Number(value) || 0;
-  const abs = Math.abs(num);
-  const sinal = num < 0 ? '-' : '';
-  if (abs >= 1000) return `${sinal}R$ ${(abs / 1000).toFixed(1).replace('.', ',')}k`;
-  return `${sinal}R$ ${abs.toFixed(0)}`;
+if (selectMes) {
+  selectMes.addEventListener(
+    'change',
+    renderDashboard
+  );
 }
 
-const pluginValoresNativos = {
-  id: 'pluginValoresNativos',
-  afterDatasetsDraw(chart, args, options) {
-    const { ctx } = chart;
-
-    chart.data.datasets.forEach((dataset, datasetIndex) => {
-      const meta = chart.getDatasetMeta(datasetIndex);
-      if (meta.hidden) return;
-
-      // Com muitas barras (ex: Top 20 Produtos) não dá pra escrever um
-      // rótulo em cima de cada uma sem sobrepor texto — nesses casos só o
-      // eixo + tooltip (passar o mouse) mostram o valor exato.
-      // Antes escondia o rótulo com mais de 10 barras (pra não sobrepor
-      // texto no Top 20 Produtos) — só que isso também apagava os rótulos
-      // do Histórico e do Budget, que têm 12 meses. Agora só esconde em
-      // gráficos realmente muito cheios (mais de 24 itens), que hoje não
-      // existe nenhum — todos os gráficos atuais (até 20 barras) mostram
-      // rótulo.
-      const muitasBarras = chart.config.type !== 'doughnut' && meta.data.length > 24;
-      if (muitasBarras) return;
-
-      meta.data.forEach((element, index) => {
-        const value = dataset.data[index];
-        if (value === null || value === undefined || value === 0) return;
-
-        ctx.save();
-        // Com muitas barras (ex: Top 20 Produtos) o rótulo fica menor pra
-        // caber sem esbarrar no vizinho.
-        const fonteTamanho = meta.data.length > 12 ? 8 : 10;
-        ctx.font = `bold ${fonteTamanho}px sans-serif`;
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'center';
-
-        let text = '';
-        if (chart.config.type === 'doughnut') {
-          const sum = dataset.data.reduce((a, b) => a + b, 0);
-          const pct = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '';
-          text = `${value} (${pct})`;
-          const position = element.tooltipPosition();
-          ctx.fillText(text, position.x, position.y);
-        } else {
-          const ehPercentual = String(dataset.label || '').includes('%') || String(dataset.label || '').includes('Budget');
-          text = ehPercentual ? `${Number(value).toFixed(1)}%` : formatValorCurto(value);
-          const textWidth = ctx.measureText(text).width;
-          const horizontal = chart.options.indexAxis === 'y';
-
-          if (horizontal) {
-            // Barra deitada: o rótulo vai colado à direita da ponta da
-            // barra (ou à esquerda, se o valor for negativo), já alinhado
-            // à esquerda em vez de centralizado.
-            const { x, y } = element.tooltipPosition ? element.tooltipPosition() : { x: element.x, y: element.y };
-            const positivo = value >= 0;
-            ctx.textAlign = positivo ? 'left' : 'right';
-            const xTexto = positivo ? x + 6 : x - 6;
-            const boxX = positivo ? x + 2 : x - textWidth - 10;
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            ctx.fillRect(boxX, y - 7, textWidth + 8, 14);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(text, xTexto, y);
-          } else {
-            const { x, y } = element.tooltipPosition ? element.tooltipPosition() : { x: element.x, y: element.y };
-            const acimaDoZero = value >= 0;
-            const yTexto = acimaDoZero ? y - 6 : y + 16;
-
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            ctx.fillRect(x - textWidth / 2 - 4, yTexto - 10, textWidth + 8, 14);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(text, x, yTexto);
-          }
-        }
-        ctx.restore();
-      });
-    });
-  }
-};
-
-function renderChartHistorico() {
-  const ctx = document.getElementById('chartHistoricoFaturamento');
-  if (!ctx) return;
-
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  const anos = [2023, 2024, 2025, 2026];
-  const cores = ['#6366f1', '#f59e0b', '#ef4444', '#10b981']; // Cores para cada ano
-  const datasets = [];
-
-  // Para cada ano, monta um dataset
-  anos.forEach((ano, index) => {
-    const valores = new Array(12).fill(null);
-    const anoStr = String(ano);
-
-    // 1) Meses 1-8: usa os dados fixos (se disponíveis para o ano)
-    for (let m = 1; m <= 8; m++) {
-      // Os dados fixos só existem para 2026 no seu historico_fixo.json
-      if (ano === 2026) {
-        const linhasMes = obterLinhasFixasMes('porCliente', m);
-        if (linhasMes) {
-          const { linhas } = filtrarPorCliente(linhasMes, clienteSel);
-          const total = linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
-          valores[m - 1] = total;
-        }
-      }
-    }
-
-    // 2) Meses 9-12 (e qualquer mês que não veio do fixo): usa a planilha ao vivo (Image-6)
-    const sheetBruto = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
-    sheetBruto.forEach(r => {
-      const idx = Number(r['Mês'] || r['Mes']) - 1;
-      const anoRow = Number(r['Ano']);
-      const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-      // Só preenche se for o ano correto e se ainda não tiver valor
-      if (idx >= 0 && idx < 12 && anoRow === ano && val > 0 && valores[idx] === null) {
-        valores[idx] = val;
-      }
-    });
-
-    // Só adiciona o dataset se houver algum dado para aquele ano
-    if (valores.some(v => v !== null && v > 0)) {
-      datasets.push({
-        label: anoStr,
-        data: valores,
-        borderColor: cores[index],
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        spanGaps: true,
-        tension: 0.1
-      });
-    }
-  });
-
-  destroyChart('chartHistoricoFaturamento');
-  charts['chartHistoricoFaturamento'] = new Chart(ctx.getContext('2d'), {
-    type: 'line',
-    data: { labels: meses, datasets: datasets },
-    plugins: [pluginValoresNativos],
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { top: 24 } },
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        title: {
-          display: datasets.length === 0,
-          text: 'Sem dados para este cliente',
-          color: '#94a3b8',
-          font: { size: 11, weight: 'normal' }
-        }
-      },
-      scales: {
-        x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-        y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
-      }
-    }
-  });
+if (selectCliente) {
+  selectCliente.addEventListener(
+    'change',
+    renderDashboard
+  );
 }
 
-function renderChartBudget() {
-  const ctx = document.getElementById('chartBudget');
-  if (!ctx) return;
-
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const sheetBruto = getSheet(dataStore.reportSection, ['% do Budget atingida por', '% Budget Atingida', 'Budget']);
-  const { linhas: sheet, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
-  const labels = mesesArray();
-  let dataVals = new Array(12).fill(0);
-
-  if (sheet.length > 0) {
-    sheet.forEach(r => {
-      const idx = Number(r['Mês'] || r['Mes']) - 1;
-      if (idx >= 0 && idx < 12) {
-        dataVals[idx] = parsePct(r['% do Budget'] || r['Budget']);
-      }
-    });
-  }
-
-  destroyChart('chartBudget');
-  const horizontal = labels.length > 8;
-  ctx.parentElement.style.height = horizontal ? Math.max(260, labels.length * 28) + 'px' : '260px';
-  charts['chartBudget'] = new Chart(ctx.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: '% Budget Atingido',
-        data: dataVals,
-        backgroundColor: '#6366f1',
-        borderRadius: 4
-      }]
-    },
-    plugins: [pluginValoresNativos],
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: horizontal ? 'y' : 'x',
-      layout: { padding: { top: 24, right: horizontal ? 40 : 0 } },
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        title: semDetalhePorCliente
-          ? { display: true, text: 'Planilha não detalha o budget por cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
-          : { display: false }
-      },
-      scales: horizontal
-        ? {
-          x: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-          y: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-        }
-        : {
-          x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-          y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
-        }
+if (searchInput) {
+  searchInput.addEventListener(
+    'input',
+    () => {
+      renderVendasClienteTable();
+      renderInatividadeTable();
     }
-  });
+  );
 }
 
-// ---------------------------------------------------------------------
-// GRÁFICO: TIPO DE ENCOMENDA (Gravado x Normal)
-// ---------------------------------------------------------------------
-// Fonte: planilha "Análise de Carteira" (upload), aba "% de encomendas gravadas"
-// Colunas: Tipo | Ano | Mes | % gravação
-//
-// Lógica:
-// - Se um mês específico está selecionado no filtro, mostramos os dados
-//   daquele mês (% de Gravado e % de Normal).
-// - Se o filtro está em "Todos os Meses", mostramos o total acumulado
-//   (a soma de % gravação para Gravado vs Normal, ou o total da aba).
-// - Se a planilha não foi carregada, mostramos os valores de demonstração.
-// ---------------------------------------------------------------------
-function renderChartTipoEncomenda() {
-  const ctx = document.getElementById('chartTipoEncomenda');
-  if (!ctx) return;
+carregarDadosFixosMensais()
+  .then(
+    () => {
+      popularSelectClientes();
+      renderDashboard();
+      restaurarSessaoAtual();
+    }
+  );
 
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const mesSel = selectMes ? selectMes.value : 'ALL';
-  const anoSel = selectAno ? selectAno.value : '2026';
-  const carregado = algumaPlanilhaCarregada();
-  const clienteEspecifico = clienteSel !== 'ALL';
-  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
-  const anoNum = Number(anoSel);
-
-  const sheetBruto = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomenda por Tipo', 'Clientes recentes que já']);
-  const { linhas: sheet, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
-
-  // Valores de demonstração (só aparecem antes de carregar planilha)
-  let gravadoPct = carregado ? 0 : 44.72;
-  let normalPct = carregado ? 0 : 55.28;
-
-  if (sheet.length > 0) {
-    // Descobre qual coluna tem o % (pode ser '% gravação' ou '% Gravado')
-    const colPct = Object.keys(sheet[0]).find(k => k.toLowerCase().includes('grava')) || '% gravação';
-
-    let rowGravado = null;
-    let rowNormal = null;
-
-    if (mesNum !== null) {
-      // Mês específico: filtra por Ano + Mês + Tipo
-      rowGravado = sheet.find(r =>
-        Number(r.Ano) === anoNum &&
-        Number(r.Mes) === mesNum &&
-        String(r.Tipo).trim().toLowerCase() === 'gravado'
+window.addEventListener(
+  'pageshow',
+  e => {
+    if (e.persisted) {
+      requestAnimationFrame(
+        renderDashboard
       );
-      rowNormal = sheet.find(r =>
-        Number(r.Ano) === anoNum &&
-        Number(r.Mes) === mesNum &&
-        String(r.Tipo).trim().toLowerCase() === 'normal'
+    }
+  }
+);
+
+if (
+  typeof Chart !==
+  'undefined'
+) {
+
+  Chart.defaults.plugins =
+    Chart.defaults.plugins ||
+    {};
+
+  Chart.defaults.plugins.tooltip =
+    Chart.defaults.plugins.tooltip ||
+    {};
+
+  Chart.defaults.plugins.tooltip.callbacks =
+    Chart.defaults.plugins.tooltip.callbacks ||
+    {};
+
+  Chart.defaults.plugins.tooltip.callbacks.label =
+    function (
+      context
+    ) {
+
+      const label =
+        context.dataset?.label ||
+        context.label ||
+        '';
+
+      let val =
+        context.parsed;
+
+      if (
+        val &&
+        typeof val ===
+          'object'
+      ) {
+        val =
+          val.y ??
+          val.x ??
+          val.r;
+      }
+
+      if (
+        typeof val !==
+          'number'
+      ) {
+        return label;
+      }
+
+      return label
+        ? `${label}: ${formatBRL(
+            val
+          )}`
+        : formatBRL(
+            val
+          );
+    };
+}
+
+function abrirModalCliente(
+  dados
+) {
+  let modal =
+    document.getElementById(
+      'customClientModal'
+    );
+
+  if (!modal) {
+
+    modal =
+      document.createElement(
+        'div'
       );
-    } else {
-      // Todos os meses: pega a última linha de cada Tipo (acumulado)
-      const todasGravado = sheet.filter(r => String(r.Tipo).trim().toLowerCase() === 'gravado');
-      const todasNormal = sheet.filter(r => String(r.Tipo).trim().toLowerCase() === 'normal');
-      rowGravado = todasGravado[todasGravado.length - 1] || null;
-      rowNormal = todasNormal[todasNormal.length - 1] || null;
-    }
 
-    if (rowGravado) gravadoPct = parsePct(rowGravado[colPct] ?? rowGravado['% gravação'] ?? rowGravado['% Gravado']);
-    if (rowNormal) normalPct = parsePct(rowNormal[colPct] ?? rowNormal['% gravação'] ?? rowNormal['% Gravado']);
+    modal.id =
+      'customClientModal';
+
+    modal.style.cssText =
+      'position:fixed;inset:0;background:rgba(11,15,25,.8);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+    document.body.appendChild(
+      modal
+    );
   }
 
-  // Monta o título informativo
-  let titulo = null;
-  if (semDetalhePorCliente) {
-    titulo = 'Planilha não detalha o tipo de encomenda por cliente';
-  } else if (mesNum !== null && carregado) {
-    titulo = `Dados de ${MAPA_MESES_EN[mesNum - 1] || mesNum}/${anoSel}`;
-  } else if (carregado && sheet.length > 0) {
-    titulo = 'Acumulado (última linha da planilha)';
-  }
+  modal.innerHTML =
+    `<div style="background:#1e293b;border:1px solid #334155;border-radius:12px;width:90%;max-width:480px;padding:24px;color:#f8fafc;font-family:sans-serif;">` +
 
-  destroyChart('chartTipoEncomenda');
-  charts['chartTipoEncomenda'] = new Chart(ctx.getContext('2d'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Gravado', 'Normal'],
-      datasets: [{
-        // Mostra o valor % direto (não a quantidade de pedidos, já que
-        // a planilha guarda o % e não o número absoluto).
-        data: [gravadoPct.toFixed(2), normalPct.toFixed(2)],
-        backgroundColor: ['#10b981', '#ef4444'],
-        borderWidth: 0
-      }]
-    },
-    plugins: [pluginValoresNativos],
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        title: titulo
-          ? { display: true, text: titulo, color: '#94a3b8', font: { size: 11, weight: 'normal' } }
-          : { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) {
-              return `${ctx.label}: ${ctx.parsed}%`;
-            }
-          }
-        }
-      }
-    }
-  });
-}
+    `<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155;padding-bottom:12px;margin-bottom:16px;">` +
 
-function renderChartSegmentos() {
-  const ctx = document.getElementById('chartSegmentos');
-  if (!ctx) return;
+    `<h3 style="margin:0;color:#6366f1;">🏢 Detalhes do Cliente</h3>` +
 
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const mesSel = selectMes ? selectMes.value : 'ALL';
-  const anoSel = selectAno ? selectAno.value : '2026';
-  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
+    `<button onclick="fecharModalCliente()" style="background:transparent;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">&times;</button>` +
 
-  const linhasFixas = (mesNum !== null && usarDadosMensaisFixos(anoSel)) ? obterLinhasDoMes('porSegmento', mesNum) : null;
-  const sheetBruto = linhasFixas || getSheet(dataStore.reportSection, ['Venda mensal em reais da', 'Separador Segmento', 'Segmento']);
-  const { linhas: sheetFiltrado, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
-  const sheet = [...sheetFiltrado].sort((a, b) => parseCurrency(b['After_Tax_Amount']) - parseCurrency(a['After_Tax_Amount']));
-  const labels = sheet.map(r => r['Separador'] || r['Segmento'] || 'Outros');
-  const dataVals = sheet.map(r => parseCurrency(r['After_Tax_Amount'] || r['Valor']));
+    `</div>` +
 
-  destroyChart('chartSegmentos');
-  const horizontal = labels.length > 8;
-  ctx.parentElement.style.height = horizontal ? Math.max(260, labels.length * 28) + 'px' : '260px';
-  charts['chartSegmentos'] = new Chart(ctx.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: labels.length > 0 ? labels : ['Sem Dados'],
-      datasets: [{
-        label: 'Vendas (R$)',
-        data: dataVals.length > 0 ? dataVals : [0],
-        backgroundColor: '#10b981',
-        borderRadius: 4
-      }]
-    },
-    plugins: [pluginValoresNativos],
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: horizontal ? 'y' : 'x',
-      layout: { padding: { top: 24, right: horizontal ? 50 : 0 } },
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        title: semDetalhePorCliente
-          ? { display: true, text: 'Planilha não detalha segmentos por cliente', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
-          : { display: false }
-      },
-      scales: horizontal
-        ? {
-          x: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-          y: { grid: { display: false }, ticks: { color: '#94a3b8', autoSkip: false, font: { size: 10 } } }
-        }
-        : {
-        x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-        y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
-      }
-    }
-  });
-}
+    `<div style="display:grid;gap:10px;">` +
 
-// ---------------------------------------------------------------------
-// GRÁFICO: TOP 20 PRODUTOS MAIS VENDIDOS
-// ---------------------------------------------------------------------
-// Fonte dos dados:
-// - Mês específico (Jan-Ago): planilha fixa do Drive "20 produtos mais vendidos
-//   mês a mês 2026" (via obterLinhasDoMes('porProduto', mes)).
-// - Mês específico (Set+): mês corrente por subtração (também via
-//   obterLinhasDoMes, que calcula por diferença).
-// - Todos os meses: aba "Image-7" da planilha Relatório Geral (upload).
-// - Sem nada carregado: dados de demonstração para o gráfico nunca ficar vazio.
-// ---------------------------------------------------------------------
-function renderChartTopProdutos() {
-  const ctx = document.getElementById('chartTopProdutos');
-  if (!ctx) return;
+    `<div><span style="color:#94a3b8;font-size:.75rem;display:block;">Cliente</span><strong>${dados.nome || '-'}</strong></div>` +
 
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const mesSel = selectMes ? selectMes.value : 'ALL';
-  const anoSel = selectAno ? selectAno.value : '2026';
-  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
+    (
+      dados.faturamento
+        ? `<div><span style="color:#94a3b8;font-size:.75rem;display:block;">Faturamento</span><strong>${dados.faturamento}</strong></div>`
+        : ''
+    ) +
 
-  // 1) Tenta dados fixos do Drive (por mês específico)
-  const linhasFixas = (mesNum !== null && usarDadosMensaisFixos(anoSel)) ? obterLinhasDoMes('porProduto', mesNum) : null;
+    (
+      dados.ultimaFatura
+        ? `<div><span style="color:#94a3b8;font-size:.75rem;display:block;">Última Fatura</span><strong>${dados.ultimaFatura}</strong></div>`
+        : ''
+    ) +
 
-  // 2) Fallback para planilha ao vivo (Image-7 do Relatório Geral)
-  const sheetCompleto = linhasFixas || getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']);
-  const { linhas: sheetFiltrado, semDetalhePorCliente } = filtrarPorCliente(sheetCompleto, clienteSel);
+    (
+      dados.inatividade
+        ? `<div><span style="color:#94a3b8;font-size:.75rem;display:block;">Inatividade</span><strong>${dados.inatividade}</strong></div>`
+        : ''
+    ) +
 
-  let sheet = [...sheetFiltrado]
-    .sort((a, b) => parseCurrency(b['Valor de Venda'] || b['Valor de Venda (R$)']) - parseCurrency(a['Valor de Venda'] || a['Valor de Venda (R$)']))
-    .slice(0, 20);
+    `</div>` +
 
-  let labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
-  let dataVals = sheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']));
+    `<div style="margin-top:20px;text-align:right;">` +
 
-  // 3) Se nada foi encontrado (planilha não carregou ou não tem aba), mostra
-  //    valores de demonstração para o gráfico nunca aparecer vazio.
-  let tituloAviso = null;
-  if (labels.length === 0) {
-    labels = ['Produto A', 'Produto B', 'Produto C', 'Produto D', 'Produto E'];
-    dataVals = [12500, 9800, 7600, 5400, 3200];
-    tituloAviso = 'Aguardando dados da planilha do Drive / Relatório Geral';
-  } else if (semDetalhePorCliente) {
-    tituloAviso = 'Planilha não detalha produtos por cliente';
-  } else if (sheet.length < 20) {
-    tituloAviso = `Só ${sheet.length} produto${sheet.length > 1 ? 's' : ''} cadastrado${sheet.length > 1 ? 's' : ''} na planilha desse mês`;
-  }
+    `<button onclick="fecharModalCliente()" style="background:#6366f1;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer;">Fechar</button>` +
 
-  destroyChart('chartTopProdutos');
-  const horizontal = labels.length > 8;
-  ctx.parentElement.style.height = horizontal ? Math.max(260, labels.length * 26) + 'px' : '260px';
-  charts['chartTopProdutos'] = new Chart(ctx.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Valor de Venda (R$)',
-        data: dataVals,
-        backgroundColor: dataVals.map(v => v < 0 ? '#ef4444' : (tituloAviso && tituloAviso.includes('Aguardando') ? '#64748b' : '#3b82f6')),
-        borderRadius: 4
-      }]
-    },
-    plugins: [pluginValoresNativos],
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: horizontal ? 'y' : 'x',
-      layout: { padding: { top: 24, right: horizontal ? 50 : 0 } },
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8' } },
-        title: tituloAviso
-          ? { display: true, text: tituloAviso, color: tituloAviso.includes('Aguardando') ? '#f59e0b' : '#94a3b8', font: { size: 11, weight: 'normal' } }
-          : { display: false }
-      },
-      scales: horizontal
-        ? {
-          x: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-          y: { grid: { display: false }, ticks: { color: '#94a3b8', autoSkip: false, font: { size: 10 } } }
-        }
-        : {
-          x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8', autoSkip: false, maxRotation: 90, minRotation: 60, font: { size: 9 } } },
-          y: { beginAtZero: true, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
-        }
-    }
-  });
-}
+    `</div>` +
 
-// Formata a célula "% do Total" da tabela: aceita tanto string pronta
-// ("15.29%", vinda da planilha ao vivo) quanto número puro (0.1529,
-// vindo dos dados fixos mensais).
-function formatPctCell(val) {
-  if (val === undefined || val === null || val === '') return '-';
-  if (typeof val === 'string' && val.includes('%')) return val;
-  return `${parsePct(val).toFixed(2)}%`;
-}
+    `</div>`;
 
-function renderVendasClienteTable() {
-  const tbody = document.getElementById('tbVendasCliente');
-  if (!tbody) return;
-
-  const mesSel = selectMes ? selectMes.value : 'ALL';
-  const anoSel = selectAno ? selectAno.value : '2026';
-  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
-  const linhasFixas = (mesNum !== null && usarDadosMensaisFixos(anoSel)) ? obterLinhasDoMes('porCliente', mesNum) : null;
-  const sheet = linhasFixas || getSheet(dataStore.reportSection, ['Vendas (R$) por Cliente', 'Cliente']);
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-
-  tbody.innerHTML = '';
-  const filtered = sheet.filter(r => {
-    const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    const matchBusca = nome.toLowerCase().includes(query);
-    const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
-    return matchBusca && matchFiltroTopo;
-  }).sort((a, b) => parseCurrency(b['Valor de venda (R$)'] || b['Valor']) - parseCurrency(a['Valor de venda (R$)'] || a['Valor']));
-
-  if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
-    return;
-  }
-
-  filtered.forEach(r => {
-    const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
-    const valorVenda = parseCurrency(r['Valor de venda (R$)'] || r['Valor']);
-    const pctTotal = formatPctCell(r['% do Total']);
-    const classe = r['Classe'] || 'Fiel';
-
-    const tr = document.createElement('tr');
-    tr.className = 'clickable-row';
-    tr.style.cursor = 'pointer';
-    tr.innerHTML = `
-      <td>${classe}</td>
-      <td><strong>${clientName}</strong></td>
-      <td>${formatBRL(valorVenda)}</td>
-      <td>${pctTotal}</td>
-    `;
-
-    tr.addEventListener('click', () => abrirModalCliente({
-      nome: clientName,
-      classe: classe,
-      faturamento: formatBRL(valorVenda),
-      participacao: pctTotal
-    }));
-
-    tbody.appendChild(tr);
-  });
-}
-
-function renderInatividadeTable() {
-  const tbody = document.getElementById('tbInatividade');
-  if (!tbody) return;
-
-  const sheet = getSheet(dataStore.analiseCarteira, ['#Dias até primeira fatura', 'Clientes com ultima fatura', 'Ultima Fatura']);
-  const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  tbody.innerHTML = '';
-
-  const filtered = sheet.filter(r => {
-    const nome = String(r['Cliente_Pai'] || r['Cliente'] || '').trim();
-    const matchBusca = nome.toLowerCase().includes(query);
-    const matchFiltroTopo = clienteSel === 'ALL' || nome === clienteSel;
-    return matchBusca && matchFiltroTopo;
-  });
-
-  if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
-    return;
-  }
-
-  filtered.forEach(r => {
-    const clientName = r['Cliente_Pai'] || r['Cliente'] || '-';
-    const dias = parseInt(r['#dias desde a ultima fat'] || r['Dias Inativo'] || r['Dias'] || 0, 10);
-    const dataFat = formatDate(r['Ultima fat'] || r['Última Fatura']);
-    const classe = r['Classe'] || 'Pontual';
-
-    const tr = document.createElement('tr');
-    tr.className = 'clickable-row';
-    tr.style.cursor = 'pointer';
-    tr.innerHTML = `
-      <td>${classe}</td>
-      <td><strong>${clientName}</strong></td>
-      <td>${dataFat}</td>
-      <td><span style="color: ${dias >= 60 ? '#ef4444' : '#10b981'}; font-weight: 700;">${dias} dias</span></td>
-    `;
-
-    tr.addEventListener('click', () => abrirModalCliente({
-      nome: clientName,
-      classe: classe,
-      ultimaFatura: dataFat,
-      inatividade: `${dias} dias`
-    }));
-
-    tbody.appendChild(tr);
-  });
-}
-
-function abrirModalCliente(dados) {
-  let modalContainer = document.getElementById('customClientModal');
-
-  if (!modalContainer) {
-    modalContainer = document.createElement('div');
-    modalContainer.id = 'customClientModal';
-    modalContainer.style.position = 'fixed';
-    modalContainer.style.top = '0';
-    modalContainer.style.left = '0';
-    modalContainer.style.width = '100vw';
-    modalContainer.style.height = '100vh';
-    modalContainer.style.backgroundColor = 'rgba(11, 15, 25, 0.8)';
-    modalContainer.style.backdropFilter = 'blur(6px)';
-    modalContainer.style.zIndex = '99999';
-    modalContainer.style.display = 'flex';
-    modalContainer.style.alignItems = 'center';
-    modalContainer.style.justifyContent = 'center';
-
-    document.body.appendChild(modalContainer);
-  }
-
-  modalContainer.innerHTML = `
-    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 90%; max-width: 480px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); font-family: sans-serif; color: #f8fafc;">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 16px;">
-        <h3 style="margin: 0; font-size: 1.1rem; color: #6366f1; display: flex; align-items: center; gap: 8px;">
-          🏢 Detalhes do Cliente
-        </h3>
-        <button onclick="fecharModalCliente()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
-      </div>
-      
-      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem;">
-        <div style="background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #6366f1;">
-          <span style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; display: block;">Cliente</span>
-          <strong style="font-size: 1.05rem; color: #ffffff;">${dados.nome}</strong>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Classe</span>
-            <strong style="color: #38bdf8;">${dados.classe || '-'}</strong>
-          </div>
-          ${dados.faturamento ? `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Faturamento</span>
-            <strong style="color: #10b981;">${dados.faturamento}</strong>
-          </div>` : ''}
-          ${dados.participacao ? `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">% do Total</span>
-            <strong style="color: #f59e0b;">${dados.participacao}</strong>
-          </div>` : ''}
-          ${dados.ultimaFatura ? `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Última Fatura</span>
-            <strong style="color: #e2e8f0;">${dados.ultimaFatura}</strong>
-          </div>` : ''}
-          ${dados.inatividade ? `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block;">Inatividade</span>
-            <strong style="color: #ef4444;">${dados.inatividade}</strong>
-          </div>` : ''}
-        </div>
-      </div>
-
-      <div style="margin-top: 20px; text-align: right;">
-        <button onclick="fecharModalCliente()" style="background: #6366f1; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-          Fechar
-        </button>
-      </div>
-    </div>
-  `;
-
-  modalContainer.style.display = 'flex';
+  modal.style.display =
+    'flex';
 }
 
 function fecharModalCliente() {
-  const modalContainer = document.getElementById('customClientModal');
-  if (modalContainer) modalContainer.style.display = 'none';
-}
+  const modal =
+    document.getElementById(
+      'customClientModal'
+    );
 
-function parseCurrency(val) {
-  if (typeof val === 'number') return val;
-  if (!val) return 0;
-  let str = String(val).replace('R$', '').replace(/\s/g, '').trim();
-  if (str.includes(',')) str = str.replace(/\./g, '').replace(',', '.');
-  const num = parseFloat(str);
-  return isNaN(num) ? 0 : num;
-}
-
-function parsePct(val) {
-  if (val === undefined || val === null || val === '') return 0;
-  if (typeof val === 'number') return val <= 1 ? val * 100 : val;
-  let str = String(val).replace('%', '').replace(',', '.').trim();
-  let num = parseFloat(str);
-  if (isNaN(num)) return 0;
-  return num <= 1 && str.indexOf('.') !== -1 ? num * 100 : num;
-}
-
-function formatDate(val) {
-  if (!val) return '-';
-  if (val instanceof Date) return val.toISOString().split('T')[0];
-  return String(val).split('T')[0];
-}
-
-function formatBRL(val) {
-  return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function mesesArray() {
-  return ['Mês 1', 'Mês 2', 'Mês 3', 'Mês 4', 'Mês 5', 'Mês 6', 'Mês 7', 'Mês 8', 'Mês 9', 'Mês 10', 'Mês 11', 'Mês 12'];
-}
-
-function destroyChart(chartId) {
-  if (charts[chartId]) {
-    charts[chartId].destroy();
-    charts[chartId] = null;
-  }
-  // Segurança extra: se por algum motivo sobrou um gráfico "grudado" nesse
-  // canvas (ex: página restaurada pelo navegador), remove antes de desenhar
-  // um novo, senão o Chart.js recusa e o gráfico fica em branco.
-  const canvas = document.getElementById(chartId);
-  if (canvas && typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
-    const existente = Chart.getChart(canvas);
-    if (existente) existente.destroy();
+  if (modal) {
+    modal.style.display =
+      'none';
   }
 }
