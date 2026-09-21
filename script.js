@@ -240,7 +240,7 @@ const CONFIG_TIPO_MENSAL = {
   porProduto: {
     chave: r => String(r['Produto'] || r['Cod'] || '').trim(),
     valor: r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']),
-    liveKeywords: ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20'],
+    liveKeywords: ['Imagem-7', 'Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20'],
     montarLinha: (chave, valor) => ({ Produto: chave, 'Valor de Venda': valor })
   }
 };
@@ -670,7 +670,7 @@ function calcularTotalAno2026() {
     }
   }
 
-  const sheetLive = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
+  const sheetLive = getSheet(dataStore.reportSection, ['Imagem-6', 'Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
   sheetLive.forEach(r => {
     const mes = Number(r['Mês'] || r['Mes']);
     const ano = Number(r['Ano']);
@@ -833,7 +833,8 @@ function renderKPIs() {
         if (valCart > 0) totalCarteiraRef = valCart;
       }
 
-      const metaQtdMes = Math.round(totalCarteiraRef * 0.60);
+      const metaRowHistorico = sheetUltimaFaturaRef && sheetUltimaFaturaRef.length > 0 ? sheetUltimaFaturaRef[0] : {};
+      const metaQtdMes = parseCurrency(metaRowHistorico['Meta']) || Math.round(totalCarteiraRef * 0.60);
       const realPctMes = totalCarteiraRef > 0 ? (positivadosMes / totalCarteiraRef) * 100 : 0;
       const bateuMetaMes = positivadosMes >= metaQtdMes;
 
@@ -855,29 +856,29 @@ function renderKPIs() {
     const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
     let positivados = carregado ? 0 : 82;
     let totalCarteira = carregado ? 0 : 271;
-    let metaQtd = 0; // Inicializa a meta
 
     if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
       const row = sheetUltimaFatura[0];
       const valPos = parseCurrency(row['Qtd_Positivados'] || row['Qtd_Positivado']);
       const valCart = parseCurrency(row['Carteira']);
-      // Pega o valor da meta diretamente da planilha
-      const valMeta = parseCurrency(row['Meta']);
-
       if (valPos > 0) positivados = valPos;
       if (valCart > 0) totalCarteira = valCart;
-      if (valMeta > 0) metaQtd = valMeta;
     }
 
-    // Se a meta não veio da planilha, calcula como fallback (60%)
-    if (metaQtd === 0) {
-      metaQtd = Math.round(totalCarteira * 0.60);
-    }
-
-    const metaPct = 60;
-    const realPct = totalCarteira > 0 ? (positivados / totalCarteira) * 100 : 0;
-    const faltaQtd = metaQtd - positivados;
-    const faltaPct = metaPct - realPct;
+    // Usa a meta oficial e a falta informadas pela própria planilha.
+    // Ex.: Carteira 282 | Positivados 98 | Meta 155 | Falta 57.
+    // Só calcula por percentual como fallback se a planilha não trouxer esses campos.
+    const rowPositivacao = sheetUltimaFatura && sheetUltimaFatura.length > 0 ? sheetUltimaFatura[0] : {};
+    const metaPlanilha = parseCurrency(rowPositivacao['Meta']);
+    const faltaPlanilha = parseCurrency(rowPositivacao['Qtd_Falta']);
+    const pctPlanilha = parsePct(rowPositivacao['%Positivados']);
+    const metaQtd = metaPlanilha > 0 ? metaPlanilha : Math.round(totalCarteira * 0.60);
+    const metaPct = totalCarteira > 0 ? (metaQtd / totalCarteira) * 100 : 60;
+    const realPct = Number.isFinite(pctPlanilha) && pctPlanilha > 0
+      ? pctPlanilha
+      : (totalCarteira > 0 ? (positivados / totalCarteira) * 100 : 0);
+    const faltaQtd = faltaPlanilha >= 0 ? faltaPlanilha : Math.max(metaQtd - positivados, 0);
+    const faltaPct = Math.max(metaPct - realPct, 0);
 
     // Alerta "corra atrás": liga na reta final do mês — quando restam 10 dias
     // úteis ou menos para acabar e a meta ainda não foi batida.
@@ -1061,59 +1062,129 @@ function renderChartHistorico() {
   if (!ctx) return;
 
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
+  const anoSel = selectAno ? selectAno.value : '2026';
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  const anos = [2023, 2024, 2025, 2026];
-  const cores = ['#6366f1', '#f59e0b', '#ef4444', '#10b981']; // Cores para cada ano
-  const datasets = [];
 
-  // Para cada ano, monta um dataset
-  anos.forEach((ano, index) => {
-    const valores = new Array(12).fill(null);
-    const anoStr = String(ano);
+  // Quando "Todos os Clientes" + 2026 estiver selecionado, usa a aba Imagem-6
+  // para comparar os quatro anos disponíveis (2023, 2024, 2025 e 2026) mês a mês.
+  // Para um cliente específico, mantém o comportamento original e mostra somente
+  // 2026, porque o detalhamento mensal por cliente disponível no site é de 2026.
+  const sheetHistorico = getSheet(dataStore.reportSection, ['Imagem-6', 'Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
+  const podeCompararAnos = clienteSel === 'ALL' && anoSel === '2026' && sheetHistorico.length > 0;
 
-    // 1) Meses 1-8: usa os dados fixos (se disponíveis para o ano)
-    for (let m = 1; m <= 8; m++) {
-      // Os dados fixos só existem para 2026 no seu historico_fixo.json
-      if (ano === 2026) {
-        const linhasMes = obterLinhasFixasMes('porCliente', m);
-        if (linhasMes) {
-          const { linhas } = filtrarPorCliente(linhasMes, clienteSel);
-          const total = linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
-          valores[m - 1] = total;
+  if (podeCompararAnos) {
+    const anosDisponiveis = [2023, 2024, 2025, 2026];
+    const datasets = anosDisponiveis.map((ano, index) => {
+      const valoresAno = new Array(12).fill(null);
+      sheetHistorico.forEach(r => {
+        const anoRow = Number(r['Ano']);
+        const mesRow = Number(r['Mês'] || r['Mes']);
+        if (anoRow !== ano || mesRow < 1 || mesRow > 12) return;
+        valoresAno[mesRow - 1] = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
+      });
+      return {
+        label: String(ano),
+        data: valoresAno,
+        borderWidth: ano === 2026 ? 3 : 2,
+        fill: false,
+        spanGaps: true,
+        tension: 0.2
+      };
+    }).filter(ds => ds.data.some(v => v !== null && Number.isFinite(v)));
+
+    destroyChart('chartHistoricoFaturamento');
+    charts['chartHistoricoFaturamento'] = new Chart(ctx.getContext('2d'), {
+      type: 'line',
+      data: { labels: meses, datasets },
+      plugins: [pluginValoresNativos],
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 24 } },
+        plugins: {
+          legend: { display: true, labels: { color: '#94a3b8' } },
+          title: {
+            display: true,
+            text: 'Comparativo mensal de faturamento — 2023 x 2024 x 2025 x 2026',
+            color: '#94a3b8',
+            font: { size: 11, weight: 'normal' }
+          }
+        },
+        scales: {
+          x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
+          y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
         }
       }
-    }
+    });
+    return;
+  }
 
-    // 2) Meses 9-12 (e qualquer mês que não veio do fixo): usa a planilha ao vivo (Image-6)
-    const sheetBruto = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
-    sheetBruto.forEach(r => {
+  let valores = new Array(12).fill(null);
+  let semNenhumDado = true;
+
+  // Para anos diferentes de 2026, se a aba histórica possuir o ano,
+  // mostra esse ano agregado. O detalhamento por cliente continua restrito a 2026.
+  if (clienteSel === 'ALL' && sheetHistorico.length > 0) {
+    sheetHistorico.forEach(r => {
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       const anoRow = Number(r['Ano']);
       const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-      // Só preenche se for o ano correto e se ainda não tiver valor
-      if (idx >= 0 && idx < 12 && anoRow === ano && val > 0 && valores[idx] === null) {
+      if (idx >= 0 && idx < 12 && anoRow === Number(anoSel) && Number.isFinite(val)) {
         valores[idx] = val;
+        semNenhumDado = false;
       }
     });
+  }
 
-    // Só adiciona o dataset se houver algum dado para aquele ano
-    if (valores.some(v => v !== null && v > 0)) {
-      datasets.push({
-        label: anoStr,
-        data: valores,
-        borderColor: cores[index],
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        spanGaps: true,
-        tension: 0.1
+  // Meses 1-8: detalhamento fixo de 2026 (inclusive quando um cliente é selecionado).
+  if (anoSel === '2026') {
+    for (let m = 1; m <= 8; m++) {
+      const linhasMes = usarDadosMensaisFixos(anoSel) ? obterLinhasDoMes('porCliente', m) : null;
+      if (!linhasMes) continue;
+      const { linhas } = filtrarPorCliente(linhasMes, clienteSel);
+      const total = linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
+      valores[m - 1] = total;
+      semNenhumDado = false;
+    }
+
+    // Mês corrente/futuros: mantém a lógica já existente por subtração.
+    for (let m = 9; m <= 12; m++) {
+      const linhasMes = usarDadosMensaisFixos(anoSel) ? obterLinhasDoMes('porCliente', m) : null;
+      if (linhasMes) {
+        const { linhas } = filtrarPorCliente(linhasMes, clienteSel);
+        const total = linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
+        if (total !== 0) { valores[m - 1] = total; semNenhumDado = false; }
+      }
+    }
+
+    // Só usa o total bruto da aba histórica para meses ainda sem detalhamento.
+    if (clienteSel === 'ALL') {
+      sheetHistorico.forEach(r => {
+        const idx = Number(r['Mês'] || r['Mes']) - 1;
+        const anoRow = Number(r['Ano']);
+        const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
+        if (idx >= 8 && idx < 12 && anoRow === 2026 && val > 0 && valores[idx] === null) {
+          valores[idx] = val;
+          semNenhumDado = false;
+        }
       });
     }
-  });
+  }
 
   destroyChart('chartHistoricoFaturamento');
   charts['chartHistoricoFaturamento'] = new Chart(ctx.getContext('2d'), {
     type: 'line',
-    data: { labels: meses, datasets: datasets },
+    data: {
+      labels: meses,
+      datasets: [{
+        label: anoSel,
+        data: valores,
+        borderWidth: 3,
+        fill: true,
+        spanGaps: true,
+        tension: 0.2
+      }]
+    },
     plugins: [pluginValoresNativos],
     options: {
       responsive: true,
@@ -1121,12 +1192,9 @@ function renderChartHistorico() {
       layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
-        title: {
-          display: datasets.length === 0,
-          text: 'Sem dados para este cliente',
-          color: '#94a3b8',
-          font: { size: 11, weight: 'normal' }
-        }
+        title: semNenhumDado
+          ? { display: true, text: 'Sem dados para este filtro', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+          : { display: false }
       },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
@@ -1150,7 +1218,8 @@ function renderChartBudget() {
     sheet.forEach(r => {
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       if (idx >= 0 && idx < 12) {
-        dataVals[idx] = parsePct(r['% do Budget'] || r['Budget']);
+        const valorBudget = parsePct(r['% do Budget'] ?? r['Budget']);
+        if (Number.isFinite(valorBudget)) dataVals[idx] = valorBudget;
       }
     });
   }
@@ -1213,8 +1282,8 @@ function renderChartTipoEncomenda() {
     const rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
     const rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
 
-    if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] ?? rowG['% gravação']);
-    if (rowN) normal = parseCurrency(rowN['Sum of Valor'] ?? rowN['% gravação']);
+    if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] ?? rowG['Valor'] ?? rowG['% gravação']);
+    if (rowN) normal = parseCurrency(rowN['Sum of Valor'] ?? rowN['Valor'] ?? rowN['% gravação']);
   }
 
   // Esse indicador não está entre as 4 planilhas mês a mês que você mandou
