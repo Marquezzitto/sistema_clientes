@@ -4,263 +4,676 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard de Vendas & Carteira - RCA 61</title>
-  
-  <!-- Fontes & Ícones -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
   <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- Chart.js & SheetJS (XLSX) -->
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <div class="app-container">
-    
-    <!-- Cabeçalho Principal -->
+
     <header class="main-header">
+
       <div class="header-title">
-        <h1>Dashboard de Performance - RCA 61</h1>
-        <p>Análise Integrada de Vendas, Carteira e Metas</p>
+
+        <h1>
+          Dashboard de Performance - RCA 61
+        </h1>
+
+        <p>
+          Análise Integrada de Vendas, Carteira e Metas
+        </p>
+
       </div>
 
       <div class="header-controls">
-        <a href="clientes.html" class="btn-upload" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: var(--accent-green);">
-          <i data-lucide="users" style="width:16px;height:16px;"></i> Base & SLAs (RCA 61)
+
+        <a
+          href="clientes.html"
+          class="btn-upload"
+          style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;background-color:var(--accent-green);"
+        >
+          <i
+            data-lucide="users"
+            style="width:16px;height:16px;"
+          ></i>
+
+          Base & SLAs (RCA 61)
         </a>
-        <a href="atendimento.html" class="btn-upload" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #f59e0b;">
-          <i data-lucide="phone-call" style="width:16px;height:16px;"></i> Atendimento ELO
+
+        <a
+          href="atendimento.html"
+          class="btn-upload"
+          style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;background-color:#f59e0b;"
+        >
+          <i
+            data-lucide="phone-call"
+            style="width:16px;height:16px;"
+          ></i>
+
+          Atendimento ELO
         </a>
 
         <div class="filter-group">
-          <i data-lucide="user" class="filter-icon"></i>
+
+          <i
+            data-lucide="user"
+            class="filter-icon"
+          ></i>
+
           <select id="selectCliente">
-            <option value="ALL" selected>Todos os Clientes</option>
+
+            <option
+              value="ALL"
+              selected
+            >
+              Todos os Clientes
+            </option>
+
           </select>
+
         </div>
 
         <div class="filter-group">
-          <i data-lucide="calendar" class="filter-icon"></i>
+
+          <i
+            data-lucide="calendar"
+            class="filter-icon"
+          ></i>
+
           <select id="selectAno">
-            <option value="2026" selected>2026</option>
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
+
+            <option
+              value="2026"
+              selected
+            >
+              2026
+            </option>
+
+            <option value="2025">
+              2025
+            </option>
+
           </select>
+
         </div>
 
         <div class="filter-group">
-          <i data-lucide="filter" class="filter-icon"></i>
+
+          <i
+            data-lucide="filter"
+            class="filter-icon"
+          ></i>
+
           <select id="selectMes">
-            <option value="ALL" selected>Mês: Todos</option>
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8">Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
+
+            <option
+              value="ALL"
+              selected
+            >
+              Mês: Todos
+            </option>
+
+            <option value="1">
+              Janeiro
+            </option>
+
+            <option value="2">
+              Fevereiro
+            </option>
+
+            <option value="3">
+              Março
+            </option>
+
+            <option value="4">
+              Abril
+            </option>
+
+            <option value="5">
+              Maio
+            </option>
+
+            <option value="6">
+              Junho
+            </option>
+
+            <option value="7">
+              Julho
+            </option>
+
+            <option value="8">
+              Agosto
+            </option>
+
+            <option value="9">
+              Setembro
+            </option>
+
+            <option value="10">
+              Outubro
+            </option>
+
+            <option value="11">
+              Novembro
+            </option>
+
+            <option value="12">
+              Dezembro
+            </option>
+
           </select>
+
         </div>
 
-        <div class="status-badge" id="statusBadge">
+        <div
+          class="status-badge"
+          id="statusBadge"
+        >
+
           <span class="status-dot"></span>
-          <span id="badgeText">Aguardando Planilhas</span>
+
+          <span id="badgeText">
+            Aguardando Planilhas
+          </span>
+
         </div>
+
       </div>
+
     </header>
 
-    <!-- Área de Upload de Planilhas -->
     <section class="upload-section">
-      <div class="upload-card" id="dropZone1">
-        <i data-lucide="file-spreadsheet" class="upload-icon"></i>
+
+      <div
+        class="upload-card"
+        id="dropZone1"
+      >
+
+        <i
+          data-lucide="file-spreadsheet"
+          class="upload-icon"
+        ></i>
+
         <div class="upload-info">
-          <h3>Relatório Geral (Report Section)</h3>
-          <p>Importe a planilha de Vendas e Faturamento</p>
-          <span class="file-label" id="labelFile1">Nenhum arquivo selecionado</span>
+
+          <h3>
+            Relatório Geral (Report Section)
+          </h3>
+
+          <p>
+            Importe a planilha de Vendas e Faturamento
+          </p>
+
+          <span
+            class="file-label"
+            id="labelFile1"
+          >
+            Nenhum arquivo selecionado
+          </span>
+
         </div>
-        <input type="file" id="fileInput1" accept=".xlsx, .xls">
-        <label for="fileInput1" class="btn-upload">Carregar</label>
+
+        <input
+          type="file"
+          id="fileInput1"
+          accept=".xlsx,.xls"
+        >
+
+        <label
+          for="fileInput1"
+          class="btn-upload"
+        >
+          Carregar
+        </label>
+
       </div>
 
-      <div class="upload-card" id="dropZone2">
-        <i data-lucide="pie-chart" class="upload-icon"></i>
+      <div
+        class="upload-card"
+        id="dropZone2"
+      >
+
+        <i
+          data-lucide="pie-chart"
+          class="upload-icon"
+        ></i>
+
         <div class="upload-info">
-          <h3>Análise de Carteira & Metas</h3>
-          <p>Importe a planilha de Positivação e Recência</p>
-          <span class="file-label" id="labelFile2">Nenhum arquivo selecionado</span>
+
+          <h3>
+            Análise de Carteira & Metas
+          </h3>
+
+          <p>
+            Importe a planilha de Positivação e Recência
+          </p>
+
+          <span
+            class="file-label"
+            id="labelFile2"
+          >
+            Nenhum arquivo selecionado
+          </span>
+
         </div>
-        <input type="file" id="fileInput2" accept=".xlsx, .xls">
-        <label for="fileInput2" class="btn-upload">Carregar</label>
+
+        <input
+          type="file"
+          id="fileInput2"
+          accept=".xlsx,.xls"
+        >
+
+        <label
+          for="fileInput2"
+          class="btn-upload"
+        >
+          Carregar
+        </label>
+
       </div>
+
     </section>
 
-    <!-- Banner Comparativo YTD -->
     <section class="ytd-banner">
+
       <div class="ytd-item">
-        <span class="ytd-label">LYTD (Ano Anterior)</span>
-        <h2 id="kpiLytd">R$ 0,00</h2>
+
+        <span class="ytd-label">
+          LYTD (Ano Anterior)
+        </span>
+
+        <h2 id="kpiLytd">
+          R$ 0,00
+        </h2>
+
       </div>
+
       <div class="ytd-divider"></div>
+
       <div class="ytd-item">
-        <span class="ytd-label">YTD (Ano Atual)</span>
-        <h2 id="kpiYtd">R$ 0,00</h2>
+
+        <span class="ytd-label">
+          YTD (Ano Atual)
+        </span>
+
+        <h2 id="kpiYtd">
+          R$ 0,00
+        </h2>
+
       </div>
+
       <div class="ytd-divider"></div>
+
       <div class="ytd-item">
-        <span class="ytd-label">Variação Absoluta</span>
-        <h2 id="kpiVariacao" class="highlight">R$ 0,00</h2>
+
+        <span class="ytd-label">
+          Variação Absoluta
+        </span>
+
+        <h2
+          id="kpiVariacao"
+          class="highlight"
+        >
+          R$ 0,00
+        </h2>
+
       </div>
+
     </section>
 
-    <!-- Cards de KPIs Principais -->
     <section class="kpi-grid">
+
       <div class="kpi-card">
+
         <div class="kpi-header">
-          <span>Faturamento Carteira</span>
+
+          <span>
+            Faturamento Carteira
+          </span>
+
           <i data-lucide="dollar-sign"></i>
+
         </div>
-        <h3 id="kpiValorMensal">R$ 0,00</h3>
-        <p class="kpi-sub">Total Acumulado</p>
+
+        <h3 id="kpiValorMensal">
+          R$ 0,00
+        </h3>
+
+        <p class="kpi-sub">
+          Total Acumulado
+        </p>
+
       </div>
 
       <div class="kpi-card">
+
         <div class="kpi-header">
-          <span>% Budget Atingido</span>
+
+          <span>
+            % Budget Atingido
+          </span>
+
           <i data-lucide="target"></i>
+
         </div>
-        <h3 id="kpiBudgetAtingido">0,0%</h3>
-        <p class="kpi-sub">Média do Período</p>
+
+        <h3 id="kpiBudgetAtingido">
+          0,0%
+        </h3>
+
+        <p class="kpi-sub">
+          Média do Período
+        </p>
+
       </div>
 
       <div class="kpi-card">
+
         <div class="kpi-header">
-          <span>Positivação Carteira</span>
+
+          <span>
+            Positivação Carteira
+          </span>
+
           <i data-lucide="users"></i>
+
         </div>
-        <h3 id="kpiPositivacao">0 / 0</h3>
-        <p class="kpi-sub" id="kpiPositivacaoSub">Meta: 60% | Real: 0%</p>
+
+        <h3 id="kpiPositivacao">
+          0 / 0
+        </h3>
+
+        <p
+          class="kpi-sub"
+          id="kpiPositivacaoSub"
+        >
+          Meta: 60% | Real: 0%
+        </p>
+
       </div>
 
       <div class="kpi-card">
+
         <div class="kpi-header">
-          <span>% Encomendas Gravadas</span>
+
+          <span>
+            % Encomendas Gravadas
+          </span>
+
           <i data-lucide="package-check"></i>
+
         </div>
-        <h3 id="kpiPctGravadas">0,0%</h3>
-        <p class="kpi-sub" id="kpiPctGravadasSub">Participação em Vendas</p>
+
+        <h3 id="kpiPctGravadas">
+          0,0%
+        </h3>
+
+        <p
+          class="kpi-sub"
+          id="kpiPctGravadasSub"
+        >
+          Participação em Vendas
+        </p>
+
       </div>
+
     </section>
 
-    <!-- Seção de Gráficos Principais -->
     <section class="charts-grid">
+
       <div class="chart-card wide">
+
         <div class="card-header">
-          <h3>Histórico de Faturamento — Comparativo 2023 a 2026</h3>
+
+          <h3>
+            Histórico de Faturamento — Comparativo 2023 a 2026
+          </h3>
+
         </div>
+
         <div class="chart-container">
-          <canvas id="chartHistoricoFaturamento"></canvas>
+
+          <canvas
+            id="chartHistoricoFaturamento"
+          ></canvas>
+
         </div>
+
       </div>
 
       <div class="chart-card">
+
         <div class="card-header">
-          <h3>Atingimento de Budget (%)</h3>
+
+          <h3>
+            Atingimento de Budget (%)
+          </h3>
+
         </div>
+
         <div class="chart-container">
-          <canvas id="chartBudget"></canvas>
+
+          <canvas
+            id="chartBudget"
+          ></canvas>
+
         </div>
+
       </div>
 
       <div class="chart-card">
+
         <div class="card-header">
-          <h3>Tipo de Encomenda</h3>
+
+          <h3>
+            Tipo de Encomenda
+          </h3>
+
         </div>
+
         <div class="chart-container">
-          <canvas id="chartTipoEncomenda"></canvas>
+
+          <canvas
+            id="chartTipoEncomenda"
+          ></canvas>
+
         </div>
+
       </div>
 
       <div class="chart-card">
+
         <div class="card-header">
-          <h3>Vendas por Segmento</h3>
+
+          <h3>
+            Vendas por Segmento
+          </h3>
+
         </div>
+
         <div class="chart-container">
-          <canvas id="chartSegmentos"></canvas>
+
+          <canvas
+            id="chartSegmentos"
+          ></canvas>
+
         </div>
+
       </div>
 
       <div class="chart-card">
+
         <div class="card-header">
-          <h3>Top 20 Produtos Mais Vendidos</h3>
+
+          <h3>
+            Top 20 Produtos Mais Vendidos
+          </h3>
+
         </div>
+
         <div class="chart-container">
-          <canvas id="chartTopProdutos"></canvas>
+
+          <canvas
+            id="chartTopProdutos"
+          ></canvas>
+
         </div>
+
       </div>
+
     </section>
 
-    <!-- Tabelas Detalhadas -->
     <section class="tables-grid">
+
       <div class="table-card">
+
         <div class="card-header space-between">
-          <h3>Vendas por Cliente</h3>
-          <input type="text" id="searchClientInput" placeholder="Buscar cliente..." class="table-search">
+
+          <h3>
+            Vendas por Cliente
+          </h3>
+
+          <input
+            type="text"
+            id="searchClientInput"
+            placeholder="Buscar cliente..."
+            class="table-search"
+          >
+
         </div>
+
         <div class="table-wrapper">
+
           <table>
+
             <thead>
+
               <tr>
-                <th>Classe</th>
-                <th>Cliente</th>
-                <th>Valor Venda</th>
-                <th>% Total</th>
+
+                <th>
+                  Classe
+                </th>
+
+                <th>
+                  Cliente
+                </th>
+
+                <th>
+                  Valor Venda
+                </th>
+
+                <th>
+                  % Total
+                </th>
+
               </tr>
+
             </thead>
-            <tbody id="tbVendasCliente">
+
+            <tbody
+              id="tbVendasCliente"
+            >
+
               <tr>
-                <td colspan="4" class="empty-row">Aguardando dados da planilha...</td>
+
+                <td
+                  colspan="4"
+                  class="empty-row"
+                >
+                  Aguardando dados da planilha...
+                </td>
+
               </tr>
+
             </tbody>
+
           </table>
+
         </div>
+
       </div>
 
       <div class="table-card">
+
         <div class="card-header">
-          <h3>Inatividade & Recência de Carteira</h3>
+
+          <h3>
+            Inatividade & Recência de Carteira
+          </h3>
+
         </div>
+
         <div class="table-wrapper">
+
           <table>
+
             <thead>
+
               <tr>
-                <th>Classe</th>
-                <th>Cliente</th>
-                <th>Última Fatura</th>
-                <th>Dias Inativo</th>
+
+                <th>
+                  Classe
+                </th>
+
+                <th>
+                  Cliente
+                </th>
+
+                <th>
+                  Última Fatura
+                </th>
+
+                <th>
+                  Dias Inativo
+                </th>
+
               </tr>
+
             </thead>
-            <tbody id="tbInatividade">
+
+            <tbody
+              id="tbInatividade"
+            >
+
               <tr>
-                <td colspan="4" class="empty-row">Aguardando dados da planilha...</td>
+
+                <td
+                  colspan="4"
+                  class="empty-row"
+                >
+                  Aguardando dados da planilha...
+                </td>
+
               </tr>
+
             </tbody>
+
           </table>
+
         </div>
+
       </div>
+
     </section>
 
   </div>
 
   <script src="script.js"></script>
+
 </body>
 </html>
