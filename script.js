@@ -240,7 +240,7 @@ const CONFIG_TIPO_MENSAL = {
   porProduto: {
     chave: r => String(r['Produto'] || r['Cod'] || '').trim(),
     valor: r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']),
-    liveKeywords: ['Imagem-7', 'Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20'],
+    liveKeywords: ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20'],
     montarLinha: (chave, valor) => ({ Produto: chave, 'Valor de Venda': valor })
   }
 };
@@ -670,7 +670,7 @@ function calcularTotalAno2026() {
     }
   }
 
-  const sheetLive = getSheet(dataStore.reportSection, ['Imagem-6', 'Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
+  const sheetLive = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
   sheetLive.forEach(r => {
     const mes = Number(r['Mês'] || r['Mes']);
     const ano = Number(r['Ano']);
@@ -833,8 +833,7 @@ function renderKPIs() {
         if (valCart > 0) totalCarteiraRef = valCart;
       }
 
-      const metaRowHistorico = sheetUltimaFaturaRef && sheetUltimaFaturaRef.length > 0 ? sheetUltimaFaturaRef[0] : {};
-      const metaQtdMes = parseCurrency(metaRowHistorico['Meta']) || Math.round(totalCarteiraRef * 0.60);
+      const metaQtdMes = Math.round(totalCarteiraRef * 0.60);
       const realPctMes = totalCarteiraRef > 0 ? (positivadosMes / totalCarteiraRef) * 100 : 0;
       const bateuMetaMes = positivadosMes >= metaQtdMes;
 
@@ -856,29 +855,29 @@ function renderKPIs() {
     const sheetUltimaFatura = getSheet(dataStore.analiseCarteira, ['Ultima fatura', 'Última fatura']);
     let positivados = carregado ? 0 : 82;
     let totalCarteira = carregado ? 0 : 271;
+    let metaQtd = 0; // Inicializa a meta
 
     if (sheetUltimaFatura && sheetUltimaFatura.length > 0) {
       const row = sheetUltimaFatura[0];
       const valPos = parseCurrency(row['Qtd_Positivados'] || row['Qtd_Positivado']);
       const valCart = parseCurrency(row['Carteira']);
+      // Pega o valor da meta diretamente da planilha
+      const valMeta = parseCurrency(row['Meta']);
+
       if (valPos > 0) positivados = valPos;
       if (valCart > 0) totalCarteira = valCart;
+      if (valMeta > 0) metaQtd = valMeta;
     }
 
-    // Usa a meta oficial e a falta informadas pela própria planilha.
-    // Ex.: Carteira 282 | Positivados 98 | Meta 155 | Falta 57.
-    // Só calcula por percentual como fallback se a planilha não trouxer esses campos.
-    const rowPositivacao = sheetUltimaFatura && sheetUltimaFatura.length > 0 ? sheetUltimaFatura[0] : {};
-    const metaPlanilha = parseCurrency(rowPositivacao['Meta']);
-    const faltaPlanilha = parseCurrency(rowPositivacao['Qtd_Falta']);
-    const pctPlanilha = parsePct(rowPositivacao['%Positivados']);
-    const metaQtd = metaPlanilha > 0 ? metaPlanilha : Math.round(totalCarteira * 0.60);
-    const metaPct = totalCarteira > 0 ? (metaQtd / totalCarteira) * 100 : 60;
-    const realPct = Number.isFinite(pctPlanilha) && pctPlanilha > 0
-      ? pctPlanilha
-      : (totalCarteira > 0 ? (positivados / totalCarteira) * 100 : 0);
-    const faltaQtd = faltaPlanilha >= 0 ? faltaPlanilha : Math.max(metaQtd - positivados, 0);
-    const faltaPct = Math.max(metaPct - realPct, 0);
+    // Se a meta não veio da planilha, calcula como fallback (60%)
+    if (metaQtd === 0) {
+      metaQtd = Math.round(totalCarteira * 0.60);
+    }
+
+    const metaPct = 60;
+    const realPct = totalCarteira > 0 ? (positivados / totalCarteira) * 100 : 0;
+    const faltaQtd = metaQtd - positivados;
+    const faltaPct = metaPct - realPct;
 
     // Alerta "corra atrás": liga na reta final do mês — quando restam 10 dias
     // úteis ou menos para acabar e a meta ainda não foi batida.
@@ -1062,129 +1061,59 @@ function renderChartHistorico() {
   if (!ctx) return;
 
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
-  const anoSel = selectAno ? selectAno.value : '2026';
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const anos = [2023, 2024, 2025, 2026];
+  const cores = ['#6366f1', '#f59e0b', '#ef4444', '#10b981']; // Cores para cada ano
+  const datasets = [];
 
-  // Quando "Todos os Clientes" + 2026 estiver selecionado, usa a aba Imagem-6
-  // para comparar os quatro anos disponíveis (2023, 2024, 2025 e 2026) mês a mês.
-  // Para um cliente específico, mantém o comportamento original e mostra somente
-  // 2026, porque o detalhamento mensal por cliente disponível no site é de 2026.
-  const sheetHistorico = getSheet(dataStore.reportSection, ['Imagem-6', 'Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
-  const podeCompararAnos = clienteSel === 'ALL' && anoSel === '2026' && sheetHistorico.length > 0;
+  // Para cada ano, monta um dataset
+  anos.forEach((ano, index) => {
+    const valores = new Array(12).fill(null);
+    const anoStr = String(ano);
 
-  if (podeCompararAnos) {
-    const anosDisponiveis = [2023, 2024, 2025, 2026];
-    const datasets = anosDisponiveis.map((ano, index) => {
-      const valoresAno = new Array(12).fill(null);
-      sheetHistorico.forEach(r => {
-        const anoRow = Number(r['Ano']);
-        const mesRow = Number(r['Mês'] || r['Mes']);
-        if (anoRow !== ano || mesRow < 1 || mesRow > 12) return;
-        valoresAno[mesRow - 1] = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-      });
-      return {
-        label: String(ano),
-        data: valoresAno,
-        borderWidth: ano === 2026 ? 3 : 2,
-        fill: false,
-        spanGaps: true,
-        tension: 0.2
-      };
-    }).filter(ds => ds.data.some(v => v !== null && Number.isFinite(v)));
-
-    destroyChart('chartHistoricoFaturamento');
-    charts['chartHistoricoFaturamento'] = new Chart(ctx.getContext('2d'), {
-      type: 'line',
-      data: { labels: meses, datasets },
-      plugins: [pluginValoresNativos],
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: { padding: { top: 24 } },
-        plugins: {
-          legend: { display: true, labels: { color: '#94a3b8' } },
-          title: {
-            display: true,
-            text: 'Comparativo mensal de faturamento — 2023 x 2024 x 2025 x 2026',
-            color: '#94a3b8',
-            font: { size: 11, weight: 'normal' }
-          }
-        },
-        scales: {
-          x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
-          y: { beginAtZero: false, grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } }
+    // 1) Meses 1-8: usa os dados fixos (se disponíveis para o ano)
+    for (let m = 1; m <= 8; m++) {
+      // Os dados fixos só existem para 2026 no seu historico_fixo.json
+      if (ano === 2026) {
+        const linhasMes = obterLinhasFixasMes('porCliente', m);
+        if (linhasMes) {
+          const { linhas } = filtrarPorCliente(linhasMes, clienteSel);
+          const total = linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
+          valores[m - 1] = total;
         }
       }
-    });
-    return;
-  }
+    }
 
-  let valores = new Array(12).fill(null);
-  let semNenhumDado = true;
-
-  // Para anos diferentes de 2026, se a aba histórica possuir o ano,
-  // mostra esse ano agregado. O detalhamento por cliente continua restrito a 2026.
-  if (clienteSel === 'ALL' && sheetHistorico.length > 0) {
-    sheetHistorico.forEach(r => {
+    // 2) Meses 9-12 (e qualquer mês que não veio do fixo): usa a planilha ao vivo (Image-6)
+    const sheetBruto = getSheet(dataStore.reportSection, ['Image-6', 'Venda Mensal em Reais', 'Venda Mensal']);
+    sheetBruto.forEach(r => {
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       const anoRow = Number(r['Ano']);
       const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-      if (idx >= 0 && idx < 12 && anoRow === Number(anoSel) && Number.isFinite(val)) {
+      // Só preenche se for o ano correto e se ainda não tiver valor
+      if (idx >= 0 && idx < 12 && anoRow === ano && val > 0 && valores[idx] === null) {
         valores[idx] = val;
-        semNenhumDado = false;
       }
     });
-  }
 
-  // Meses 1-8: detalhamento fixo de 2026 (inclusive quando um cliente é selecionado).
-  if (anoSel === '2026') {
-    for (let m = 1; m <= 8; m++) {
-      const linhasMes = usarDadosMensaisFixos(anoSel) ? obterLinhasDoMes('porCliente', m) : null;
-      if (!linhasMes) continue;
-      const { linhas } = filtrarPorCliente(linhasMes, clienteSel);
-      const total = linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
-      valores[m - 1] = total;
-      semNenhumDado = false;
-    }
-
-    // Mês corrente/futuros: mantém a lógica já existente por subtração.
-    for (let m = 9; m <= 12; m++) {
-      const linhasMes = usarDadosMensaisFixos(anoSel) ? obterLinhasDoMes('porCliente', m) : null;
-      if (linhasMes) {
-        const { linhas } = filtrarPorCliente(linhasMes, clienteSel);
-        const total = linhas.reduce((s, r) => s + parseCurrency(r['Valor de venda (R$)']), 0);
-        if (total !== 0) { valores[m - 1] = total; semNenhumDado = false; }
-      }
-    }
-
-    // Só usa o total bruto da aba histórica para meses ainda sem detalhamento.
-    if (clienteSel === 'ALL') {
-      sheetHistorico.forEach(r => {
-        const idx = Number(r['Mês'] || r['Mes']) - 1;
-        const anoRow = Number(r['Ano']);
-        const val = parseCurrency(r['Vendas (R$)'] || r['Vendas'] || r['Valor']);
-        if (idx >= 8 && idx < 12 && anoRow === 2026 && val > 0 && valores[idx] === null) {
-          valores[idx] = val;
-          semNenhumDado = false;
-        }
+    // Só adiciona o dataset se houver algum dado para aquele ano
+    if (valores.some(v => v !== null && v > 0)) {
+      datasets.push({
+        label: anoStr,
+        data: valores,
+        borderColor: cores[index],
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        spanGaps: true,
+        tension: 0.1
       });
     }
-  }
+  });
 
   destroyChart('chartHistoricoFaturamento');
   charts['chartHistoricoFaturamento'] = new Chart(ctx.getContext('2d'), {
     type: 'line',
-    data: {
-      labels: meses,
-      datasets: [{
-        label: anoSel,
-        data: valores,
-        borderWidth: 3,
-        fill: true,
-        spanGaps: true,
-        tension: 0.2
-      }]
-    },
+    data: { labels: meses, datasets: datasets },
     plugins: [pluginValoresNativos],
     options: {
       responsive: true,
@@ -1192,9 +1121,12 @@ function renderChartHistorico() {
       layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
-        title: semNenhumDado
-          ? { display: true, text: 'Sem dados para este filtro', color: '#94a3b8', font: { size: 11, weight: 'normal' } }
-          : { display: false }
+        title: {
+          display: datasets.length === 0,
+          text: 'Sem dados para este cliente',
+          color: '#94a3b8',
+          font: { size: 11, weight: 'normal' }
+        }
       },
       scales: {
         x: { grid: { color: '#1f293d' }, ticks: { color: '#94a3b8' } },
@@ -1218,8 +1150,7 @@ function renderChartBudget() {
     sheet.forEach(r => {
       const idx = Number(r['Mês'] || r['Mes']) - 1;
       if (idx >= 0 && idx < 12) {
-        const valorBudget = parsePct(r['% do Budget'] ?? r['Budget']);
-        if (Number.isFinite(valorBudget)) dataVals[idx] = valorBudget;
+        dataVals[idx] = parsePct(r['% do Budget'] || r['Budget']);
       }
     });
   }
@@ -1263,39 +1194,77 @@ function renderChartBudget() {
   });
 }
 
+// ---------------------------------------------------------------------
+// GRÁFICO: TIPO DE ENCOMENDA (Gravado x Normal)
+// ---------------------------------------------------------------------
+// Fonte: planilha "Análise de Carteira" (upload), aba "% de encomendas gravadas"
+// Colunas: Tipo | Ano | Mes | % gravação
+//
+// Lógica:
+// - Se um mês específico está selecionado no filtro, mostramos os dados
+//   daquele mês (% de Gravado e % de Normal).
+// - Se o filtro está em "Todos os Meses", mostramos o total acumulado
+//   (a soma de % gravação para Gravado vs Normal, ou o total da aba).
+// - Se a planilha não foi carregada, mostramos os valores de demonstração.
+// ---------------------------------------------------------------------
 function renderChartTipoEncomenda() {
   const ctx = document.getElementById('chartTipoEncomenda');
   if (!ctx) return;
 
   const clienteSel = selectCliente ? selectCliente.value : 'ALL';
   const mesSel = selectMes ? selectMes.value : 'ALL';
+  const anoSel = selectAno ? selectAno.value : '2026';
   const carregado = algumaPlanilhaCarregada();
-  const sheetBruto = getSheet(dataStore.analiseCarteira, ['Clientes recentes que já', '% de encomendas gravadas', 'Encomenda por Tipo']);
+  const clienteEspecifico = clienteSel !== 'ALL';
+  const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
+  const anoNum = Number(anoSel);
+
+  const sheetBruto = getSheet(dataStore.analiseCarteira, ['% de encomendas gravadas', 'Encomenda por Tipo', 'Clientes recentes que já']);
   const { linhas: sheet, semDetalhePorCliente } = filtrarPorCliente(sheetBruto, clienteSel);
 
-  // Antes de qualquer planilha carregada, mostra números de demonstração.
-  // Depois de carregada, mostra o real (que pode ser 0/0).
-  let gravado = carregado ? 0 : 89;
-  let normal = carregado ? 0 : 110;
+  // Valores de demonstração (só aparecem antes de carregar planilha)
+  let gravadoPct = carregado ? 0 : 44.72;
+  let normalPct = carregado ? 0 : 55.28;
 
   if (sheet.length > 0) {
-    const rowG = sheet.find(r => String(r.Tipo).toLowerCase().includes('gravado'));
-    const rowN = sheet.find(r => String(r.Tipo).toLowerCase().includes('normal'));
+    // Descobre qual coluna tem o % (pode ser '% gravação' ou '% Gravado')
+    const colPct = Object.keys(sheet[0]).find(k => k.toLowerCase().includes('grava')) || '% gravação';
 
-    if (rowG) gravado = parseCurrency(rowG['Sum of Valor'] ?? rowG['Valor'] ?? rowG['% gravação']);
-    if (rowN) normal = parseCurrency(rowN['Sum of Valor'] ?? rowN['Valor'] ?? rowN['% gravação']);
+    let rowGravado = null;
+    let rowNormal = null;
+
+    if (mesNum !== null) {
+      // Mês específico: filtra por Ano + Mês + Tipo
+      rowGravado = sheet.find(r =>
+        Number(r.Ano) === anoNum &&
+        Number(r.Mes) === mesNum &&
+        String(r.Tipo).trim().toLowerCase() === 'gravado'
+      );
+      rowNormal = sheet.find(r =>
+        Number(r.Ano) === anoNum &&
+        Number(r.Mes) === mesNum &&
+        String(r.Tipo).trim().toLowerCase() === 'normal'
+      );
+    } else {
+      // Todos os meses: pega a última linha de cada Tipo (acumulado)
+      const todasGravado = sheet.filter(r => String(r.Tipo).trim().toLowerCase() === 'gravado');
+      const todasNormal = sheet.filter(r => String(r.Tipo).trim().toLowerCase() === 'normal');
+      rowGravado = todasGravado[todasGravado.length - 1] || null;
+      rowNormal = todasNormal[todasNormal.length - 1] || null;
+    }
+
+    if (rowGravado) gravadoPct = parsePct(rowGravado[colPct] ?? rowGravado['% gravação'] ?? rowGravado['% Gravado']);
+    if (rowNormal) normalPct = parsePct(rowNormal[colPct] ?? rowNormal['% gravação'] ?? rowNormal['% Gravado']);
   }
 
-  // Esse indicador não está entre as 4 planilhas mês a mês que você mandou
-  // (Cliente/Segmento/Produto) — ele só existe na planilha "Análise de
-  // Carteira", que traz o acumulado, sem quebra por mês. Por isso não muda
-  // ao trocar o filtro de Mês; se quiser esse detalhe, precisa de uma 5ª
-  // planilha "Gravado x Normal mês a mês".
+  // Monta o título informativo
   let titulo = null;
   if (semDetalhePorCliente) {
     titulo = 'Planilha não detalha o tipo de encomenda por cliente';
-  } else if (mesSel !== 'ALL' && carregado) {
-    titulo = 'Acumulado da carteira — esta planilha não vem quebrada por mês';
+  } else if (mesNum !== null && carregado) {
+    titulo = `Dados de ${MAPA_MESES_EN[mesNum - 1] || mesNum}/${anoSel}`;
+  } else if (carregado && sheet.length > 0) {
+    titulo = 'Acumulado (última linha da planilha)';
   }
 
   destroyChart('chartTipoEncomenda');
@@ -1304,14 +1273,13 @@ function renderChartTipoEncomenda() {
     data: {
       labels: ['Gravado', 'Normal'],
       datasets: [{
-        data: [gravado, normal],
+        // Mostra o valor % direto (não a quantidade de pedidos, já que
+        // a planilha guarda o % e não o número absoluto).
+        data: [gravadoPct.toFixed(2), normalPct.toFixed(2)],
         backgroundColor: ['#10b981', '#ef4444'],
         borderWidth: 0
       }]
     },
-    // O plugin nativo já calcula o percentual em cima do que existir no
-    // gráfico (gravado + normal), então mesmo com pouco volume (ex: só
-    // 35,16 no total) o rótulo mostra o percentual correto daquilo que tem.
     plugins: [pluginValoresNativos],
     options: {
       responsive: true,
@@ -1320,7 +1288,14 @@ function renderChartTipoEncomenda() {
         legend: { display: true, labels: { color: '#94a3b8' } },
         title: titulo
           ? { display: true, text: titulo, color: '#94a3b8', font: { size: 11, weight: 'normal' } }
-          : { display: false }
+          : { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return `${ctx.label}: ${ctx.parsed}%`;
+            }
+          }
+        }
       }
     }
   });
@@ -1381,6 +1356,17 @@ function renderChartSegmentos() {
   });
 }
 
+// ---------------------------------------------------------------------
+// GRÁFICO: TOP 20 PRODUTOS MAIS VENDIDOS
+// ---------------------------------------------------------------------
+// Fonte dos dados:
+// - Mês específico (Jan-Ago): planilha fixa do Drive "20 produtos mais vendidos
+//   mês a mês 2026" (via obterLinhasDoMes('porProduto', mes)).
+// - Mês específico (Set+): mês corrente por subtração (também via
+//   obterLinhasDoMes, que calcula por diferença).
+// - Todos os meses: aba "Image-7" da planilha Relatório Geral (upload).
+// - Sem nada carregado: dados de demonstração para o gráfico nunca ficar vazio.
+// ---------------------------------------------------------------------
 function renderChartTopProdutos() {
   const ctx = document.getElementById('chartTopProdutos');
   if (!ctx) return;
@@ -1390,21 +1376,30 @@ function renderChartTopProdutos() {
   const anoSel = selectAno ? selectAno.value : '2026';
   const mesNum = mesSel !== 'ALL' ? parseInt(mesSel, 10) : null;
 
+  // 1) Tenta dados fixos do Drive (por mês específico)
   const linhasFixas = (mesNum !== null && usarDadosMensaisFixos(anoSel)) ? obterLinhasDoMes('porProduto', mesNum) : null;
+
+  // 2) Fallback para planilha ao vivo (Image-7 do Relatório Geral)
   const sheetCompleto = linhasFixas || getSheet(dataStore.reportSection, ['Image-7', 'Top 20 Produtos Mais Vendidos', 'Top 20']);
   const { linhas: sheetFiltrado, semDetalhePorCliente } = filtrarPorCliente(sheetCompleto, clienteSel);
-  const sheet = [...sheetFiltrado]
+
+  let sheet = [...sheetFiltrado]
     .sort((a, b) => parseCurrency(b['Valor de Venda'] || b['Valor de Venda (R$)']) - parseCurrency(a['Valor de Venda'] || a['Valor de Venda (R$)']))
     .slice(0, 20);
-  const labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
-  const dataVals = sheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']));
 
-  // Se a planilha daquele mês tiver menos de 20 produtos cadastrados, o
-  // gráfico mostra só o que existe — e avisa, pra ficar claro que não é bug.
+  let labels = sheet.map(r => String(r['Produto'] || r['Cod'] || ''));
+  let dataVals = sheet.map(r => parseCurrency(r['Valor de Venda'] || r['Valor de Venda (R$)']));
+
+  // 3) Se nada foi encontrado (planilha não carregou ou não tem aba), mostra
+  //    valores de demonstração para o gráfico nunca aparecer vazio.
   let tituloAviso = null;
-  if (semDetalhePorCliente) {
+  if (labels.length === 0) {
+    labels = ['Produto A', 'Produto B', 'Produto C', 'Produto D', 'Produto E'];
+    dataVals = [12500, 9800, 7600, 5400, 3200];
+    tituloAviso = 'Aguardando dados da planilha do Drive / Relatório Geral';
+  } else if (semDetalhePorCliente) {
     tituloAviso = 'Planilha não detalha produtos por cliente';
-  } else if (sheet.length > 0 && sheet.length < 20) {
+  } else if (sheet.length < 20) {
     tituloAviso = `Só ${sheet.length} produto${sheet.length > 1 ? 's' : ''} cadastrado${sheet.length > 1 ? 's' : ''} na planilha desse mês`;
   }
 
@@ -1414,11 +1409,11 @@ function renderChartTopProdutos() {
   charts['chartTopProdutos'] = new Chart(ctx.getContext('2d'), {
     type: 'bar',
     data: {
-      labels: labels.length > 0 ? labels : ['Sem Dados'],
+      labels: labels,
       datasets: [{
         label: 'Valor de Venda (R$)',
-        data: dataVals.length > 0 ? dataVals : [0],
-        backgroundColor: dataVals.map(v => v < 0 ? '#ef4444' : '#3b82f6'),
+        data: dataVals,
+        backgroundColor: dataVals.map(v => v < 0 ? '#ef4444' : (tituloAviso && tituloAviso.includes('Aguardando') ? '#64748b' : '#3b82f6')),
         borderRadius: 4
       }]
     },
@@ -1431,7 +1426,7 @@ function renderChartTopProdutos() {
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8' } },
         title: tituloAviso
-          ? { display: true, text: tituloAviso, color: '#94a3b8', font: { size: 11, weight: 'normal' } }
+          ? { display: true, text: tituloAviso, color: tituloAviso.includes('Aguardando') ? '#f59e0b' : '#94a3b8', font: { size: 11, weight: 'normal' } }
           : { display: false }
       },
       scales: horizontal
