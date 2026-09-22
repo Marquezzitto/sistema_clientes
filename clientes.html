@@ -26,9 +26,11 @@
         <a href="index.html" class="btn-upload" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
           <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Voltar ao Dashboard
         </a>
+
         <a href="atendimento.html" class="btn-upload" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #f59e0b;">
           <i data-lucide="phone-call" style="width:16px;height:16px;"></i> Atendimento ELO
         </a>
+
         <div class="status-badge active" id="statusBadge">
           <span class="status-dot"></span>
           <span id="contadorClientes">Carregando base...</span>
@@ -40,8 +42,16 @@
     <section class="table-card" style="margin-top: 10px;">
       <div class="card-header space-between">
         <h3>Lista de Clientes, Cidades & Prazos de SLA</h3>
-        <input type="text" id="searchClientGlobal" placeholder="Pesquisar por cliente, cidade ou código..." class="table-search" style="width: 300px;">
+
+        <input
+          type="text"
+          id="searchClientGlobal"
+          placeholder="Pesquisar por cliente, cidade ou código..."
+          class="table-search"
+          style="width: 300px;"
+        >
       </div>
+
       <div class="table-wrapper" style="max-height: 600px;">
         <table>
           <thead>
@@ -54,9 +64,12 @@
               <th style="text-align: center;">Ações</th>
             </tr>
           </thead>
+
           <tbody id="tbClientesSLA">
             <tr>
-              <td colspan="6" class="empty-row">Carregando clientes...</td>
+              <td colspan="6" class="empty-row">
+                Carregando clientes...
+              </td>
             </tr>
           </tbody>
         </table>
@@ -71,1300 +84,379 @@
     // ============================================================
     // SLA / TRANSPORTADORAS
     // Fonte principal: planilha pública "SLA TRANSPORTES"
-    // Drive: https://docs.google.com/spreadsheets/d/1phgqg2JLT4PQ4FTKIipY0_2v4zpx5tB4/edit
+    // Drive:
+    // https://docs.google.com/spreadsheets/d/1phgqg2JLT4PQ4FTKIipY0_2v4zpx5tB4/edit
     //
-    // Regra de distribuição:
-    // - Barilog: capital de SP + municípios que pertencem às Regiões
-    //   Metropolitanas oficiais utilizadas para esta operação.
-    // - Paulinéris: interior de SP e, se houver UF diferente de SP,
-    //   fica classificado como "Fora de SP".
+    // REGRA:
     //
-    // O SLA é buscado primeiro na planilha correspondente.
-    // Quando a planilha da Barilog não possui uma determinada cidade
-    // metropolitana, o código preserva o SLA já existente no clientes.json
-    // e identifica no detalhe que houve fallback.
+    // 1. Se a cidade da carteira estiver na relação da
+    //    SLA PAULINERIS, permanece Paulinéris.
+    //
+    // 2. Mesmo que a cidade também apareça na planilha
+    //    da Barilog, a Paulinéris tem prioridade.
+    //
+    // 3. Barilog fica somente para as cidades que NÃO estão
+    //    na relação da Paulinéris e que pertencem à capital
+    //    ou à Grande São Paulo/RM.
+    //
+    // 4. As cidades da carteira atual já possuem seus SLAs
+    //    conferidos nas planilhas recebidas.
     // ============================================================
 
     const SLA_DRIVE_URL =
       'https://docs.google.com/spreadsheets/d/1phgqg2JLT4PQ4FTKIipY0_2v4zpx5tB4/edit';
 
-    // Dados extraídos da aba "SLA BARILOG" da planilha.
-    const slaBarilogPorCidade = {
-  "AGUAS DE SAO PEDRO": "D+7",
-  "ALTAMIRA": "D+20",
-  "AMARGOSA": "D+11",
-  "AMERICANA": "D+4",
-  "ANAPOLIS": "D+6",
-  "APARECIDA DOESTE": "D+7",
-  "APUCARANA": "D+8",
-  "ARACAJU": "D+8",
-  "ARACATUBA": "D+4",
-  "ARAGUAINA": "D+12",
-  "ARAPIRACA": "D+11",
-  "ARAPONGAS": "D+7",
-  "ARAQUARI": "D+6",
-  "ARARAQUARA": "D+5",
-  "ARARAS": "D+4",
-  "ARAXA": "D+5",
-  "ARCOS": "D+ 6",
-  "ARROIO DO MEIO": "D+6",
-  "ARTUR NOGUEIRA": "D+6",
-  "ASSIS": "D+6",
-  "ATIBAIA": "D+4",
-  "AVARE": "D+5",
-  "BALNEARIO CAMBORIU": "D+6",
-  "BALSAS": "D+15",
-  "BANGU": "D+6",
-  "BARRA MANSA": "D+6",
-  "BARREIRAS": "D+11",
-  "BARRETOS": "D+5",
-  "BAURU": "D+4",
-  "BELEM": "D+10",
-  "BELO HORIZONTE": "D+4",
-  "BENTO GONCALVES": "D+5",
-  "BERTIOGA": "D+4",
-  "BETIM": "D+6",
-  "BIRUGUI": "D+6",
-  "BLUMENAU": "D+5",
-  "BOITUVA": "D+5",
-  "BOTUCATU": "D+5",
-  "BRAGANCA PAULISTA": "D+3",
-  "BRASILIA": "D+5",
-  "BRUMADINHO": "D+8",
-  "BRUSQUE": "D+6",
-  "CABO FRIO": "D+6",
-  "CAMACARI": "D+12",
-  "CAMBUI": "D+2",
-  "CAMPESTRE": "D+7",
-  "CAMPINA GRANDE": "D+12",
-  "CAMPINAS": "D+3",
-  "CAMPO GRANDE": "D+8",
-  "CAMPO LIMPO PAULISTA": "D+4",
-  "CAMPOS DOS GOYTACAZES": "D+6",
-  "CANOAS": "D+5",
-  "CAPIM GROSSO": "D+12",
-  "CARPINA": "D+12",
-  "CARUARU": "D+12",
-  "CASCAVEL": "D+8",
-  "CATALAO": "D+7",
-  "CAXIAS": "D+15",
-  "CAXIAS DO SUL": "D+6",
-  "CHAPECO": "D+6",
-  "CHARQUEADAS": "D+6",
-  "COCALZINHO DE GOIAS": "D+7",
-  "COLATINA": "D+6",
-  "CONCORDIA": "D+7",
-  "COSMOPOLIS": "D+6",
-  "CRICIUMA": "D+7",
-  "CUIABA": "D+8",
-  "CURITIBA": "D+3",
-  "DIADEMA": "D+1",
-  "DOURADOS": "D+9",
-  "DUQUE DE CAXIAS": "D+5",
-  "ENCANTADO": "D+6",
-  "ERECHIM": "D+6",
-  "ESPUMOSO": "D+6",
-  "ESTRELA": "D+6",
-  "FAZENDA RIO GRANDE": "D+6",
-  "FEIRA DE SANTANA": "D+10",
-  "FERRAZ DE VASCONCELOS": "D+1",
-  "FLORIANOPOLIS": "D+4",
-  "FORTALEZA": "D+10",
-  "FOZ DO IGUACU": "D+6",
-  "FRAIBURGO": "D+7",
-  "FRANCA": "D+5",
-  "FRANCISCO BELTRAO": "D+6",
-  "GARANHUNS": "D+12",
-  "GARIBALDI": "D+6",
-  "GOIANIA": "D+4",
-  "GOVERNADOR VALADARES": "D+7",
-  "GRAVATAI": "D+5",
-  "GUAPORE": "D+6",
-  "GUARUJA": "D+4",
-  "HORTOLANDIA": "D+4",
-  "IBIPORA": "D+5",
-  "ICARA": "D+7",
-  "IGUAPE": "D+7",
-  "ILHEUS": "D+10",
-  "IMPERATRIZ": "D+12",
-  "INDAIATUBA": "D+4",
-  "IPATINGA": "D+6",
-  "IPORA": "D+7",
-  "ITABUNA": "D+12",
-  "ITAJAI": "D+4",
-  "ITAPEJARA D OESTE": "D+7",
-  "ITAPEMA": "D+6",
-  "ITAPETININGA": "D+4",
-  "ITAQUAQUECETUBA": "D+1",
-  "ITATIAIA": "D+6",
-  "ITATIBA": "D+6",
-  "ITATINGA": "D+6",
-  "ITU": "D+5",
-  "JAGUARIUNA": "D+5",
-  "JALES": "D+6",
-  "JARAGUA DO SUL": "D+6",
-  "JARDINOPOLIS": "D+6",
-  "JAU": "D+6",
-  "JOAO PESSOA": "D+10",
-  "JOBOATAO DOS GUARARAPES": "D+10",
-  "JOINVILLE": "D+4",
-  "JUAZEIRO": "D+12",
-  "JUIZ DE FORA": "D+4",
-  "JUNDIAI": "D+4",
-  "LAGES": "D+6",
-  "LAGOA SANTA": "D+6",
-  "LAJEADO": "D+6",
-  "LAURO DE FREITAS": "D+10",
-  "LIMEIRA": "D+4",
-  "LIMOEIRO": "D+10",
-  "LINHARES": "D+6",
-  "LINS": "D+6",
-  "LONDRINA": "D+6",
-  "LOUVEIRA": "D+4",
-  "MACAE": "D+6",
-  "MACEIO": "D+10",
-  "MAGE": "D+6",
-  "MANAUS": "D+30",
-  "MANDAGUARI": "D+7",
-  "MARILIA": "D+5",
-  "MARINGA": "D+6",
-  "MAUA": "D+1",
-  "MEDIANEIRA": "D+6",
-  "MIRASSOL": "D+6",
-  "MOGI DAS CRUZES": "D+1",
-  "MOGI MIRIM": "D+4",
-  "MONTES CLAROS": "D+7",
-  "MOSSORO": "D+12",
-  "MURIAE": "D+6",
-  "NATAL": "D+10",
-  "NAVEGANTES": "D+4",
-  "NITEROI": "D+4",
-  "NOVA IGUACU": "D+6",
-  "NOVA ODESSA": "D+5",
-  "NOVO HAMBURGO": "D+5",
-  "NOVO HORIZONTE": "D+6",
-  "OLINDA": "D+10",
-  "ORLANDIA": "D+7",
-  "ORLEANS": "D+7",
-  "OURINHOS": "D+5",
-  "OURO BRANCO": "D+6",
-  "OURO PRETO": "D+6",
-  "PAICANDU": "D+6",
-  "PALHOCA": "D+5",
-  "PALMAS": "D+10",
-  "PARA DE MINAS": "D+7",
-  "PARNAIBA": "D+12",
-  "PASSO FUNDO": "D+6",
-  "PASSOS": "D+6",
-  "PATOS": "D+10",
-  "PATOS DE MINAS": "D+6",
-  "PAULINIA": "D+4",
-  "PAULISTA": "D+10",
-  "PEDRO LEOPOLDO": "D+6",
-  "PELOTAS": "D+6",
-  "PETROPOLIS": "D+6",
-  "PINHAIS": "D+4",
-  "PINHEIRO PRETO": "D+6",
-  "PIRACICABA": "D+5",
-  "POA": "D+1",
-  "PONTA GROSSA": "D+5",
-  "PONTE NOVA": "D+5",
-  "PORTO ALEGRE": "D+5",
-  "PORTO FERREIRA": "D+6",
-  "PORTO VELHO": "D+20",
-  "PRAIA GRANDE": "D+3",
-  "PRESIDENTE PRUDENTE": "D+3",
-  "QUIRINOPOLIS": "D+7",
-  "QUIXERAMOBIM": "D+15",
-  "RECIFE": "D+10",
-  "REDENCAO": "D+15",
-  "RESENDE": "D+6",
-  "RIBEIRAO PRETO": "D+4",
-  "RIO BRANCO": "D+30",
-  "RIO CLARO": "D+4",
-  "RIO DE JANEIRO": "D+4",
-  "RIO GRANDE": "D+5",
-  "RIO VERDE": "D+6",
-  "RONDONOPOLIS": "D+10",
-  "SACRAMENTO": "D+7",
-  "SALVADOR": "D+10",
-  "SANTA MARIA": "D+6",
-  "SANTO A. DO JARDIM": "D+8",
-  "SANTO ANDRE": "D+1",
-  "SANTOS": "D+3",
-  "SAO BERNARDO DO CAMPO": "D+1",
-  "SAO CAETANO DO SUL": "D+1",
-  "SAO CARLOS": "D+5",
-  "SAO GONCALO": "D+5",
-  "SAO JOAO DA BOA VISTA": "D+5",
-  "SAO JOAO DO MERITI": "D+5",
-  "SAO JOAQUIM DE BICAS": "D+7",
-  "SAO JOSE": "D+5",
-  "SAO JOSE DO RIO PARDO": "D+7",
-  "SAO JOSE DO RIO PRETO": "D+4",
-  "SAO JOSE DOS CAMPOS": "D+3",
-  "SAO JOSE DOS PINHAIS": "D+4",
-  "SAO LEOPOLDO": "D+5",
-  "SAO LOURENCO": "D+6",
-  "SAO LUIS": "D+10",
-  "SAO VICENTE": "D+4",
-  "SAQUAREMA": "D+5",
-  "SERRA": "D+5",
-  "SERRA ALTA": "D+6",
-  "SETE LAGOAS": "D+6",
-  "SOROCABA": "D+3",
-  "SORRISO": "D+8",
-  "SUMARE": "D+4",
-  "SUZANO": "D+1",
-  "TABIRA": "D+10",
-  "TATUI": "D+5",
-  "TAUBATE": "D+5",
-  "TEOFILO OTONI": "D+10",
-  "TERESINA": "D+12",
-  "TRES LAGOAS": "D+10",
-  "TUBARAO": "D+6",
-  "UBARANA": "D+7",
-  "UBERABA": "D+5",
-  "UBERLANDIA": "D+5",
-  "URUACU": "D+7",
-  "VALINHOS": "D+5",
-  "VARGINHA": "D+5",
-  "VARZEA PAULISTA": "D+5",
-  "VILHA VELHA": "D+6",
-  "VINHEDO": "D+5",
-  "VITORIA": "D+4",
-  "VITORIA DA CONQUISTA": "D+10",
-  "VOLTA REDONDA": "D+6",
-  "XANXERE": "D+7"
-};
 
-    // Dados da aba "SLA PAULINERIS".
-    // As fórmulas da coluna E usam [1]Parametros!$B$3 + N.
-    // O próprio arquivo XLSX preserva o valor externo B3 = 2.
-    // Portanto os D+ abaixo são os resultados da planilha.
-    const slaPaulinerisPorCidade = {
-  "ADAMANTINA": "D+5",
-  "ADOLFO": "D+7",
-  "AGUA VERMELHA": "D+4",
-  "AGUAI": "D+5",
-  "AGUAS DA PRATA": "D+5",
-  "AGUAS DE LINDOIA": "D+4",
-  "AGUAS DE SANTA BARBARA": "D+6",
-  "AGUAS DE SAO PEDRO": "D+5",
-  "AGUDOS": "D+4",
-  "AGULHA": "D+5",
-  "AJAPI": "D+4",
-  "ALAMBARI": "D+6",
-  "ALFREDO MARCONDES": "D+9",
-  "ALTAIR": "D+8",
-  "ALTINOPOLIS": "D+4",
-  "ALTO ALEGRE": "D+9",
-  "ALUMINIO": "D+6",
-  "ALVARES FLORENCE": "D+9",
-  "ALVARES MACHADO": "D+6",
-  "ALVARO DE CARVALHO": "D+8",
-  "ALVINLANDIA": "D+5",
-  "AMERICANA": "D+4",
-  "AMERICO BRASILIENSE": "D+4",
-  "AMERICO DE CAMPOS": "D+9",
-  "AMPARO": "D+4",
-  "ANALANDIA": "D+6",
-  "ANDRADINA": "D+5",
-  "ANGATUBA": "D+6",
-  "ANHEMBI": "D+8",
-  "ANHUMAS": "D+6",
-  "APARECIDA": "D+3",
-  "APARECIDA D OESTE": "D+6",
-  "APARECIDA DE SAO MANUEL": "D+6",
-  "APIAI": "D+7",
-  "ARABA": "D+6",
-  "ARABELA": "D+9",
-  "ARACARIGUAMA": "D+5",
-  "ARACATUBA": "D+5",
-  "ARACOIABA DA SERRA": "D+7",
-  "ARAMINA": "D+5",
-  "ARANDU": "D+6",
-  "ARAPEI": "D+9",
-  "ARARAQUARA": "D+4",
-  "ARARAS": "D+3",
-  "ARCADAS": "D+4",
-  "ARCO IRIS": "D+9",
-  "AREALVA": "D+6",
-  "AREIAS": "D+9",
-  "AREIOPOLIS": "D+6",
-  "ARIRANHA": "D+4",
-  "ARTUR NOGUEIRA": "D+4",
-  "ASPASIA": "D+9",
-  "ASSIS": "D+5",
-  "ASSISTENCIA": "D+4",
-  "ATIBAIA": "D+4",
-  "AURIFLAMA": "D+6",
-  "AVAI": "D+9",
-  "AVANHANDAVA": "D+5",
-  "AVARE": "D+4",
-  "BACAETAVA": "D+6",
-  "BADY BASSITT": "D+4",
-  "BAGUACU": "D+9",
-  "BALBINOS": "D+9",
-  "BALSAMO": "D+4",
-  "BANANAL": "D+12",
-  "BANDEIRANTES D OESTE": "D+9",
-  "BARAO DE ANTONINA": "D+9",
-  "BARBOSA": "D+9",
-  "BARIRI": "D+4",
-  "BARRA BONITA": "D+4",
-  "BARRA DO CHAPEU": "D+9",
-  "BARRA DO TURVO": "D+9",
-  "BARRETOS": "D+4",
-  "BARRINHA": "D+6",
-  "BASTOS": "D+6",
-  "BATATAIS": "D+4",
-  "BATATUBA": "D+7",
-  "BAURU": "D+4",
-  "BEBEDOURO": "D+4",
-  "BENTO DE ABREU": "D+7",
-  "BERNARDINO DE CAMPOS": "D+5",
-  "BERTIOGA": "D+8",
-  "BILAC": "D+9",
-  "BIRIGUI": "D+5",
-  "BOA ESPERANCA DO SUL": "D+6",
-  "BOCAINA": "D+6",
-  "BOFETE": "D+8",
-  "BOITUVA": "D+4",
-  "BOM JESUS DOS PERDOES": "D+5",
-  "BOM SUCESSO DE ITARARE": "D+9",
-  "BONFIM PAULISTA": "D+4",
-  "BORA": "D+9",
-  "BORACEIA": "D+8",
-  "BORBOREMA": "D+4",
-  "BOREBI": "D+8",
-  "BOTAFOGO": "D+4",
-  "BOTUCATU": "D+4",
-  "BRAGANCA PAULISTA": "D+4",
-  "BRASITANIA": "D+9",
-  "BRAUNA": "D+9",
-  "BREJO ALEGRE": "D+9",
-  "BRODOWSKI": "D+4",
-  "BROTAS": "D+6",
-  "BURI": "D+6",
-  "BURITAMA": "D+7",
-  "BURITIZAL": "D+5",
-  "CABRALIA PAULISTA": "D+8",
-  "CABREUVA": "D+4",
-  "CACAPAVA": "D+6",
-  "CACHOEIRA PAULISTA": "D+5",
-  "CACONDE": "D+6",
-  "CAFELANDIA": "D+6",
-  "CAIABU": "D+9",
-  "CAIUA": "D+6",
-  "CAJATI": "D+6",
-  "CAJOBI": "D+6",
-  "CAJURU": "D+5",
-  "CAMPESTRINHO": "D+8",
-  "CAMPINA DO MONTE ALEGRE": "D+6",
-  "CAMPINAS": "D+3",
-  "CAMPO LIMPO PAULISTA": "D+4",
-  "CAMPOS DO JORDAO": "D+5",
-  "CAMPOS NOVOS PAULISTA": "D+5",
-  "CANANEIA": "D+9",
-  "CANAS": "D+6",
-  "CANDIDO MOTA": "D+5",
-  "CANDIDO RODRIGUES": "D+8",
-  "CANITAR": "D+5",
-  "CAPAO BONITO": "D+4",
-  "CAPELA DO ALTO": "D+7",
-  "CAPIVARI": "D+4",
-  "CARAGUATATUBA": "D+6",
-  "CARDOSO": "D+9",
-  "CASA BRANCA": "D+4",
-  "CASSIA DOS COQUEIROS": "D+6",
-  "CASTILHO": "D+7",
-  "CATANDUVA": "D+4",
-  "CATIGUA": "D+6",
-  "CEDRAL": "D+4",
-  "CERQUEIRA CESAR": "D+6",
-  "CERQUILHO": "D+4",
-  "CESARIO LANGE": "D+6",
-  "CHARQUEADA": "D+4",
-  "CHAVANTES": "D+5",
-  "CLEMENTINA": "D+9",
-  "COLINA": "D+4",
-  "COLOMBIA": "D+6",
-  "CONCHAL": "D+4",
-  "CONCHAS": "D+6",
-  "CORDEIROPOLIS": "D+4",
-  "COROADOS": "D+9",
-  "CORONEL MACEDO": "D+8",
-  "CORUMBATAI": "D+6",
-  "COSMOPOLIS": "D+4",
-  "COSMORAMA": "D+7",
-  "CRAVINHOS": "D+4",
-  "CRISTAIS PAULISTA": "D+6",
-  "CRUZALIA": "D+7",
-  "CRUZEIRO": "D+4",
-  "CUBATAO": "D+7",
-  "CUNHA": "D+9",
-  "DESCALVADO": "D+4",
-  "DIRCE REIS": "D+9",
-  "DIST PLANALTO": "D+9",
-  "DIVINOLANDIA": "D+6",
-  "DOBRADA": "D+6",
-  "DOIS CORREGOS": "D+4",
-  "DOLCINOPOLIS": "D+9",
-  "DOURADO": "D+6",
-  "DRACENA": "D+7",
-  "DUARTINA": "D+6",
-  "DUMONT": "D+6",
-  "DUPLO CEU": "D+9",
-  "ECHAPORA": "D+9",
-  "ELDORADO": "D+7",
-  "ELIAS FAUSTO": "D+6",
-  "ELISIARIO": "D+4",
-  "EMBAUBA": "D+6",
-  "EMILIANOPOLIS": "D+9",
-  "ENGENHEIRO BALDUINO": "D+4",
-  "ENGENHEIRO COELHO": "D+5",
-  "ENGENHEIRO SCHMITT": "D+4",
-  "ESPIGAO": "D+6",
-  "ESPIRITO SANTO DO PINHAL": "D+4",
-  "ESPIRITO SANTO DO TURVO": "D+5",
-  "ESTIVA GERBI": "D+4",
-  "ESTRELA D OESTE": "D+7",
-  "ESTRELA DO NORTE": "D+9",
-  "EUCLIDES DA CUNHA PAULISTA": "D+9",
-  "EUGENIO DE MELO": "D+4",
-  "FARTURA": "D+5",
-  "FERNANDO PRESTES": "D+8",
-  "FERNANDOPOLIS": "D+5",
-  "FERNAO": "D+9",
-  "FLORA RICA": "D+9",
-  "FLOREAL": "D+7",
-  "FLORIDA PAULISTA": "D+9",
-  "FLORINEA": "D+7",
-  "FRANCA": "D+4",
-  "GABRIEL MONTEIRO": "D+9",
-  "GALIA": "D+6",
-  "GARCA": "D+4",
-  "GARDENIA": "D+9",
-  "GASTAO VIDIGAL": "D+9",
-  "GAVIAO PEIXOTO": "D+6",
-  "GENERAL SALGADO": "D+7",
-  "GETULINA": "D+8",
-  "GLICERIO": "D+9",
-  "GUAICARA": "D+5",
-  "GUAIMBE": "D+8",
-  "GUAIRA": "D+5",
-  "GUAPIACU": "D+4",
-  "GUAPIARA": "D+6",
-  "GUARA": "D+4",
-  "GUARACAI": "D+7",
-  "GUARACI": "D+8",
-  "GUARACIABA D OESTE": "D+9",
-  "GUARANI D OESTE": "D+9",
-  "GUARANTA": "D+6",
-  "GUARAPUA": "D+8",
-  "GUARARAPES": "D+5",
-  "GUARATINGUETA": "D+3",
-  "GUAREI": "D+8",
-  "GUARIBA": "D+4",
-  "GUARIROBA": "D+8",
-  "GUARUJA": "D+5",
-  "GUATAPARA": "D+8",
-  "GUZOLANDIA": "D+6",
-  "HERCULANDIA": "D+9",
-  "HOLAMBRA": "D+4",
-  "HORTOLANDIA": "D+4",
-  "IACANGA": "D+6",
-  "IACRI": "D+6",
-  "IARAS": "D+6",
-  "IBATE": "D+6",
-  "IBIRA": "D+4",
-  "IBIRAREMA": "D+5",
-  "IBITINGA": "D+4",
-  "IBITIUVA": "D+4",
-  "IBIUNA": "D+6",
-  "ICEM": "D+7",
-  "IDA IOLANDA": "D+6",
-  "IEPE": "D+9",
-  "IGARACU DO TIETE": "D+4",
-  "IGARAI": "D+8",
-  "IGARAPAVA": "D+5",
-  "IGARATA": "D+8",
-  "IGUAPE": "D+6",
-  "ILHA COMPRIDA": "D+6",
-  "ILHA SOLTEIRA": "D+6",
-  "ILHABELA": "D+10",
-  "INDAIATUBA": "D+4",
-  "INDIANA": "D+6",
-  "INDIAPORA": "D+9",
-  "INUBIA PAULISTA": "D+9",
-  "IPAUSSU": "D+5",
-  "IPERO": "D+6",
-  "IPEUNA": "D+4",
-  "IPIGUA": "D+6",
-  "IPORANGA": "D+9",
-  "IPUA": "D+4",
-  "IRACEMAPOLIS": "D+4",
-  "IRAPUA": "D+8",
-  "IRAPURU": "D+9",
-  "ITABERA": "D+6",
-  "ITAI": "D+5",
-  "ITAJOBI": "D+4",
-  "ITAJU": "D+8",
-  "ITANHAEM": "D+6",
-  "ITAOCA": "D+9",
-  "ITAPETININGA": "D+4",
-  "ITAPEVA": "D+4",
-  "ITAPIRA": "D+4",
-  "ITAPIRAPUA PAULISTA": "D+9",
-  "ITAPOLIS": "D+4",
-  "ITAPORANGA": "D+7",
-  "ITAPUI": "D+6",
-  "ITAPURA": "D+7",
-  "ITARARE": "D+6",
-  "ITARIRI": "D+7",
-  "ITATIBA": "D+4",
-  "ITATINGA": "D+6",
-  "ITIRAPINA": "D+6",
-  "ITIRAPUA": "D+6",
-  "ITOBI": "D+6",
-  "ITU": "D+4",
-  "ITUPEVA": "D+4",
-  "ITUVERAVA": "D+4",
-  "JABORANDI": "D+4",
-  "JABOTICABAL": "D+4",
-  "JACARE": "D+4",
-  "JACAREI": "D+4",
-  "JACI": "D+4",
-  "JACIPORA": "D+9",
-  "JACUPIRANGA": "D+6",
-  "JAGUARIUNA": "D+4",
-  "JALES": "D+5",
-  "JAMBEIRO": "D+8",
-  "JARDINOPOLIS": "D+4",
-  "JARINU": "D+6",
-  "JAU": "D+4",
-  "JERIQUARA": "D+6",
-  "JOANOPOLIS": "D+7",
-  "JOAO RAMALHO": "D+7",
-  "JORDANESIA": "D+4",
-  "JOSE BONIFACIO": "D+4",
-  "JULIANIA": "D+9",
-  "JULIO MESQUITA": "D+8",
-  "JUMIRIM": "D+6",
-  "JUNDIAI": "D+3",
-  "JUNQUEIROPOLIS": "D+9",
-  "JUQUIA": "D+7",
-  "JURUCE": "D+4",
-  "LAGOA BRANCA": "D+8",
-  "LAGOINHA": "D+8",
-  "LARANJAL PAULISTA": "D+4",
-  "LAVINIA": "D+7",
-  "LAVRINHAS": "D+7",
-  "LEME": "D+4",
-  "LENCOIS PAULISTA": "D+4",
-  "LIMEIRA": "D+4",
-  "LINDOIA": "D+4",
-  "LINS": "D+5",
-  "LORENA": "D+3",
-  "LOURDES": "D+9",
-  "LOUVEIRA": "D+4",
-  "LUCELIA": "D+7",
-  "LUCIANOPOLIS": "D+8",
-  "LUIS ANTONIO": "D+8",
-  "LUIZIANIA": "D+9",
-  "LUPERCIO": "D+5",
-  "LUTECIA": "D+9",
-  "MACATUBA": "D+6",
-  "MACAUBAL": "D+6",
-  "MACEDONIA": "D+9",
-  "MAGDA": "D+7",
-  "MAIRINQUE": "D+6",
-  "MANDURI": "D+5",
-  "MARABA PAULISTA": "D+9",
-  "MARACAI": "D+7",
-  "MARAPOAMA": "D+4",
-  "MARCONDESIA": "D+6",
-  "MARIAPOLIS": "D+9",
-  "MARILIA": "D+4",
-  "MARINOPOLIS": "D+6",
-  "MARISTELA": "D+6",
-  "MARTINOPOLIS": "D+6",
-  "MATAO": "D+4",
-  "MENDONCA": "D+6",
-  "MERIDIANO": "D+9",
-  "MESOPOLIS": "D+9",
-  "MIGUELOPOLIS": "D+6",
-  "MINEIROS DO TIETE": "D+6",
-  "MIRA ESTRELA": "D+9",
-  "MIRACATU": "D+7",
-  "MIRANDOPOLIS": "D+7",
-  "MIRANTE DO PARANAPANEMA": "D+9",
-  "MIRASSOL": "D+4",
-  "MIRASSOLANDIA": "D+6",
-  "MOCOCA": "D+4",
-  "MOGI GUACU": "D+4",
-  "MOGI MIRIM": "D+4",
-  "MOMBUCA": "D+4",
-  "MONCOES": "D+9",
-  "MONGAGUA": "D+7",
-  "MONTE ALEGRE DO SUL": "D+7",
-  "MONTE ALTO": "D+4",
-  "MONTE APRAZIVEL": "D+4",
-  "MONTE AZUL PAULISTA": "D+4",
-  "MONTE CASTELO": "D+9",
-  "MONTE MOR": "D+4",
-  "MONTE VERDE PAULISTA": "D+6",
-  "MONTEIRO LOBATO": "D+8",
-  "MOREIRA CESAR": "D+6",
-  "MORRO AGUDO": "D+5",
-  "MORUNGABA": "D+7",
-  "MOTUCA": "D+8",
-  "MURUTINGA DO SUL": "D+7",
-  "NANTES": "D+9",
-  "NARANDIBA": "D+9",
-  "NATIVIDADE DA SERRA": "D+8",
-  "NAZARE PAULISTA": "D+5",
-  "NEVES PAULISTA": "D+6",
-  "NHANDEARA": "D+7",
-  "NIPOA": "D+6",
-  "NOVA ALEXANDRIA": "D+5",
-  "NOVA ALIANCA": "D+6",
-  "NOVA CAMPINA": "D+8",
-  "NOVA CANAA PAULISTA": "D+9",
-  "NOVA CASTILHO": "D+9",
-  "NOVA EUROPA": "D+6",
-  "NOVA GRANADA": "D+4",
-  "NOVA GUATAPORANGA": "D+9",
-  "NOVA INDEPENDENCIA": "D+7",
-  "NOVA LUZITANIA": "D+9",
-  "NOVA ODESSA": "D+4",
-  "NOVA VENEZA": "D+4",
-  "NOVAIS": "D+6",
-  "NOVO HORIZONTE": "D+4",
-  "NUPORANGA": "D+6",
-  "OASIS": "D+9",
-  "OCAUCU": "D+5",
-  "OLEO": "D+5",
-  "OLIMPIA": "D+5",
-  "ONDA VERDE": "D+6",
-  "ORIENTE": "D+4",
-  "ORINDIUVA": "D+7",
-  "ORLANDIA": "D+4",
-  "OSCAR BRESSANE": "D+8",
-  "OSVALDO CRUZ": "D+5",
-  "OURINHOS": "D+5",
-  "OURO VERDE": "D+9",
-  "OUROESTE": "D+5",
-  "PACAEMBU": "D+9",
-  "PALESTINA": "D+5",
-  "PALMARES PAULISTA": "D+6",
-  "PALMEIRA D OESTE": "D+6",
-  "PALMITAL": "D+5",
-  "PANORAMA": "D+7",
-  "PARAGUACU PAULISTA": "D+5",
-  "PARAIBUNA": "D+8",
-  "PARAISO": "D+6",
-  "PARANAPANEMA": "D+9",
-  "PARANAPUA": "D+9",
-  "PARAPUA": "D+5",
-  "PARDINHO": "D+8",
-  "PARIQUERA ACU": "D+6",
-  "PARISI": "D+9",
-  "PARNASO": "D+9",
-  "PARURU": "D+9",
-  "PATROCINIO PAULISTA": "D+6",
-  "PAULICEIA": "D+7",
-  "PAULINIA": "D+4",
-  "PAULISTANIA": "D+5",
-  "PAULO DE FARIA": "D+7",
-  "PAULOPOLIS": "D+4",
-  "PEDERNEIRAS": "D+4",
-  "PEDRA BELA": "D+7",
-  "PEDRANOPOLIS": "D+9",
-  "PEDREGULHO": "D+6",
-  "PEDREIRA": "D+4",
-  "PEDRINHAS PAULISTA": "D+7",
-  "PEDRO DE TOLEDO": "D+7",
-  "PENAPOLIS": "D+6",
-  "PEREIRA BARRETO": "D+6",
-  "PEREIRAS": "D+6",
-  "PERUIBE": "D+6",
-  "PIACATU": "D+9",
-  "PIEDADE": "D+6",
-  "PILAR DO SUL": "D+6",
-  "PINDAMONHANGABA": "D+5",
-  "PINDORAMA": "D+4",
-  "PINHALZINHO": "D+4",
-  "PIQUEROBI": "D+6",
-  "PIQUETE": "D+8",
-  "PIRACAIA": "D+7",
-  "PIRACICABA": "D+4",
-  "PIRAJU": "D+5",
-  "PIRAJUI": "D+6",
-  "PIRANGI": "D+5",
-  "PIRAPOZINHO": "D+6",
-  "PIRASSUNUNGA": "D+4",
-  "PIRATININGA": "D+6",
-  "PITANGUEIRAS": "D+4",
-  "PLANALTO": "D+9",
-  "PLATINA": "D+7",
-  "POLONI": "D+6",
-  "POMPEIA": "D+4",
-  "PONGAI": "D+8",
-  "PONTAL": "D+6",
-  "PONTALINDA": "D+9",
-  "PONTES GESTAL": "D+9",
-  "POPULINA": "D+9",
-  "PORANGABA": "D+8",
-  "PORTO FELIZ": "D+4",
-  "PORTO FERREIRA": "D+4",
-  "POTIM": "D+3",
-  "POTIRENDABA": "D+6",
-  "PRACINHA": "D+9",
-  "PRADOPOLIS": "D+6",
-  "PRAIA GRANDE": "D+5",
-  "PRATANIA": "D+6",
-  "PRESIDENTE ALVES": "D+9",
-  "PRESIDENTE BERNARDES": "D+6",
-  "PRESIDENTE EPITACIO": "D+6",
-  "PRESIDENTE PRUDENTE": "D+6",
-  "PRESIDENTE VENCESLAU": "D+6",
-  "PRIMAVERA": "D+9",
-  "PROMISSAO": "D+5",
-  "QUADRA": "D+8",
-  "QUATA": "D+7",
-  "QUEIROZ": "D+9",
-  "QUELUZ": "D+7",
-  "QUINTANA": "D+4",
-  "RAFARD": "D+4",
-  "RANCHARIA": "D+7",
-  "RECHAN": "D+4",
-  "REDENCAO DA SERRA": "D+8",
-  "REGENTE FEIJO": "D+6",
-  "REGINOPOLIS": "D+6",
-  "REGISTRO": "D+4",
-  "RESTINGA": "D+6",
-  "RIBEIRA": "D+9",
-  "RIBEIRAO BONITO": "D+6",
-  "RIBEIRAO BRANCO": "D+7",
-  "RIBEIRAO CORRENTE": "D+8",
-  "RIBEIRAO DO SUL": "D+5",
-  "RIBEIRAO DOS INDIOS": "D+9",
-  "RIBEIRAO GRANDE": "D+9",
-  "RIBEIRAO PRETO": "D+4",
-  "RIFAINA": "D+8",
-  "RINCAO": "D+6",
-  "RINOPOLIS": "D+6",
-  "RIO CLARO": "D+4",
-  "RIO DAS PEDRAS": "D+4",
-  "RIOLANDIA": "D+9",
-  "RIVERSUL": "D+9",
-  "ROSANA": "D+9",
-  "ROSEIRA": "D+6",
-  "RUBIACEA": "D+7",
-  "RUBINEIA": "D+9",
-  "SABINO": "D+8",
-  "SAGRES": "D+9",
-  "SALES": "D+8",
-  "SALES OLIVEIRA": "D+6",
-  "SALMOURAO": "D+9",
-  "SALTINHO": "D+4",
-  "SALTO": "D+4",
-  "SALTO DE PIRAPORA": "D+7",
-  "SALTO GRANDE": "D+5",
-  "SANDOVALINA": "D+9",
-  "SANTA ADELIA": "D+4",
-  "SANTA ALBERTINA": "D+9",
-  "SANTA BARBARA D OESTE": "D+4",
-  "SANTA BRANCA": "D+8",
-  "SANTA CLARA D OESTE": "D+9",
-  "SANTA CRUZ DA CONCEICAO": "D+8",
-  "SANTA CRUZ DA ESPERANCA": "D+4",
-  "SANTA CRUZ DAS PALMEIRAS": "D+4",
-  "SANTA CRUZ DO RIO PARDO": "D+5",
-  "SANTA ERNESTINA": "D+6",
-  "SANTA FE DO SUL": "D+6",
-  "SANTA GERTRUDES": "D+4",
-  "SANTA LUCIA": "D+6",
-  "SANTA MARIA DA SERRA": "D+8",
-  "SANTA MERCEDES": "D+9",
-  "SANTA RITA D OESTE": "D+9",
-  "SANTA RITA DO PASSA QUATRO": "D+4",
-  "SANTA ROSA DE VITERBO": "D+4",
-  "SANTA SALETE": "D+9",
-  "SANTANA DA PONTE PENSA": "D+9",
-  "SANTO ANASTACIO": "D+6",
-  "SANTO ANTONIO DA ALEGRIA": "D+6",
-  "SANTO ANTONIO DE POSSE": "D+5",
-  "SANTO ANTONIO DO ARACANGUA": "D+9",
-  "SANTO ANTONIO DO JARDIM": "D+4",
-  "SANTO ANTONIO DO PINHAL": "D+8",
-  "SANTO EXPEDITO": "D+9",
-  "SANTOPOLIS DO AGUAPEI": "D+9",
-  "SANTOS": "D+5",
-  "SAO BENEDITO DAS AREIAS": "D+8",
-  "SAO BENTO DO SAPUCAI": "D+8",
-  "SAO CARLOS": "D+4",
-  "SAO FRANCISCO": "D+9",
-  "SAO FRANCISCO XAVIER": "D+8",
-  "SAO JOAO DA BOA VISTA": "D+4",
-  "SAO JOAO DAS DUAS PONTES": "D+9",
-  "SAO JOAO DE IRACEMA": "D+9",
-  "SAO JOAO DO PAU D ALHO": "D+9",
-  "SAO JOAQUIM DA BARRA": "D+4",
-  "SAO JOSE DA BELA VISTA": "D+8",
-  "SAO JOSE DO BARREIRO": "D+9",
-  "SAO JOSE DO RIO PARDO": "D+4",
-  "SAO JOSE DO RIO PRETO": "D+4",
-  "SAO JOSE DOS CAMPOS": "D+4",
-  "SAO LOURENCO DO TURVO": "D+6",
-  "SAO LUIZ DO PARAITINGA": "D+8",
-  "SAO MANUEL": "D+4",
-  "SAO MIGUEL ARCANJO": "D+6",
-  "SAO PEDRO": "D+4",
-  "SAO PEDRO DO TURVO": "D+5",
-  "SAO ROQUE": "D+6",
-  "SAO SEBASTIAO": "D+8",
-  "SAO SEBASTIAO DA GRAMA": "D+6",
-  "SAO SIMAO": "D+4",
-  "SAO VICENTE": "D+5",
-  "SARAPUI": "D+6",
-  "SARUTAIA": "D+5",
-  "SEBASTIANOPOLIS DO SUL": "D+8",
-  "SERRA AZUL": "D+6",
-  "SERRA NEGRA": "D+4",
-  "SERRANA": "D+4",
-  "SERTAOZINHO": "D+4",
-  "SETE BARRAS": "D+7",
-  "SEVERINIA": "D+6",
-  "SILVEIRAS": "D+9",
-  "SIMONSEN": "D+7",
-  "SOCORRO": "D+4",
-  "SOROCABA": "D+4",
-  "SUD MENNUCCI": "D+6",
-  "SUMARE": "D+4",
-  "SUZANAPOLIS": "D+6",
-  "TABAPUA": "D+6",
-  "TABATINGA": "D+6",
-  "TACIBA": "D+9",
-  "TAGUAI": "D+5",
-  "TAIACU": "D+6",
-  "TAIUVA": "D+6",
-  "TAMBAU": "D+4",
-  "TANABI": "D+4",
-  "TAPIRAI": "D+9",
-  "TAPIRATIBA": "D+6",
-  "TAQUARAL": "D+6",
-  "TAQUARITINGA": "D+4",
-  "TAQUARITUBA": "D+4",
-  "TAQUARIVAI": "D+6",
-  "TARABAI": "D+9",
-  "TARUMA": "D+5",
-  "TATUI": "D+4",
-  "TAUBATE": "D+4",
-  "TEJUPA": "D+5",
-  "TEODORO SAMPAIO": "D+9",
-  "TERRA NOVA D OESTE": "D+9",
-  "TERRA ROXA": "D+4",
-  "TIETE": "D+4",
-  "TIMBURI": "D+5",
-  "TORRE DE PEDRA": "D+8",
-  "TORRINHA": "D+6",
-  "TRABIJU": "D+6",
-  "TREMEMBE": "D+6",
-  "TRES FRONTEIRAS": "D+6",
-  "TUIUTI": "D+7",
-  "TUPA": "D+6",
-  "TUPI PAULISTA": "D+7",
-  "TURIUBA": "D+9",
-  "TURMALINA": "D+9",
-  "UBARANA": "D+6",
-  "UBATUBA": "D+6",
-  "UBIRAJARA": "D+5",
-  "UCHOA": "D+6",
-  "UNIAO PAULISTA": "D+8",
-  "UNIVERSO": "D+9",
-  "URANIA": "D+5",
-  "URU": "D+8",
-  "URUPES": "D+4",
-  "VALENTIM GENTIL": "D+7",
-  "VALINHOS": "D+4",
-  "VALPARAISO": "D+7",
-  "VARGEM": "D+7",
-  "VARGEM GRANDE DO SUL": "D+4",
-  "VARPA": "D+9",
-  "VARZEA PAULISTA": "D+4",
-  "VENDA BRANCA": "D+8",
-  "VERA CRUZ": "D+4",
-  "VINHEDO": "D+4",
-  "VIRADOURO": "D+4",
-  "VISTA ALEGRE DO ALTO": "D+5",
-  "VITORIA BRASIL": "D+9",
-  "VOTORANTIM": "D+4",
-  "VOTUPORANGA": "D+5",
-  "ZACARIAS": "D+9"
-};
+    // ============================================================
+    // SLA DA CARTEIRA ATUAL
+    // ============================================================
 
-    // Regiões Metropolitanas oficiais de SP aplicadas à carteira.
-    const regioesMetropolitanas = {
-  "RMSP": [
-    "ARUJA",
-    "BARUERI",
-    "BIRITIBA MIRIM",
-    "CAIEIRAS",
-    "CAJAMAR",
-    "CARAPICUIBA",
-    "COTIA",
-    "DIADEMA",
-    "EMBU",
-    "EMBU GUACU",
-    "FERRAZ DE VASCONCELOS",
-    "FRANCISCO MORATO",
-    "FRANCO DA ROCHA",
-    "GUARAREMA",
-    "GUARULHOS",
-    "ITAPECERICA DA SERRA",
-    "ITAPEVI",
-    "ITAQUAQUECETUBA",
-    "JANDIRA",
-    "JUQUITIBA",
-    "MAIRIPORA",
-    "MAUA",
-    "MOGI DAS CRUZES",
-    "OSASCO",
-    "PIRAPORA DO BOM JESUS",
-    "POA",
-    "RIBEIRAO PIRES",
-    "RIO GRANDE DA SERRA",
-    "SALESOPOLIS",
-    "SANTA ISABEL",
-    "SANTANA DO PARNAIBA",
-    "SANTO ANDRE",
-    "SAO BERNARDO DO CAMPO",
-    "SAO CAETANO DO SUL",
-    "SAO PAULO",
-    "SUZANO",
-    "TABOAO DA SERRA",
-    "VARGEM GRANDE PAULISTA"
-  ],
-  "RMC": [
-    "AMERICANA",
-    "ARTUR NOGUEIRA",
-    "CAMPINAS",
-    "COSMOPOLIS",
-    "ENGENHEIRO COELHO",
-    "HOLAMBRA",
-    "HORTOLANDIA",
-    "INDAIATUBA",
-    "ITATIBA",
-    "JAGUARIUNA",
-    "MONTE MOR",
-    "NOVA ODESSA",
-    "PAULINIA",
-    "PEDREIRA",
-    "SANTA BARBARA D OESTE",
-    "SANTO ANTONIO DE POSSE",
-    "SUMARE",
-    "VALINHOS",
-    "VINHEDO"
-  ],
-  "RMS": [
-    "ALAMBARI",
-    "ALUMINIO",
-    "ARACARIGUAMA",
-    "ARACOIABA DA SERRA",
-    "BOITUVA",
-    "CAPELA DO ALTO",
-    "CERQUILHO",
-    "CESARIO LANGE",
-    "IBIUNA",
-    "IPERO",
-    "ITU",
-    "JUMIRIM",
-    "MAIRINQUE",
-    "PIEDADE",
-    "PILAR DO SUL",
-    "PORTO FELIZ",
-    "SALTO",
-    "SALTO DE PIRAPORA",
-    "SAO MIGUEL ARCANJO",
-    "SAO ROQUE",
-    "SARAPUI",
-    "SOROCABA",
-    "TAPIRAI",
-    "TATUI",
-    "TIETE",
-    "VOTORANTIM"
-  ],
-  "RMBS": [
-    "BERTIOGA",
-    "CUBATAO",
-    "GUARUJA",
-    "ITANHAEM",
-    "MONGAGUA",
-    "PERUIBE",
-    "PRAIA GRANDE",
-    "SANTOS",
-    "SAO VICENTE"
-  ],
-  "RMVPLN": [
-    "APARECIDA",
-    "ARAPEI",
-    "AREIAS",
-    "BANANAL",
-    "CACAPAVA",
-    "CACHOEIRA PAULISTA",
-    "CAMPOS DO JORDAO",
-    "CANAS",
-    "CARAGUATATUBA",
-    "CRUZEIRO",
-    "CUNHA",
-    "GUARATINGUETA",
-    "IGARATA",
-    "ILHABELA",
-    "JACAREI",
-    "JAMBEIRO",
-    "LAGOINHA",
-    "LAVRINHAS",
-    "LORENA",
-    "MONTEIRO LOBATO",
-    "NATIVIDADE DA SERRA",
-    "PARAIBUNA",
-    "PINDAMONHANGABA",
-    "PIQUETE",
-    "POTIM",
-    "QUELUZ",
-    "REDENCAO DA SERRA",
-    "ROSEIRA",
-    "SANTA BRANCA",
-    "SANTO ANTONIO DO PINHAL",
-    "SAO BENTO DO SAPUCAI",
-    "SAO JOSE DO BARREIRO",
-    "SAO JOSE DOS CAMPOS",
-    "SAO LUIZ DO PARAITINGA",
-    "SAO SEBASTIAO",
-    "SILVEIRAS",
-    "TAUBATE",
-    "TREMEMBE",
-    "UBATUBA"
-  ],
-  "RMPira": [
-    "AGUAS DE SAO PEDRO",
-    "ANALANDIA",
-    "ARARAS",
-    "CAPIVARI",
-    "CHARQUEADA",
-    "CONCHAL",
-    "CORDEIROPOLIS",
-    "CORUMBATAI",
-    "ELIAS FAUSTO",
-    "IPEUNA",
-    "IRACEMAPOLIS",
-    "LEME",
-    "LIMEIRA",
-    "MOMBUCA",
-    "PIRACICABA",
-    "PIRASSUNUNGA",
-    "RAFARD",
-    "RIO CLARO",
-    "RIO DAS PEDRAS",
-    "SALTINHO",
-    "SANTA CRUZ DA CONCEICAO",
-    "SANTA GERTRUDES",
-    "SANTA MARIA DA SERRA",
-    "SAO PEDRO"
-  ],
-  "RMJundiaí": [
-    "CABREUVA",
-    "CAMPO LIMPO PAULISTA",
-    "ITUPEVA",
-    "JARINU",
-    "JUNDIAI",
-    "LOUVEIRA",
-    "VARZEA PAULISTA"
-  ],
-  "RMRP": [
-    "ALTINOPOLIS",
-    "BARRINHA",
-    "BATATAIS",
-    "BRODOWSKI",
-    "CAJURU",
-    "CASSIA DOS COQUEIROS",
-    "CRAVINHOS",
-    "DUMONT",
-    "GUARIBA",
-    "GUATAPARA",
-    "JABOTICABAL",
-    "JARDINOPOLIS",
-    "LUIS ANTONIO",
-    "MOCOCA",
-    "MONTE ALTO",
-    "MORRO AGUDO",
-    "NUPORANGA",
-    "ORLANDIA",
-    "PITANGUEIRAS",
-    "PONTAL",
-    "PRADOPOLIS",
-    "RIBEIRAO PRETO",
-    "SALES OLIVEIRA",
-    "SANTA CRUZ DA ESPERANCA",
-    "SANTA RITA DO PASSA QUATRO",
-    "SANTA ROSA DE VITERBO",
-    "SANTO ANTONIO DA ALEGRIA",
-    "SAO SIMAO",
-    "SERRA AZUL",
-    "SERRANA",
-    "SERTAOZINHO",
-    "TAIUVA",
-    "TAMBAU",
-    "TAQUARAL"
-  ],
-  "RMSJRP": [
-    "ADOLFO",
-    "BADY BASSIT",
-    "BALSAMO",
-    "CEDRAL",
-    "GUAPIACU",
-    "IBIRA",
-    "ICEM",
-    "IPIGUA",
-    "IRAPUA",
-    "JACI",
-    "JOSE BONIFACIO",
-    "MACAUBAL",
-    "MENDONCA",
-    "MIRASSOL",
-    "MIRASSOLANDIA",
-    "MONTE APRAZIVEL",
-    "NEVES PAULISTA",
-    "NIPOA",
-    "NOVA ALIANCA",
-    "NOVA GRANADA",
-    "OLIMPIA",
-    "ONDA VERDE",
-    "ORINDIUVA",
-    "PALESTINA",
-    "PAULO DE FARIA",
-    "PLANALTO",
-    "POLONI",
-    "POTIRENDABA",
-    "SALES",
-    "SAO JOSE DO RIO PRETO",
-    "SEVERINIA",
-    "TANABI",
-    "UBARANA",
-    "UCHOA",
-    "UNIAO PAULISTA",
-    "URUPES",
-    "ZACARIAS"
-  ]
-};
+    const slaPorCidade = {
+      "AMERICANA": "D+4",
+      "AMPARO": "D+4",
+      "ARACATUBA": "D+5",
+      "ARACOIABA DA SERRA": "D+7",
+      "ARTUR NOGUEIRA": "D+4",
+      "ASSIS": "D+5",
+      "ATIBAIA": "D+4",
+      "BADY BASSITT": "D+4",
+      "BARRETOS": "D+4",
+      "BARUERI": "D+2",
+      "BAURU": "D+4",
+      "BOITUVA": "D+4",
+      "BOTUCATU": "D+4",
+      "BRODOWSKI": "D+4",
+      "CACAPAVA": "D+6",
+      "CAJAMAR": "D+2",
+      "CAMPINAS": "D+3",
+      "CONCHAS": "D+6",
+      "COSMOPOLIS": "D+4",
+      "CRAVINHOS": "D+4",
+      "CUBATAO": "D+7",
+      "DRACENA": "D+7",
+      "EMBU GUACU": "D+2",
+      "FRANCA": "D+4",
+      "GUARARAPES": "D+5",
+      "GUARULHOS": "D+2",
+      "HORTOLANDIA": "D+4",
+      "IGUAPE": "D+6",
+      "ILHA COMPRIDA": "D+6",
+      "INDAIATUBA": "D+4",
+      "ITAPEVI": "D+2",
+      "ITAPIRA": "D+4",
+      "ITU": "D+4",
+      "JABOTICABAL": "D+4",
+      "JANDIRA": "D+2",
+      "JARDINOPOLIS": "D+4",
+      "JARINU": "D+6",
+      "JAU": "D+4",
+      "JOSE BONIFACIO": "D+4",
+      "JUNDIAI": "D+3",
+      "LARANJAL PAULISTA": "D+4",
+      "LENCOIS PAULISTA": "D+4",
+      "LIMEIRA": "D+4",
+      "LORENA": "D+3",
+      "LOUVEIRA": "D+4",
+      "MAIRIPORA": "D+2",
+      "MARILIA": "D+4",
+      "MATAO": "D+4",
+      "MAUA": "D+1",
+      "MOCOCA": "D+4",
+      "MOGI DAS CRUZES": "D+1",
+      "MOGI GUACU": "D+4",
+      "MOGI MIRIM": "D+4",
+      "MONTE MOR": "D+4",
+      "ORLANDIA": "D+4",
+      "OSASCO": "D+2",
+      "PARAGUACU PAULISTA": "D+5",
+      "PAULINIA": "D+4",
+      "PIRACAIA": "D+7",
+      "PIRACICABA": "D+4",
+      "PORTO FERREIRA": "D+4",
+      "POTIM": "D+3",
+      "PRAIA GRANDE": "D+5",
+      "PRESIDENTE PRUDENTE": "D+6",
+      "RIBEIRAO PRETO": "D+4",
+      "RIO CLARO": "D+4",
+      "SANTA BARBARA D OESTE": "D+4",
+      "SANTA ROSA DE VITERBO": "D+4",
+      "SANTOS": "D+5",
+      "SAO CARLOS": "D+4",
+      "SAO JOAO DA BOA VISTA": "D+4",
+      "SAO JOSE DO RIO PRETO": "D+4",
+      "SAO JOSE DOS CAMPOS": "D+4",
+      "SAO PAULO": "D+1",
+      "SOROCABA": "D+4",
+      "SUMARE": "D+4",
+      "SUZANO": "D+1",
+      "TATUI": "D+4",
+      "TAUBATE": "D+4",
+      "TUPA": "D+6",
+      "VALINHOS": "D+4",
+      "VARGEM GRANDE PAULISTA": "D+2",
+      "VARZEA PAULISTA": "D+4",
+      "VINHEDO": "D+4",
+      "VOTORANTIM": "D+4",
 
-    const nomeRegiao = {
-  "RMSP": "Grande São Paulo",
-  "RMC": "Região Metropolitana de Campinas",
-  "RMS": "Região Metropolitana de Sorocaba",
-  "RMBS": "Região Metropolitana da Baixada Santista",
-  "RMVPLN": "Região Metropolitana do Vale do Paraíba e Litoral Norte",
-  "RMPira": "Região Metropolitana de Piracicaba",
-  "RMJundiaí": "Região Metropolitana de Jundiaí",
-  "RMRP": "Região Metropolitana de Ribeirão Preto",
-  "RMSJRP": "Região Metropolitana de São José do Rio Preto"
-};
+      // Exemplo de cidade futura da Grande São Paulo:
+      "DIADEMA": "D+1"
+    };
 
-    // Fallback exclusivamente para cidades da carteira atual que não
-    // aparecem como destino na aba SLA BARILOG.
-    const slaBaseClienteFallback = {
-  "AMERICANA": "D+4",
-  "AMPARO": "D+4",
-  "ARACATUBA": "D+5",
-  "ARACOIABA DA SERRA": "D+7",
-  "ARTUR NOGUEIRA": "D+4",
-  "ASSIS": "D+5",
-  "ATIBAIA": "D+4",
-  "BADY BASSITT": "D+4",
-  "BARRETOS": "D+4",
-  "BARUERI": "D+2",
-  "BAURU": "D+4",
-  "BOITUVA": "D+4",
-  "BOTUCATU": "D+4",
-  "BRODOWSKI": "D+4",
-  "CACAPAVA": "D+6",
-  "CAJAMAR": "D+2",
-  "CAMPINAS": "D+3",
-  "CONCHAS": "D+6",
-  "COSMOPOLIS": "D+4",
-  "CRAVINHOS": "D+4",
-  "CUBATAO": "D+7",
-  "DRACENA": "D+7",
-  "EMBU GUACU": "D+2",
-  "FRANCA": "D+4",
-  "GUARARAPES": "D+5",
-  "GUARULHOS": "D+2",
-  "HORTOLANDIA": "D+4",
-  "IGUAPE": "D+6",
-  "ILHA COMPRIDA": "D+6",
-  "INDAIATUBA": "D+4",
-  "ITAPEVI": "D+2",
-  "ITAPIRA": "D+4",
-  "ITU": "D+4",
-  "JABOTICABAL": "D+4",
-  "JANDIRA": "D+2",
-  "JARDINOPOLIS": "D+4",
-  "JARINU": "D+6",
-  "JAU": "D+4",
-  "JOSE BONIFACIO": "D+4",
-  "JUNDIAI": "D+3",
-  "LARANJAL PAULISTA": "D+4",
-  "LENCOIS PAULISTA": "D+4",
-  "LIMEIRA": "D+4",
-  "LORENA": "D+3",
-  "LOUVEIRA": "D+4",
-  "MAIRIPORA": "D+2",
-  "MARILIA": "D+4",
-  "MATAO": "D+4",
-  "MAUA": "D+2",
-  "MOCOCA": "D+4",
-  "MOGI DAS CRUZES": "D+2",
-  "MOGI GUACU": "D+4",
-  "MOGI MIRIM": "D+4",
-  "MONTE MOR": "D+4",
-  "ORLANDIA": "D+4",
-  "OSASCO": "D+2",
-  "PARAGUACU PAULISTA": "D+5",
-  "PAULINIA": "D+4",
-  "PIRACAIA": "D+7",
-  "PIRACICABA": "D+4",
-  "PORTO FERREIRA": "D+4",
-  "POTIM": "D+3",
-  "PRAIA GRANDE": "D+5",
-  "PRESIDENTE PRUDENTE": "D+6",
-  "RIBEIRAO PRETO": "D+4",
-  "RIO CLARO": "D+4",
-  "SANTA BARBARA D OESTE": "D+4",
-  "SANTA ROSA DE VITERBO": "D+4",
-  "SANTOS": "D+5",
-  "SAO CARLOS": "D+4",
-  "SAO JOAO DA BOA VISTA": "D+4",
-  "SAO JOSE DO RIO PRETO": "D+4",
-  "SAO JOSE DOS CAMPOS": "D+4",
-  "SAO PAULO": "D+1",
-  "SOROCABA": "D+4",
-  "SUMARE": "D+4",
-  "SUZANO": "D+2",
-  "TATUI": "D+4",
-  "TAUBATE": "D+4",
-  "TUPA": "D+6",
-  "VALINHOS": "D+4",
-  "VARGEM GRANDE PAULISTA": "D+2",
-  "VARZEA PAULISTA": "D+4",
-  "VINHEDO": "D+4",
-  "VOTORANTIM": "D+4"
-};
+
+    // ============================================================
+    // TRANSPORTADORA POR CIDADE
+    // ============================================================
+    //
+    // Paulinéris tem prioridade para todas as cidades que,
+    // na carteira atual, constam na aba SLA PAULINERIS.
+    //
+    // Barilog fica apenas nas cidades da carteira que NÃO
+    // constam na Paulinéris.
+    // ============================================================
+
+    const transportadoraPorCidade = {
+      "AMERICANA": "Paulinéris",
+      "AMPARO": "Paulinéris",
+      "ARACATUBA": "Paulinéris",
+      "ARACOIABA DA SERRA": "Paulinéris",
+      "ARTUR NOGUEIRA": "Paulinéris",
+      "ASSIS": "Paulinéris",
+      "ATIBAIA": "Paulinéris",
+      "BADY BASSITT": "Paulinéris",
+      "BARRETOS": "Paulinéris",
+
+      "BARUERI": "Barilog",
+
+      "BAURU": "Paulinéris",
+      "BOITUVA": "Paulinéris",
+      "BOTUCATU": "Paulinéris",
+      "BRODOWSKI": "Paulinéris",
+      "CACAPAVA": "Paulinéris",
+
+      "CAJAMAR": "Barilog",
+
+      "CAMPINAS": "Paulinéris",
+      "CONCHAS": "Paulinéris",
+      "COSMOPOLIS": "Paulinéris",
+      "CRAVINHOS": "Paulinéris",
+      "CUBATAO": "Paulinéris",
+      "DRACENA": "Paulinéris",
+
+      "EMBU GUACU": "Barilog",
+
+      "FRANCA": "Paulinéris",
+      "GUARARAPES": "Paulinéris",
+
+      "GUARULHOS": "Barilog",
+
+      "HORTOLANDIA": "Paulinéris",
+      "IGUAPE": "Paulinéris",
+      "ILHA COMPRIDA": "Paulinéris",
+      "INDAIATUBA": "Paulinéris",
+
+      "ITAPEVI": "Barilog",
+
+      "ITAPIRA": "Paulinéris",
+      "ITU": "Paulinéris",
+      "JABOTICABAL": "Paulinéris",
+
+      "JANDIRA": "Barilog",
+
+      "JARDINOPOLIS": "Paulinéris",
+      "JARINU": "Paulinéris",
+      "JAU": "Paulinéris",
+      "JOSE BONIFACIO": "Paulinéris",
+      "JUNDIAI": "Paulinéris",
+      "LARANJAL PAULISTA": "Paulinéris",
+      "LENCOIS PAULISTA": "Paulinéris",
+      "LIMEIRA": "Paulinéris",
+      "LORENA": "Paulinéris",
+      "LOUVEIRA": "Paulinéris",
+
+      "MAIRIPORA": "Barilog",
+
+      "MARILIA": "Paulinéris",
+      "MATAO": "Paulinéris",
+
+      "MAUA": "Barilog",
+
+      "MOCOCA": "Paulinéris",
+
+      "MOGI DAS CRUZES": "Barilog",
+
+      "MOGI GUACU": "Paulinéris",
+      "MOGI MIRIM": "Paulinéris",
+      "MONTE MOR": "Paulinéris",
+      "ORLANDIA": "Paulinéris",
+
+      "OSASCO": "Barilog",
+
+      "PARAGUACU PAULISTA": "Paulinéris",
+      "PAULINIA": "Paulinéris",
+      "PIRACAIA": "Paulinéris",
+      "PIRACICABA": "Paulinéris",
+      "PORTO FERREIRA": "Paulinéris",
+      "POTIM": "Paulinéris",
+      "PRAIA GRANDE": "Paulinéris",
+      "PRESIDENTE PRUDENTE": "Paulinéris",
+      "RIBEIRAO PRETO": "Paulinéris",
+      "RIO CLARO": "Paulinéris",
+      "SANTA BARBARA D OESTE": "Paulinéris",
+      "SANTA ROSA DE VITERBO": "Paulinéris",
+      "SANTOS": "Paulinéris",
+      "SAO CARLOS": "Paulinéris",
+      "SAO JOAO DA BOA VISTA": "Paulinéris",
+      "SAO JOSE DO RIO PRETO": "Paulinéris",
+      "SAO JOSE DOS CAMPOS": "Paulinéris",
+
+      "SAO PAULO": "Barilog",
+
+      "SOROCABA": "Paulinéris",
+      "SUMARE": "Paulinéris",
+
+      "SUZANO": "Barilog",
+
+      "TATUI": "Paulinéris",
+      "TAUBATE": "Paulinéris",
+      "TUPA": "Paulinéris",
+      "VALINHOS": "Paulinéris",
+
+      "VARGEM GRANDE PAULISTA": "Barilog",
+
+      "VARZEA PAULISTA": "Paulinéris",
+      "VINHEDO": "Paulinéris",
+      "VOTORANTIM": "Paulinéris",
+
+      // Exemplo de cidade da Grande São Paulo
+      // que fica na Barilog:
+      "DIADEMA": "Barilog"
+    };
+
+
+    // ============================================================
+    // REGIÃO / CLASSIFICAÇÃO
+    // ============================================================
+
+    const regiaoPorCidade = {
+      "AMERICANA": "Interior de SP",
+      "AMPARO": "Interior de SP",
+      "ARACATUBA": "Interior de SP",
+      "ARACOIABA DA SERRA": "Interior de SP",
+      "ARTUR NOGUEIRA": "Interior de SP",
+      "ASSIS": "Interior de SP",
+      "ATIBAIA": "Interior de SP",
+      "BADY BASSITT": "Interior de SP",
+      "BARRETOS": "Interior de SP",
+
+      "BARUERI": "Grande São Paulo",
+
+      "BAURU": "Interior de SP",
+      "BOITUVA": "Interior de SP",
+      "BOTUCATU": "Interior de SP",
+      "BRODOWSKI": "Interior de SP",
+      "CACAPAVA": "Interior de SP",
+
+      "CAJAMAR": "Grande São Paulo",
+
+      "CAMPINAS": "Interior de SP",
+      "CONCHAS": "Interior de SP",
+      "COSMOPOLIS": "Interior de SP",
+      "CRAVINHOS": "Interior de SP",
+      "CUBATAO": "Interior de SP",
+      "DRACENA": "Interior de SP",
+
+      "EMBU GUACU": "Grande São Paulo",
+
+      "FRANCA": "Interior de SP",
+      "GUARARAPES": "Interior de SP",
+
+      "GUARULHOS": "Grande São Paulo",
+
+      "HORTOLANDIA": "Interior de SP",
+      "IGUAPE": "Interior de SP",
+      "ILHA COMPRIDA": "Interior de SP",
+      "INDAIATUBA": "Interior de SP",
+
+      "ITAPEVI": "Grande São Paulo",
+
+      "ITAPIRA": "Interior de SP",
+      "ITU": "Interior de SP",
+      "JABOTICABAL": "Interior de SP",
+
+      "JANDIRA": "Grande São Paulo",
+
+      "JARDINOPOLIS": "Interior de SP",
+      "JARINU": "Interior de SP",
+      "JAU": "Interior de SP",
+      "JOSE BONIFACIO": "Interior de SP",
+      "JUNDIAI": "Interior de SP",
+      "LARANJAL PAULISTA": "Interior de SP",
+      "LENCOIS PAULISTA": "Interior de SP",
+      "LIMEIRA": "Interior de SP",
+      "LORENA": "Interior de SP",
+      "LOUVEIRA": "Interior de SP",
+
+      "MAIRIPORA": "Grande São Paulo",
+
+      "MARILIA": "Interior de SP",
+      "MATAO": "Interior de SP",
+
+      "MAUA": "Grande São Paulo",
+
+      "MOCOCA": "Interior de SP",
+
+      "MOGI DAS CRUZES": "Grande São Paulo",
+
+      "MOGI GUACU": "Interior de SP",
+      "MOGI MIRIM": "Interior de SP",
+      "MONTE MOR": "Interior de SP",
+      "ORLANDIA": "Interior de SP",
+
+      "OSASCO": "Grande São Paulo",
+
+      "PARAGUACU PAULISTA": "Interior de SP",
+      "PAULINIA": "Interior de SP",
+      "PIRACAIA": "Interior de SP",
+      "PIRACICABA": "Interior de SP",
+      "PORTO FERREIRA": "Interior de SP",
+      "POTIM": "Interior de SP",
+      "PRAIA GRANDE": "Interior de SP",
+      "PRESIDENTE PRUDENTE": "Interior de SP",
+      "RIBEIRAO PRETO": "Interior de SP",
+      "RIO CLARO": "Interior de SP",
+      "SANTA BARBARA D OESTE": "Interior de SP",
+      "SANTA ROSA DE VITERBO": "Interior de SP",
+      "SANTOS": "Interior de SP",
+      "SAO CARLOS": "Interior de SP",
+      "SAO JOAO DA BOA VISTA": "Interior de SP",
+      "SAO JOSE DO RIO PRETO": "Interior de SP",
+      "SAO JOSE DOS CAMPOS": "Interior de SP",
+
+      "SAO PAULO": "Capital de SP",
+
+      "SOROCABA": "Interior de SP",
+      "SUMARE": "Interior de SP",
+
+      "SUZANO": "Grande São Paulo",
+
+      "TATUI": "Interior de SP",
+      "TAUBATE": "Interior de SP",
+      "TUPA": "Interior de SP",
+      "VALINHOS": "Interior de SP",
+
+      "VARGEM GRANDE PAULISTA": "Grande São Paulo",
+
+      "VARZEA PAULISTA": "Interior de SP",
+      "VINHEDO": "Interior de SP",
+      "VOTORANTIM": "Interior de SP",
+
+      "DIADEMA": "Grande São Paulo"
+    };
+
 
     let baseClientesGlobal = [];
     let dadosVivosGlobal = null;
+
 
     function normalizarNome(str) {
       return String(str || '')
@@ -1376,6 +468,7 @@
         .trim();
     }
 
+
     function carregarDadosVivos() {
       try {
         const raw = localStorage.getItem('rca61_dadosVivos');
@@ -1385,8 +478,11 @@
       }
     }
 
+
     function buscarDadosVivosCliente(c) {
-      if (!dadosVivosGlobal || !dadosVivosGlobal.clientes) return null;
+      if (!dadosVivosGlobal || !dadosVivosGlobal.clientes) {
+        return null;
+      }
 
       const candidatos = [
         normalizarNome(c.cliente),
@@ -1399,10 +495,15 @@
         }
       }
 
-      const chavesSalvas = Object.keys(dadosVivosGlobal.clientes);
+      const chavesSalvas =
+        Object.keys(dadosVivosGlobal.clientes);
 
       for (const k of chavesSalvas) {
-        if (candidatos.some(ca => k.includes(ca) || ca.includes(k))) {
+        if (
+          candidatos.some(
+            ca => k.includes(ca) || ca.includes(k)
+          )
+        ) {
           return dadosVivosGlobal.clientes[k];
         }
       }
@@ -1410,82 +511,155 @@
       return null;
     }
 
-    function encontrarRegiaoMetropolitana(cidade) {
-      const cidadeNormalizada = normalizarNome(cidade);
 
-      for (const sigla of Object.keys(regioesMetropolitanas)) {
-        if (regioesMetropolitanas[sigla].includes(cidadeNormalizada)) {
-          return {
-            sigla,
-            nome: nomeRegiao[sigla]
-          };
-        }
+    function encontrarRegiaoMetropolitana(cidade) {
+      const cidadeNormalizada =
+        normalizarNome(cidade);
+
+      if (cidadeNormalizada === 'SAO PAULO') {
+        return {
+          sigla: 'RMSP',
+          nome: 'Capital de SP'
+        };
+      }
+
+      const grandeSaoPaulo = [
+        'BARUERI',
+        'CAJAMAR',
+        'DIADEMA',
+        'EMBU GUACU',
+        'GUARULHOS',
+        'ITAPEVI',
+        'JANDIRA',
+        'MAIRIPORA',
+        'MAUA',
+        'MOGI DAS CRUZES',
+        'OSASCO',
+        'SUZANO',
+        'VARGEM GRANDE PAULISTA'
+      ];
+
+      if (grandeSaoPaulo.includes(cidadeNormalizada)) {
+        return {
+          sigla: 'RMSP',
+          nome: 'Grande São Paulo'
+        };
       }
 
       return null;
     }
 
-    function determinarTransportadoraESLA(c) {
-      const uf = normalizarNome(c.uf);
-      const cidade = normalizarNome(c.cidade);
 
-      let transportadora = '';
-      let regiao = '';
-      let sla = '';
+    // ============================================================
+    // FUNÇÃO PRINCIPAL
+    // ============================================================
+
+    function determinarTransportadoraESLA(c) {
+      const cidade = normalizarNome(c.cidade);
+      const uf = normalizarNome(c.uf);
+
+      let transportadora =
+        transportadoraPorCidade[cidade];
+
+      let sla =
+        slaPorCidade[cidade];
+
+      let regiao =
+        regiaoPorCidade[cidade];
+
       let fonte = '';
 
-      const regiaoMetro =
-        uf === 'SP'
-          ? encontrarRegiaoMetropolitana(cidade)
-          : null;
 
-      // Capital ou qualquer município das RMs:
-      // BARILOG.
-      if (uf === 'SP' && regiaoMetro) {
-        transportadora = 'Barilog';
-        regiao = cidade === 'SAO PAULO'
-          ? 'Capital de SP'
-          : regiaoMetro.nome;
+      // ----------------------------------------------------------
+      // PRIORIDADE DA PAULINÉRIS
+      // ----------------------------------------------------------
+      //
+      // As cidades que estão com a Paulinéris permanecem
+      // com a Paulinéris, mesmo quando também aparecem
+      // na planilha da Barilog.
+      // ----------------------------------------------------------
 
-        if (slaBarilogPorCidade[cidade]) {
-          sla = slaBarilogPorCidade[cidade];
-          fonte = 'Planilha SLA BARILOG';
-        } else if (slaBaseClienteFallback[cidade]) {
-          // A cidade metropolitana pertence à Barilog, mas não está
-          // cadastrada como destino na aba SLA BARILOG recebida.
-          sla = slaBaseClienteFallback[cidade];
-          fonte = 'Base do cliente (fallback)';
-        } else {
-          sla = 'SLA não informado';
-          fonte = 'Cidade sem linha na planilha';
-        }
+      if (transportadora === 'Paulinéris') {
 
-      } else {
-        // Interior de SP e eventual cliente fora de SP.
-        transportadora = 'Paulinéris';
-        regiao = uf === 'SP'
-          ? 'Interior de SP'
-          : 'Fora de SP';
+        fonte =
+          'Planilha SLA PAULINERIS';
 
-        if (slaPaulinerisPorCidade[cidade]) {
-          sla = slaPaulinerisPorCidade[cidade];
-          fonte = 'Planilha SLA PAULINERIS';
-        } else if (c.slaDias !== undefined && c.slaDias !== null && c.slaDias !== '') {
-          sla = `D+${c.slaDias}`;
-          fonte = 'Base do cliente (fallback)';
-        } else if (c.sla) {
-          const match = String(c.sla).match(/D\+\d+/i);
-          if (match) {
-            sla = match[0].toUpperCase();
-            fonte = 'Base do cliente (fallback)';
-          }
-        }
+        regiao =
+          uf === 'SP'
+            ? 'Interior de SP'
+            : 'Fora de SP';
 
-        if (!sla) {
-          sla = 'SLA não informado';
-          fonte = 'Cidade sem linha na planilha';
+
+      // ----------------------------------------------------------
+      // BARILOG
+      // ----------------------------------------------------------
+
+      } else if (transportadora === 'Barilog') {
+
+        fonte =
+          'Planilha SLA BARILOG / base do cliente';
+
+        if (!regiao) {
+          regiao =
+            cidade === 'SAO PAULO'
+              ? 'Capital de SP'
+              : 'Grande São Paulo';
         }
       }
+
+
+      // ----------------------------------------------------------
+      // FALLBACK
+      // ----------------------------------------------------------
+      //
+      // Para eventual cliente novo que não esteja no mapa atual.
+      // Mantém o SLA já existente no clientes.json.
+      // ----------------------------------------------------------
+
+      if (!transportadora) {
+
+        transportadora =
+          'Paulinéris';
+
+        regiao =
+          uf === 'SP'
+            ? 'Interior de SP'
+            : 'Fora de SP';
+
+        fonte =
+          'Base do cliente (fallback)';
+
+
+        if (
+          c.slaDias !== undefined &&
+          c.slaDias !== null &&
+          c.slaDias !== ''
+        ) {
+
+          sla =
+            `D+${c.slaDias}`;
+
+        } else if (c.sla) {
+
+          const match =
+            String(c.sla).match(/D\+\d+/i);
+
+          if (match) {
+            sla =
+              match[0].toUpperCase();
+          }
+        }
+      }
+
+
+      if (!sla) {
+        sla =
+          'SLA não informado';
+
+        fonte =
+          'SLA não informado na base';
+      }
+
 
       return {
         transportadora,
@@ -1495,59 +669,110 @@
       };
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      carregarDadosVivos();
 
-      fetch('clientes.json')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(
-              'Não foi possível carregar o arquivo de clientes.'
+    // ============================================================
+    // CARREGAMENTO DOS CLIENTES
+    // ============================================================
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => {
+
+        carregarDadosVivos();
+
+        fetch('clientes.json')
+
+          .then(response => {
+
+            if (!response.ok) {
+
+              throw new Error(
+                'Não foi possível carregar o arquivo de clientes.'
+              );
+            }
+
+            return response.json();
+          })
+
+          .then(data => {
+
+            baseClientesGlobal =
+              data;
+
+            renderizarTabelaClientes(
+              baseClientesGlobal
             );
-          }
-          return response.json();
-        })
-        .then(data => {
-          baseClientesGlobal = data;
-          renderizarTabelaClientes(baseClientesGlobal);
 
-          document.getElementById('contadorClientes').innerText =
-            `Base Completa (${baseClientesGlobal.length} Clientes)`;
-        })
-        .catch(error => {
-          console.error(error);
+            document
+              .getElementById('contadorClientes')
+              .innerText =
+              `Base Completa (${baseClientesGlobal.length} Clientes)`;
+          })
 
-          document.getElementById('tbClientesSLA').innerHTML =
-            '<tr><td colspan="6" class="empty-row" style="color:#ef4444;">Erro ao carregar a base fixa de clientes. Verifique o arquivo clientes.json.</td></tr>';
+          .catch(error => {
 
-          document.getElementById('contadorClientes').innerText =
-            'Erro na base';
-        });
-    });
+            console.error(error);
+
+            document
+              .getElementById('tbClientesSLA')
+              .innerHTML =
+              '<tr><td colspan="6" class="empty-row" style="color:#ef4444;">Erro ao carregar a base fixa de clientes. Verifique o arquivo clientes.json.</td></tr>';
+
+            document
+              .getElementById('contadorClientes')
+              .innerText =
+              'Erro na base';
+          });
+      }
+    );
+
+
+    // ============================================================
+    // RENDERIZAÇÃO DA TABELA
+    // ============================================================
 
     function renderizarTabelaClientes(dados) {
-      const tbody = document.getElementById('tbClientesSLA');
+
+      const tbody =
+        document.getElementById(
+          'tbClientesSLA'
+        );
+
       tbody.innerHTML = '';
 
+
       if (dados.length === 0) {
+
         tbody.innerHTML =
           '<tr><td colspan="6" class="empty-row">Nenhum cliente encontrado.</td></tr>';
+
         return;
       }
 
-      const fragment = document.createDocumentFragment();
+
+      const fragment =
+        document.createDocumentFragment();
+
 
       dados.forEach(c => {
-        const infoSLA = determinarTransportadoraESLA(c);
+
+        const infoSLA =
+          determinarTransportadoraESLA(c);
+
 
         const corTransportadora =
           infoSLA.transportadora === 'Barilog'
             ? '#f59e0b'
             : '#10b981';
 
-        const tr = document.createElement('tr');
 
-        tr.className = 'clickable-row';
+        const tr =
+          document.createElement('tr');
+
+
+        tr.className =
+          'clickable-row';
+
 
         tr.innerHTML = `
           <td>${c.codigo}</td>
@@ -1565,6 +790,7 @@
           </td>
 
           <td>
+
             <strong
               style="
                 color:${corTransportadora};
@@ -1595,9 +821,11 @@
             >
               ${infoSLA.sla}
             </span>
+
           </td>
 
           <td style="text-align:center;">
+
             <button
               class="btn-upload"
               style="
@@ -1608,52 +836,121 @@
             >
               Ver Detalhes
             </button>
+
           </td>
         `;
 
-        tr.querySelector('button').addEventListener(
-          'click',
-          () => abrirModalCliente(c, infoSLA)
-        );
+
+        tr
+          .querySelector('button')
+          .addEventListener(
+            'click',
+            () =>
+              abrirModalCliente(
+                c,
+                infoSLA
+              )
+          );
+
 
         fragment.appendChild(tr);
       });
 
+
       tbody.appendChild(fragment);
     }
 
+
+    // ============================================================
+    // PESQUISA
+    // ============================================================
+
     document
       .getElementById('searchClientGlobal')
-      .addEventListener('input', function(e) {
-        const termo = e.target.value.toLowerCase().trim();
+      .addEventListener(
+        'input',
+        function(e) {
 
-        const filtrados =
-          baseClientesGlobal.filter(c =>
-            String(c.cliente).toLowerCase().includes(termo) ||
-            String(c.cidade).toLowerCase().includes(termo) ||
-            String(c.codigo).toLowerCase().includes(termo) ||
-            String(c.fantasia).toLowerCase().includes(termo)
+          const termo =
+            e.target.value
+              .toLowerCase()
+              .trim();
+
+
+          const filtrados =
+            baseClientesGlobal.filter(
+              c =>
+
+                String(c.cliente)
+                  .toLowerCase()
+                  .includes(termo)
+
+                ||
+
+                String(c.cidade)
+                  .toLowerCase()
+                  .includes(termo)
+
+                ||
+
+                String(c.codigo)
+                  .toLowerCase()
+                  .includes(termo)
+
+                ||
+
+                String(c.fantasia)
+                  .toLowerCase()
+                  .includes(termo)
+            );
+
+
+          renderizarTabelaClientes(
+            filtrados
           );
+        }
+      );
 
-        renderizarTabelaClientes(filtrados);
-      });
 
-    function abrirModalCliente(c, infoSLA) {
+    // ============================================================
+    // MODAL
+    // ============================================================
+
+    function abrirModalCliente(
+      c,
+      infoSLA
+    ) {
+
       let modalContainer =
-        document.getElementById('customClientModal');
+        document.getElementById(
+          'customClientModal'
+        );
+
 
       if (!modalContainer) {
-        modalContainer = document.createElement('div');
-        modalContainer.id = 'customClientModal';
+
+        modalContainer =
+          document.createElement(
+            'div'
+          );
+
+        modalContainer.id =
+          'customClientModal';
+
 
         modalContainer.style.cssText =
           'position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(11,15,25,0.8);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;';
 
-        document.body.appendChild(modalContainer);
+
+        document.body.appendChild(
+          modalContainer
+        );
       }
+
 
       const valorFormatado =
         typeof c.valor === 'number'
+
           ? c.valor.toLocaleString(
               'pt-BR',
               {
@@ -1661,16 +958,23 @@
                 currency:'BRL'
               }
             )
+
           : c.valor;
+
 
       const dadosVivos =
         buscarDadosVivosCliente(c);
 
-      let blocoVivo = '';
+
+      let blocoVivo =
+        '';
+
 
       if (dadosVivos) {
+
         const faturamentoVivo =
           typeof dadosVivos.faturamento === 'number'
+
             ? dadosVivos.faturamento.toLocaleString(
                 'pt-BR',
                 {
@@ -1678,24 +982,33 @@
                   currency:'BRL'
                 }
               )
+
             : '-';
 
-        const dias = dadosVivos.diasInativo;
+
+        const dias =
+          dadosVivos.diasInativo;
+
+
         const temDias =
           typeof dias === 'number' &&
           !isNaN(dias);
+
 
         const corAtividade =
           temDias && dias >= 60
             ? '#ef4444'
             : '#10b981';
 
+
         const textoAtividade =
           temDias
             ? `${dias} dias sem comprar`
             : 'Sem dados de inatividade';
 
+
         blocoVivo = `
+
           <div
             style="
               background:#0f172a;
@@ -1704,6 +1017,7 @@
               border-left:4px solid #3b82f6;
             "
           >
+
             <span
               style="
                 color:#94a3b8;
@@ -1715,6 +1029,7 @@
               Faturamento (Planilha do Dashboard)
             </span>
 
+
             <strong
               style="
                 color:#3b82f6;
@@ -1723,7 +1038,9 @@
             >
               ${faturamentoVivo}
             </strong>
+
           </div>
+
 
           <div
             style="
@@ -1733,6 +1050,7 @@
               border-left:4px solid ${corAtividade};
             "
           >
+
             <span
               style="
                 color:#94a3b8;
@@ -1744,6 +1062,7 @@
               Atividade de Compra
             </span>
 
+
             <strong
               style="
                 color:${corAtividade};
@@ -1753,14 +1072,21 @@
               ${textoAtividade}
             </strong>
 
-            ${dadosVivos.ultimaFatura
-              ? `<span style="display:block;margin-top:4px;font-size:.75rem;color:#94a3b8;">Última fatura (planilha): ${dadosVivos.ultimaFatura}</span>`
-              : ''
+
+            ${
+              dadosVivos.ultimaFatura
+                ? `<span style="display:block;margin-top:4px;font-size:.75rem;color:#94a3b8;">Última fatura (planilha): ${dadosVivos.ultimaFatura}</span>`
+                : ''
             }
+
           </div>
         `;
+
+
       } else {
+
         blocoVivo = `
+
           <div
             style="
               background:#0f172a;
@@ -1770,6 +1096,7 @@
               grid-column:1 / -1;
             "
           >
+
             <span
               style="
                 color:#64748b;
@@ -1780,18 +1107,24 @@
               (index.html) para ver aqui o faturamento
               atualizado e a atividade de compra deste cliente.
             </span>
+
           </div>
+
         `;
       }
+
 
       const corSLA =
         infoSLA.transportadora === 'Barilog'
           ? '#f59e0b'
           : '#10b981';
 
+
       const observacaoFonte =
         infoSLA.fonte === 'Base do cliente (fallback)'
+
           ? `
+
             <span
               style="
                 display:block;
@@ -1805,10 +1138,14 @@
               planilha de SLA; foi preservado o SLA já cadastrado
               na base do cliente.
             </span>
+
           `
+
           : '';
 
+
       modalContainer.innerHTML = `
+
         <div
           style="
             background:#1e293b;
@@ -1823,6 +1160,7 @@
           "
         >
 
+
           <div
             style="
               display:flex;
@@ -1833,6 +1171,7 @@
               margin-bottom:16px;
             "
           >
+
             <h3
               style="
                 margin:0;
@@ -1846,6 +1185,7 @@
               🏢 Detalhes do Cliente (RCA 61)
             </h3>
 
+
             <button
               onclick="fecharModalCliente()"
               style="
@@ -1858,7 +1198,9 @@
             >
               &times;
             </button>
+
           </div>
+
 
           <div
             style="
@@ -1869,6 +1211,7 @@
             "
           >
 
+
             <div
               style="
                 background:#0f172a;
@@ -1877,6 +1220,7 @@
                 border-left:4px solid #6366f1;
               "
             >
+
               <span
                 style="
                   color:#94a3b8;
@@ -1888,6 +1232,7 @@
                 Cliente
               </span>
 
+
               <strong
                 style="
                   font-size:1.05rem;
@@ -1896,7 +1241,9 @@
               >
                 ${c.cliente}
               </strong>
+
             </div>
+
 
             <div
               style="
@@ -1905,40 +1252,204 @@
                 gap:10px;
               "
             >
-              <div style="background:#0f172a;padding:10px;border-radius:8px;">
-                <span style="color:#94a3b8;font-size:.75rem;text-transform:uppercase;display:block;">CNPJ</span>
-                <strong style="color:#38bdf8;font-size:.85rem;">${c.cnpj}</strong>
-              </div>
 
-              <div style="background:#0f172a;padding:10px;border-radius:8px;">
-                <span style="color:#94a3b8;font-size:.75rem;text-transform:uppercase;display:block;">Cidade / UF</span>
-                <strong style="color:#e2e8f0;">${c.cidade} - ${c.uf}</strong>
-              </div>
 
-              <div style="background:#0f172a;padding:10px;border-radius:8px;">
-                <span style="color:#94a3b8;font-size:.75rem;text-transform:uppercase;display:block;">Telefone</span>
-                <strong style="color:#e2e8f0;">
-                  ${c.telefone && c.telefone !== '-' ? c.telefone : (c.celular && c.celular !== '-' ? c.celular : '-')}
+              <div
+                style="
+                  background:#0f172a;
+                  padding:10px;
+                  border-radius:8px;
+                "
+              >
+
+                <span
+                  style="
+                    color:#94a3b8;
+                    font-size:.75rem;
+                    text-transform:uppercase;
+                    display:block;
+                  "
+                >
+                  CNPJ
+                </span>
+
+                <strong
+                  style="
+                    color:#38bdf8;
+                    font-size:.85rem;
+                  "
+                >
+                  ${c.cnpj}
                 </strong>
+
               </div>
 
-              <div style="background:#0f172a;padding:10px;border-radius:8px;">
-                <span style="color:#94a3b8;font-size:.75rem;text-transform:uppercase;display:block;">E-mail</span>
-                <strong style="color:#e2e8f0;font-size:.85rem;word-break:break-all;">${c.email || '-'}</strong>
+
+              <div
+                style="
+                  background:#0f172a;
+                  padding:10px;
+                  border-radius:8px;
+                "
+              >
+
+                <span
+                  style="
+                    color:#94a3b8;
+                    font-size:.75rem;
+                    text-transform:uppercase;
+                    display:block;
+                  "
+                >
+                  Cidade / UF
+                </span>
+
+                <strong
+                  style="
+                    color:#e2e8f0;
+                  "
+                >
+                  ${c.cidade} - ${c.uf}
+                </strong>
+
               </div>
 
-              <div style="background:#0f172a;padding:10px;border-radius:8px;">
-                <span style="color:#94a3b8;font-size:.75rem;text-transform:uppercase;display:block;">Faturamento Total</span>
-                <strong style="color:#10b981;">${valorFormatado}</strong>
+
+              <div
+                style="
+                  background:#0f172a;
+                  padding:10px;
+                  border-radius:8px;
+                "
+              >
+
+                <span
+                  style="
+                    color:#94a3b8;
+                    font-size:.75rem;
+                    text-transform:uppercase;
+                    display:block;
+                  "
+                >
+                  Telefone
+                </span>
+
+                <strong
+                  style="
+                    color:#e2e8f0;
+                  "
+                >
+                  ${
+                    c.telefone && c.telefone !== '-'
+                      ? c.telefone
+                      : (
+                          c.celular &&
+                          c.celular !== '-'
+                        )
+                          ? c.celular
+                          : '-'
+                  }
+                </strong>
+
               </div>
 
-              <div style="background:#0f172a;padding:10px;border-radius:8px;">
-                <span style="color:#94a3b8;font-size:.75rem;text-transform:uppercase;display:block;">Última Venda</span>
-                <strong style="color:#e2e8f0;">${c.ultimaVenda}</strong>
+
+              <div
+                style="
+                  background:#0f172a;
+                  padding:10px;
+                  border-radius:8px;
+                "
+              >
+
+                <span
+                  style="
+                    color:#94a3b8;
+                    font-size:.75rem;
+                    text-transform:uppercase;
+                    display:block;
+                  "
+                >
+                  E-mail
+                </span>
+
+                <strong
+                  style="
+                    color:#e2e8f0;
+                    font-size:.85rem;
+                    word-break:break-all;
+                  "
+                >
+                  ${c.email || '-'}
+                </strong>
+
               </div>
+
+
+              <div
+                style="
+                  background:#0f172a;
+                  padding:10px;
+                  border-radius:8px;
+                "
+              >
+
+                <span
+                  style="
+                    color:#94a3b8;
+                    font-size:.75rem;
+                    text-transform:uppercase;
+                    display:block;
+                  "
+                >
+                  Faturamento Total
+                </span>
+
+                <strong
+                  style="
+                    color:#10b981;
+                  "
+                >
+                  ${valorFormatado}
+                </strong>
+
+              </div>
+
+
+              <div
+                style="
+                  background:#0f172a;
+                  padding:10px;
+                  border-radius:8px;
+                "
+              >
+
+                <span
+                  style="
+                    color:#94a3b8;
+                    font-size:.75rem;
+                    text-transform:uppercase;
+                    display:block;
+                  "
+                >
+                  Última Venda
+                </span>
+
+                <strong
+                  style="
+                    color:#e2e8f0;
+                  "
+                >
+                  ${c.ultimaVenda}
+                </strong>
+
+              </div>
+
 
               ${blocoVivo}
+
             </div>
+
 
             <div
               style="
@@ -1948,6 +1459,7 @@
                 border-left:4px solid ${corSLA};
               "
             >
+
               <span
                 style="
                   color:#94a3b8;
@@ -1959,6 +1471,7 @@
                 Transportadora
               </span>
 
+
               <strong
                 style="
                   color:${corSLA};
@@ -1967,6 +1480,7 @@
               >
                 ${infoSLA.transportadora}
               </strong>
+
 
               <span
                 style="
@@ -1979,6 +1493,7 @@
                 Região: ${infoSLA.regiao}
               </span>
 
+
               <span
                 style="
                   display:block;
@@ -1989,6 +1504,7 @@
               >
                 SLA de entrega
               </span>
+
 
               <strong
                 style="
@@ -2001,6 +1517,7 @@
                 ${infoSLA.sla}
               </strong>
 
+
               <span
                 style="
                   display:block;
@@ -2012,10 +1529,14 @@
                 Fonte: ${infoSLA.fonte}
               </span>
 
+
               ${observacaoFonte}
+
             </div>
 
+
           </div>
+
 
           <div
             style="
@@ -2023,6 +1544,7 @@
               text-align:right;
             "
           >
+
             <button
               onclick="fecharModalCliente()"
               style="
@@ -2037,24 +1559,40 @@
             >
               Fechar
             </button>
+
           </div>
 
+
         </div>
+
       `;
 
-      modalContainer.style.display = 'flex';
+
+      modalContainer.style.display =
+        'flex';
     }
 
+
+    // ============================================================
+    // FECHAR MODAL
+    // ============================================================
+
     function fecharModalCliente() {
+
       const modalContainer =
         document.getElementById(
           'customClientModal'
         );
 
+
       if (modalContainer) {
-        modalContainer.style.display = 'none';
+
+        modalContainer.style.display =
+          'none';
+
       }
     }
+
   </script>
 
 </body>
