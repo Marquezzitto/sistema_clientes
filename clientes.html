@@ -3,1163 +3,1812 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Base de Clientes & SLAs - RCA 61</title>
-  
+  <title>Atendimento ELO - RCA 61</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <link rel="stylesheet" href="style.css">
+  <style>
+    .elo-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:0.7rem; font-weight:600; }
+    .elo-cell-locked { color: var(--text-secondary); background: rgba(255,255,255,0.02); }
+    .elo-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
+    .elo-dot.on { background: var(--accent-green); }
+    .elo-dot.off { background: #334155; }
+    .elo-guide { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 16px 20px; }
+    .elo-guide summary { cursor: pointer; font-weight: 600; }
+    .elo-guide-row { display:flex; gap:10px; margin-top:10px; font-size:0.85rem; }
+    .elo-guide-row b { min-width: 120px; color: var(--accent-indigo); flex-shrink:0; }
+    .elo-panel-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:14px; }
+    .elo-panel-card { background: var(--bg-card); border:1px solid var(--border-color); border-radius: var(--radius); padding:14px 16px; }
+    .elo-panel-card .lbl { font-size:0.7rem; color: var(--text-secondary); text-transform:uppercase; }
+    .elo-panel-card .val { font-size:1.3rem; font-weight:700; margin-top:4px; }
+    .elo-panel-card .var { font-size:0.75rem; margin-top:2px; }
+
+    .elo-progress-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:14px;
+      margin-top:14px;
+    }
+
+    .elo-progress-card {
+      background:var(--bg-card);
+      border:1px solid var(--border-color);
+      border-radius:var(--radius);
+      padding:16px;
+    }
+
+    .elo-progress-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+
+    .elo-progress-month {
+      font-size:0.78rem;
+      color:var(--text-secondary);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .elo-progress-pct {
+      font-size:1.45rem;
+      font-weight:700;
+      line-height:1;
+    }
+
+    .elo-progress-main {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+      margin-top:14px;
+    }
+
+    .elo-progress-kpi {
+      background:#0f172a;
+      border-radius:8px;
+      padding:10px;
+    }
+
+    .elo-progress-kpi .lbl {
+      display:block;
+      font-size:0.68rem;
+      color:#64748b;
+      text-transform:uppercase;
+    }
+
+    .elo-progress-kpi .num {
+      display:block;
+      margin-top:3px;
+      font-size:1rem;
+      font-weight:700;
+      color:#f8fafc;
+    }
+
+    .elo-progress-bar {
+      height:8px;
+      background:#1e293b;
+      border-radius:999px;
+      overflow:hidden;
+      margin-top:14px;
+    }
+
+    .elo-progress-fill {
+      height:100%;
+      border-radius:999px;
+      background:#10b981;
+      transition:width .25s ease;
+    }
+
+    .elo-progress-status {
+      margin-top:9px;
+      font-size:0.75rem;
+      color:#94a3b8;
+      line-height:1.35;
+    }
+
+    .elo-progress-footer {
+      display:grid !important;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+      margin-top:12px;
+      padding-top:11px;
+      border-top:1px solid var(--border-color);
+      min-height:48px;
+      visibility:visible;
+    }
+
+    .elo-progress-footer-item {
+      text-align:center;
+      font-size:0.72rem;
+      color:#94a3b8;
+      line-height:1.25;
+    }
+
+    .elo-progress-footer-item strong {
+      display:block;
+      margin-top:3px;
+      font-size:0.95rem;
+      color:#f8fafc;
+    }
+
+    @media (max-width:900px) {
+      .elo-progress-grid {
+        grid-template-columns:1fr;
+      }
+    }
+
+    .elo-modal-month {
+      background:#0f172a;
+      border-radius:8px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .elo-modal-month h4 {
+      font-size:0.8rem;
+      color:#94a3b8;
+      text-transform:uppercase;
+    }
+
+    .elo-field label {
+      display:block;
+      font-size:0.7rem;
+      color:#64748b;
+      margin-bottom:3px;
+    }
+
+    .elo-field input,
+    .elo-field select,
+    .elo-field textarea {
+      width:100%;
+      background:#1e293b;
+      border:1px solid #334155;
+      color:#f8fafc;
+      padding:7px 8px;
+      border-radius:6px;
+      font-size:0.85rem;
+      font-family:inherit;
+    }
+
+    .elo-field textarea {
+      resize:vertical;
+      min-height:70px;
+    }
+
+    .elo-dirty {
+      border-color:#f59e0b !important;
+      box-shadow:0 0 0 1px rgba(245,158,11,0.4);
+    }
+
+    .elo-toast {
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      z-index:100000;
+      padding:12px 18px;
+      border-radius:8px;
+      font-size:0.875rem;
+      font-weight:600;
+      color:#fff;
+      opacity:0;
+      transform:translateY(10px);
+      transition:all .25s;
+    }
+
+    .elo-toast.show {
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    .elo-toast.ok {
+      background:#10b981;
+    }
+
+    .elo-toast.err {
+      background:#ef4444;
+    }
+
+    .elo-btn-save-modal {
+      background:#10b981;
+      color:#fff;
+      border:none;
+      padding:10px 20px;
+      border-radius:6px;
+      font-weight:600;
+      cursor:pointer;
+      font-size:0.9rem;
+    }
+
+    .elo-btn-save-modal:disabled {
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+  </style>
 </head>
+
 <body>
 
   <div class="app-container">
-    
+
     <header class="main-header">
+
       <div class="header-title">
-        <h1>Base de Clientes & SLAs - RCA 61</h1>
-        <p>Consulta unificada da carteira completa e prazos de entrega por cidade</p>
+        <h1>Atendimento ELO - RCA 61</h1>
+        <p>Registro mensal de contato com a carteira - Set/Out/Nov 2026</p>
       </div>
 
       <div class="header-controls">
-        <a href="index.html" class="btn-upload" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-          <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Voltar ao Dashboard
+
+        <a
+          href="index.html"
+          class="btn-upload"
+          style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;"
+        >
+          <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
+          Dashboard
         </a>
 
-        <a href="atendimento.html" class="btn-upload" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #f59e0b;">
-          <i data-lucide="phone-call" style="width:16px;height:16px;"></i> Atendimento ELO
+        <a
+          href="clientes.html"
+          class="btn-upload"
+          style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background-color:var(--accent-indigo);"
+        >
+          <i data-lucide="users" style="width:16px;height:16px;"></i>
+          Base & SLAs
         </a>
 
         <div class="status-badge active" id="statusBadge">
           <span class="status-dot"></span>
-          <span id="contadorClientes">Carregando base...</span>
+          <span id="statusText">Carregando...</span>
         </div>
+
       </div>
+
     </header>
 
-    <!-- Tabela Geral de Clientes e SLAs -->
-    <section class="table-card" style="margin-top: 10px;">
+    <section
+      class="elo-panel-grid"
+      id="painelGrid"
+    ></section>
+
+    <section
+      class="elo-progress-grid"
+      id="eloProgressGrid"
+    ></section>
+
+    <details class="elo-guide">
+
+      <summary>
+        Como funciona esse atendimento (clique para abrir)
+      </summary>
+
+      <div id="guiaConteudo"></div>
+
+    </details>
+
+    <section
+      class="table-card"
+      style="margin-top:10px;"
+    >
+
       <div class="card-header space-between">
-        <h3>Lista de Clientes, Cidades & Prazos de SLA</h3>
+
+        <h3>
+          Minha Carteira - 270 Clientes
+        </h3>
 
         <input
           type="text"
-          id="searchClientGlobal"
+          id="searchElo"
           placeholder="Pesquisar por cliente, cidade ou código..."
           class="table-search"
-          style="width: 300px;"
+          style="width:300px;"
         >
+
       </div>
 
-      <div class="table-wrapper" style="max-height: 600px;">
+      <div
+        class="table-wrapper"
+        style="max-height:600px;"
+      >
+
         <table>
+
           <thead>
+
             <tr>
               <th>Código</th>
-              <th>Cliente / Razão Social</th>
-              <th>Fantasia</th>
-              <th>Cidade / UF</th>
-              <th>SLA de Entrega</th>
-              <th style="text-align: center;">Ações</th>
+              <th>Cliente</th>
+              <th>Cidade</th>
+              <th>Var%</th>
+              <th>Ped. 26</th>
+              <th>Grava?</th>
+              <th>Ponto de Atenção</th>
+              <th>Contatos (S/O/N)</th>
+              <th style="text-align:center;">Ações</th>
             </tr>
+
           </thead>
 
-          <tbody id="tbClientesSLA">
+          <tbody id="tbElo">
+
             <tr>
-              <td colspan="6" class="empty-row">
-                Carregando clientes...
+              <td
+                colspan="9"
+                class="empty-row"
+              >
+                Carregando planilha do Drive...
               </td>
             </tr>
+
           </tbody>
+
         </table>
+
       </div>
+
     </section>
 
   </div>
 
-<script>
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-
-    // ============================================================
-    // SLA / TRANSPORTADORAS
-    // Fonte principal: planilha pública "SLA TRANSPORTES"
-    // Drive:
-    // https://docs.google.com/spreadsheets/d/1phgqg2JLT4PQ4FTKIipY0_2v4zpx5tB4/edit
-    //
-    // REGRA:
-    //
-    // 1. Se a cidade da carteira estiver na relação da
-    //    SLA PAULINERIS, permanece Paulinéris.
-    //
-    // 2. Mesmo que a cidade também apareça na planilha
-    //    da Barilog, a Paulinéris tem prioridade.
-    //
-    // 3. Barilog fica somente para as cidades que NÃO estão
-    //    na relação da Paulinéris e que pertencem à capital
-    //    ou à Grande São Paulo/RM.
-    //
-    // 4. As cidades da carteira atual já possuem seus SLAs
-    //    conferidos nas planilhas recebidas.
-    // ============================================================
-
-    const SLA_DRIVE_URL =
-      'https://docs.google.com/spreadsheets/d/1phgqg2JLT4PQ4FTKIipY0_2v4zpx5tB4/edit';
-
-
-    // ============================================================
-    // SLA DA CARTEIRA ATUAL
-    // ============================================================
-
-    const slaPorCidade = {
-      "AMERICANA": "D+4",
-      "AMPARO": "D+4",
-      "ARACATUBA": "D+5",
-      "ARACOIABA DA SERRA": "D+7",
-      "ARTUR NOGUEIRA": "D+4",
-      "ASSIS": "D+5",
-      "ATIBAIA": "D+4",
-      "BADY BASSITT": "D+4",
-      "BARRETOS": "D+4",
-      "BARUERI": "D+2",
-      "BAURU": "D+4",
-      "BOITUVA": "D+4",
-      "BOTUCATU": "D+4",
-      "BRODOWSKI": "D+4",
-      "CACAPAVA": "D+6",
-      "CAJAMAR": "D+2",
-      "CAMPINAS": "D+3",
-      "CONCHAS": "D+6",
-      "COSMOPOLIS": "D+4",
-      "CRAVINHOS": "D+4",
-      "CUBATAO": "D+7",
-      "DRACENA": "D+7",
-      "EMBU GUACU": "D+2",
-      "FRANCA": "D+4",
-      "GUARARAPES": "D+5",
-      "GUARULHOS": "D+2",
-      "HORTOLANDIA": "D+4",
-      "IGUAPE": "D+6",
-      "ILHA COMPRIDA": "D+6",
-      "INDAIATUBA": "D+4",
-      "ITAPEVI": "D+2",
-      "ITAPIRA": "D+4",
-      "ITU": "D+4",
-      "JABOTICABAL": "D+4",
-      "JANDIRA": "D+2",
-      "JARDINOPOLIS": "D+4",
-      "JARINU": "D+6",
-      "JAU": "D+4",
-      "JOSE BONIFACIO": "D+4",
-      "JUNDIAI": "D+3",
-      "LARANJAL PAULISTA": "D+4",
-      "LENCOIS PAULISTA": "D+4",
-      "LIMEIRA": "D+4",
-      "LORENA": "D+3",
-      "LOUVEIRA": "D+4",
-      "MAIRIPORA": "D+2",
-      "MARILIA": "D+4",
-      "MATAO": "D+4",
-      "MAUA": "D+1",
-      "MOCOCA": "D+4",
-      "MOGI DAS CRUZES": "D+1",
-      "MOGI GUACU": "D+4",
-      "MOGI MIRIM": "D+4",
-      "MONTE MOR": "D+4",
-      "ORLANDIA": "D+4",
-      "OSASCO": "D+2",
-      "PARAGUACU PAULISTA": "D+5",
-      "PAULINIA": "D+4",
-      "PIRACAIA": "D+7",
-      "PIRACICABA": "D+4",
-      "PORTO FERREIRA": "D+4",
-      "POTIM": "D+3",
-      "PRAIA GRANDE": "D+5",
-      "PRESIDENTE PRUDENTE": "D+6",
-      "RIBEIRAO PRETO": "D+4",
-      "RIO CLARO": "D+4",
-      "SANTA BARBARA D OESTE": "D+4",
-      "SANTA ROSA DE VITERBO": "D+4",
-      "SANTOS": "D+5",
-      "SAO CARLOS": "D+4",
-      "SAO JOAO DA BOA VISTA": "D+4",
-      "SAO JOSE DO RIO PRETO": "D+4",
-      "SAO JOSE DOS CAMPOS": "D+4",
-      "SAO PAULO": "D+1",
-      "SOROCABA": "D+4",
-      "SUMARE": "D+4",
-      "SUZANO": "D+1",
-      "TATUI": "D+4",
-      "TAUBATE": "D+4",
-      "TUPA": "D+6",
-      "VALINHOS": "D+4",
-      "VARGEM GRANDE PAULISTA": "D+2",
-      "VARZEA PAULISTA": "D+4",
-      "VINHEDO": "D+4",
-      "VOTORANTIM": "D+4",
-
-      // Exemplo de cidade futura da Grande São Paulo:
-      "DIADEMA": "D+1"
-    };
-
-
-    // ============================================================
-    // TRANSPORTADORA POR CIDADE
-    // ============================================================
-    //
-    // Paulinéris tem prioridade para todas as cidades que,
-    // na carteira atual, constam na aba SLA PAULINERIS.
-    //
-    // Barilog fica apenas nas cidades da carteira que NÃO
-    // constam na Paulinéris.
-    // ============================================================
-
-    const transportadoraPorCidade = {
-      "AMERICANA": "Paulinéris",
-      "AMPARO": "Paulinéris",
-      "ARACATUBA": "Paulinéris",
-      "ARACOIABA DA SERRA": "Paulinéris",
-      "ARTUR NOGUEIRA": "Paulinéris",
-      "ASSIS": "Paulinéris",
-      "ATIBAIA": "Paulinéris",
-      "BADY BASSITT": "Paulinéris",
-      "BARRETOS": "Paulinéris",
-
-      "BARUERI": "Barilog",
-
-      "BAURU": "Paulinéris",
-      "BOITUVA": "Paulinéris",
-      "BOTUCATU": "Paulinéris",
-      "BRODOWSKI": "Paulinéris",
-      "CACAPAVA": "Paulinéris",
-
-      "CAJAMAR": "Barilog",
-
-      "CAMPINAS": "Paulinéris",
-      "CONCHAS": "Paulinéris",
-      "COSMOPOLIS": "Paulinéris",
-      "CRAVINHOS": "Paulinéris",
-      "CUBATAO": "Paulinéris",
-      "DRACENA": "Paulinéris",
-
-      "EMBU GUACU": "Barilog",
-
-      "FRANCA": "Paulinéris",
-      "GUARARAPES": "Paulinéris",
-
-      "GUARULHOS": "Barilog",
-
-      "HORTOLANDIA": "Paulinéris",
-      "IGUAPE": "Paulinéris",
-      "ILHA COMPRIDA": "Paulinéris",
-      "INDAIATUBA": "Paulinéris",
-
-      "ITAPEVI": "Barilog",
-
-      "ITAPIRA": "Paulinéris",
-      "ITU": "Paulinéris",
-      "JABOTICABAL": "Paulinéris",
-
-      "JANDIRA": "Barilog",
-
-      "JARDINOPOLIS": "Paulinéris",
-      "JARINU": "Paulinéris",
-      "JAU": "Paulinéris",
-      "JOSE BONIFACIO": "Paulinéris",
-      "JUNDIAI": "Paulinéris",
-      "LARANJAL PAULISTA": "Paulinéris",
-      "LENCOIS PAULISTA": "Paulinéris",
-      "LIMEIRA": "Paulinéris",
-      "LORENA": "Paulinéris",
-      "LOUVEIRA": "Paulinéris",
-
-      "MAIRIPORA": "Barilog",
-
-      "MARILIA": "Paulinéris",
-      "MATAO": "Paulinéris",
-
-      "MAUA": "Barilog",
-
-      "MOCOCA": "Paulinéris",
-
-      "MOGI DAS CRUZES": "Barilog",
-
-      "MOGI GUACU": "Paulinéris",
-      "MOGI MIRIM": "Paulinéris",
-      "MONTE MOR": "Paulinéris",
-      "ORLANDIA": "Paulinéris",
-
-      "OSASCO": "Barilog",
-
-      "PARAGUACU PAULISTA": "Paulinéris",
-      "PAULINIA": "Paulinéris",
-      "PIRACAIA": "Paulinéris",
-      "PIRACICABA": "Paulinéris",
-      "PORTO FERREIRA": "Paulinéris",
-      "POTIM": "Paulinéris",
-      "PRAIA GRANDE": "Paulinéris",
-      "PRESIDENTE PRUDENTE": "Paulinéris",
-      "RIBEIRAO PRETO": "Paulinéris",
-      "RIO CLARO": "Paulinéris",
-      "SANTA BARBARA D OESTE": "Paulinéris",
-      "SANTA ROSA DE VITERBO": "Paulinéris",
-      "SANTOS": "Paulinéris",
-      "SAO CARLOS": "Paulinéris",
-      "SAO JOAO DA BOA VISTA": "Paulinéris",
-      "SAO JOSE DO RIO PRETO": "Paulinéris",
-      "SAO JOSE DOS CAMPOS": "Paulinéris",
-
-      "SAO PAULO": "Barilog",
-
-      "SOROCABA": "Paulinéris",
-      "SUMARE": "Paulinéris",
-
-      "SUZANO": "Barilog",
-
-      "TATUI": "Paulinéris",
-      "TAUBATE": "Paulinéris",
-      "TUPA": "Paulinéris",
-      "VALINHOS": "Paulinéris",
-
-      "VARGEM GRANDE PAULISTA": "Barilog",
-
-      "VARZEA PAULISTA": "Paulinéris",
-      "VINHEDO": "Paulinéris",
-      "VOTORANTIM": "Paulinéris",
-
-      // Exemplo de cidade da Grande São Paulo
-      // que fica na Barilog:
-      "DIADEMA": "Barilog"
-    };
-
-
-    // ============================================================
-    // REGIÃO / CLASSIFICAÇÃO
-    // ============================================================
-
-    const regiaoPorCidade = {
-      "AMERICANA": "Interior de SP",
-      "AMPARO": "Interior de SP",
-      "ARACATUBA": "Interior de SP",
-      "ARACOIABA DA SERRA": "Interior de SP",
-      "ARTUR NOGUEIRA": "Interior de SP",
-      "ASSIS": "Interior de SP",
-      "ATIBAIA": "Interior de SP",
-      "BADY BASSITT": "Interior de SP",
-      "BARRETOS": "Interior de SP",
-
-      "BARUERI": "Grande São Paulo",
-
-      "BAURU": "Interior de SP",
-      "BOITUVA": "Interior de SP",
-      "BOTUCATU": "Interior de SP",
-      "BRODOWSKI": "Interior de SP",
-      "CACAPAVA": "Interior de SP",
-
-      "CAJAMAR": "Grande São Paulo",
-
-      "CAMPINAS": "Interior de SP",
-      "CONCHAS": "Interior de SP",
-      "COSMOPOLIS": "Interior de SP",
-      "CRAVINHOS": "Interior de SP",
-      "CUBATAO": "Interior de SP",
-      "DRACENA": "Interior de SP",
-
-      "EMBU GUACU": "Grande São Paulo",
-
-      "FRANCA": "Interior de SP",
-      "GUARARAPES": "Interior de SP",
-
-      "GUARULHOS": "Grande São Paulo",
-
-      "HORTOLANDIA": "Interior de SP",
-      "IGUAPE": "Interior de SP",
-      "ILHA COMPRIDA": "Interior de SP",
-      "INDAIATUBA": "Interior de SP",
-
-      "ITAPEVI": "Grande São Paulo",
-
-      "ITAPIRA": "Interior de SP",
-      "ITU": "Interior de SP",
-      "JABOTICABAL": "Interior de SP",
-
-      "JANDIRA": "Grande São Paulo",
-
-      "JARDINOPOLIS": "Interior de SP",
-      "JARINU": "Interior de SP",
-      "JAU": "Interior de SP",
-      "JOSE BONIFACIO": "Interior de SP",
-      "JUNDIAI": "Interior de SP",
-      "LARANJAL PAULISTA": "Interior de SP",
-      "LENCOIS PAULISTA": "Interior de SP",
-      "LIMEIRA": "Interior de SP",
-      "LORENA": "Interior de SP",
-      "LOUVEIRA": "Interior de SP",
-
-      "MAIRIPORA": "Grande São Paulo",
-
-      "MARILIA": "Interior de SP",
-      "MATAO": "Interior de SP",
-
-      "MAUA": "Grande São Paulo",
-
-      "MOCOCA": "Interior de SP",
-
-      "MOGI DAS CRUZES": "Grande São Paulo",
-
-      "MOGI GUACU": "Interior de SP",
-      "MOGI MIRIM": "Interior de SP",
-      "MONTE MOR": "Interior de SP",
-      "ORLANDIA": "Interior de SP",
-
-      "OSASCO": "Grande São Paulo",
-
-      "PARAGUACU PAULISTA": "Interior de SP",
-      "PAULINIA": "Interior de SP",
-      "PIRACAIA": "Interior de SP",
-      "PIRACICABA": "Interior de SP",
-      "PORTO FERREIRA": "Interior de SP",
-      "POTIM": "Interior de SP",
-      "PRAIA GRANDE": "Interior de SP",
-      "PRESIDENTE PRUDENTE": "Interior de SP",
-      "RIBEIRAO PRETO": "Interior de SP",
-      "RIO CLARO": "Interior de SP",
-      "SANTA BARBARA D OESTE": "Interior de SP",
-      "SANTA ROSA DE VITERBO": "Interior de SP",
-      "SANTOS": "Interior de SP",
-      "SAO CARLOS": "Interior de SP",
-      "SAO JOAO DA BOA VISTA": "Interior de SP",
-      "SAO JOSE DO RIO PRETO": "Interior de SP",
-      "SAO JOSE DOS CAMPOS": "Interior de SP",
-
-      "SAO PAULO": "Capital de SP",
-
-      "SOROCABA": "Interior de SP",
-      "SUMARE": "Interior de SP",
-
-      "SUZANO": "Grande São Paulo",
-
-      "TATUI": "Interior de SP",
-      "TAUBATE": "Interior de SP",
-      "TUPA": "Interior de SP",
-      "VALINHOS": "Interior de SP",
-
-      "VARGEM GRANDE PAULISTA": "Grande São Paulo",
-
-      "VARZEA PAULISTA": "Interior de SP",
-      "VINHEDO": "Interior de SP",
-      "VOTORANTIM": "Interior de SP",
-
-      "DIADEMA": "Grande São Paulo"
-    };
-
-
-    let baseClientesGlobal = [];
-    let dadosVivosGlobal = null;
-
-
-    function normalizarNome(str) {
-      return String(str || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toUpperCase()
-        .replace(/[^A-Z0-9 ]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+  <div
+    id="eloToast"
+    class="elo-toast"
+  ></div>
+
+  <script>
+
+    if (
+      typeof lucide !== 'undefined'
+    ) {
+      lucide.createIcons();
     }
 
+    // ============================================================
+    // CONFIGURAÇÃO
+    // ============================================================
 
-    function carregarDadosVivos() {
+    const DRIVE_FILE_ID =
+      '1yr12JeKO-5ipBrzbqrcWFnYXhkfkQvH7tkRicbcogps';
+
+    const APPS_SCRIPT_URL =
+      'https://script.google.com/macros/s/AKfycbw-s10eMg-8ajimxH3lK1vwo5dK_o43SLHtQa4H0sN5oHQ8VrewthA-iBxx32_RVfns/exec';
+
+    const ASSUNTO_OPCOES = [
+      'Apresentação da carteira',
+      'Oferta de gravação',
+      'Acompanhamento de pedido',
+      'Ocorrência ou devolução',
+      'Cliente sem compra',
+      'entender motivo',
+      'Dúvida de produto ou processo',
+      'Atualização de cadastro',
+      'Sem retorno',
+      'Cliente não localizado'
+    ];
+
+    const ENCAMINHADO_OPCOES = [
+      'Nada a encaminhar',
+      'Reunião com a Aline Almeida',
+      'Mesa de negociação',
+      'Crédito e limite',
+      'Logística',
+      'Fiscal',
+      'Qualidade ou gravação',
+      'Cadastro'
+    ];
+
+    let baseElo = [];
+
+    // ============================================================
+    // CARREGAMENTO
+    // ============================================================
+
+    async function carregarDados() {
+
       try {
-        const raw = localStorage.getItem('rca61_dadosVivos');
-        dadosVivosGlobal = raw ? JSON.parse(raw) : null;
-      } catch (e) {
-        dadosVivosGlobal = null;
-      }
-    }
 
+        const url =
+          `https://docs.google.com/spreadsheets/d/${DRIVE_FILE_ID}/export?format=xlsx`;
 
-    function buscarDadosVivosCliente(c) {
-      if (!dadosVivosGlobal || !dadosVivosGlobal.clientes) {
-        return null;
-      }
+        const res =
+          await fetch(url);
 
-      const candidatos = [
-        normalizarNome(c.cliente),
-        normalizarNome(c.fantasia)
-      ].filter(Boolean);
-
-      for (const chave of candidatos) {
-        if (dadosVivosGlobal.clientes[chave]) {
-          return dadosVivosGlobal.clientes[chave];
+        if (!res.ok) {
+          throw new Error(
+            'HTTP ' + res.status
+          );
         }
-      }
 
-      const chavesSalvas =
-        Object.keys(dadosVivosGlobal.clientes);
+        const buf =
+          await res.arrayBuffer();
 
-      for (const k of chavesSalvas) {
-        if (
-          candidatos.some(
-            ca => k.includes(ca) || ca.includes(k)
-          )
-        ) {
-          return dadosVivosGlobal.clientes[k];
-        }
-      }
-
-      return null;
-    }
-
-
-    function encontrarRegiaoMetropolitana(cidade) {
-      const cidadeNormalizada =
-        normalizarNome(cidade);
-
-      if (cidadeNormalizada === 'SAO PAULO') {
-        return {
-          sigla: 'RMSP',
-          nome: 'Capital de SP'
-        };
-      }
-
-      const grandeSaoPaulo = [
-        'BARUERI',
-        'CAJAMAR',
-        'DIADEMA',
-        'EMBU GUACU',
-        'GUARULHOS',
-        'ITAPEVI',
-        'JANDIRA',
-        'MAIRIPORA',
-        'MAUA',
-        'MOGI DAS CRUZES',
-        'OSASCO',
-        'SUZANO',
-        'VARGEM GRANDE PAULISTA'
-      ];
-
-      if (grandeSaoPaulo.includes(cidadeNormalizada)) {
-        return {
-          sigla: 'RMSP',
-          nome: 'Grande São Paulo'
-        };
-      }
-
-      return null;
-    }
-
-
-    // ============================================================
-    // FUNÇÃO PRINCIPAL
-    // ============================================================
-
-    function determinarTransportadoraESLA(c) {
-      const cidade = normalizarNome(c.cidade);
-      const uf = normalizarNome(c.uf);
-
-      let transportadora =
-        transportadoraPorCidade[cidade];
-
-      let sla =
-        slaPorCidade[cidade];
-
-      let regiao =
-        regiaoPorCidade[cidade];
-
-      let fonte = '';
-
-
-      // ----------------------------------------------------------
-      // PRIORIDADE DA PAULINÉRIS
-      // ----------------------------------------------------------
-      //
-      // As cidades que estão com a Paulinéris permanecem
-      // com a Paulinéris, mesmo quando também aparecem
-      // na planilha da Barilog.
-      // ----------------------------------------------------------
-
-      if (transportadora === 'Paulinéris') {
-
-        fonte =
-          'Planilha SLA PAULINERIS';
-
-        regiao =
-          uf === 'SP'
-            ? 'Interior de SP'
-            : 'Fora de SP';
-
-
-      // ----------------------------------------------------------
-      // BARILOG
-      // ----------------------------------------------------------
-
-      } else if (transportadora === 'Barilog') {
-
-        fonte =
-          'Planilha SLA BARILOG / base do cliente';
-
-        if (!regiao) {
-          regiao =
-            cidade === 'SAO PAULO'
-              ? 'Capital de SP'
-              : 'Grande São Paulo';
-        }
-      }
-
-
-      // ----------------------------------------------------------
-      // FALLBACK
-      // ----------------------------------------------------------
-      //
-      // Para eventual cliente novo que não esteja no mapa atual.
-      // Mantém o SLA já existente no clientes.json.
-      // ----------------------------------------------------------
-
-      if (!transportadora) {
-
-        transportadora =
-          'Paulinéris';
-
-        regiao =
-          uf === 'SP'
-            ? 'Interior de SP'
-            : 'Fora de SP';
-
-        fonte =
-          'Base do cliente (fallback)';
-
-
-        if (
-          c.slaDias !== undefined &&
-          c.slaDias !== null &&
-          c.slaDias !== ''
-        ) {
-
-          sla =
-            `D+${c.slaDias}`;
-
-        } else if (c.sla) {
-
-          const match =
-            String(c.sla).match(/D\+\d+/i);
-
-          if (match) {
-            sla =
-              match[0].toUpperCase();
-          }
-        }
-      }
-
-
-      if (!sla) {
-        sla =
-          'SLA não informado';
-
-        fonte =
-          'SLA não informado na base';
-      }
-
-
-      return {
-        transportadora,
-        regiao,
-        sla,
-        fonte
-      };
-    }
-
-
-    // ============================================================
-    // CARREGAMENTO DOS CLIENTES
-    // ============================================================
-
-    document.addEventListener(
-      'DOMContentLoaded',
-      () => {
-
-        carregarDadosVivos();
-
-        fetch('clientes.json')
-
-          .then(response => {
-
-            if (!response.ok) {
-
-              throw new Error(
-                'Não foi possível carregar o arquivo de clientes.'
-              );
+        const wb =
+          XLSX.read(
+            new Uint8Array(buf),
+            {
+              type:'array',
+              cellDates:true
             }
+          );
 
-            return response.json();
-          })
+        baseElo =
+          extrairDoWorkbook(wb);
 
-          .then(data => {
+        renderizarPainel(wb);
+        renderizarGuia(wb);
 
-            baseClientesGlobal =
-              data;
-
-            renderizarTabelaClientes(
-              baseClientesGlobal
-            );
-
-            document
-              .getElementById('contadorClientes')
-              .innerText =
-              `Base Completa (${baseClientesGlobal.length} Clientes)`;
-          })
-
-          .catch(error => {
-
-            console.error(error);
-
-            document
-              .getElementById('tbClientesSLA')
-              .innerHTML =
-              '<tr><td colspan="6" class="empty-row" style="color:#ef4444;">Erro ao carregar a base fixa de clientes. Verifique o arquivo clientes.json.</td></tr>';
-
-            document
-              .getElementById('contadorClientes')
-              .innerText =
-              'Erro na base';
-          });
-      }
-    );
-
-
-    // ============================================================
-    // RENDERIZAÇÃO DA TABELA
-    // ============================================================
-
-    function renderizarTabelaClientes(dados) {
-
-      const tbody =
-        document.getElementById(
-          'tbClientesSLA'
+        setStatus(
+          true,
+          `Sincronizado do Drive (${baseElo.length} clientes)`
         );
 
-      tbody.innerHTML = '';
+      } catch (err) {
 
+        console.warn(
+          '[Atendimento ELO] Não consegui buscar do Drive, usando snapshot local.',
+          err
+        );
 
-      if (dados.length === 0) {
+        try {
 
-        tbody.innerHTML =
-          '<tr><td colspan="6" class="empty-row">Nenhum cliente encontrado.</td></tr>';
+          const r =
+            await fetch(
+              'atendimento_elo.json'
+            );
+
+          baseElo =
+            await r.json();
+
+          setStatus(
+            false,
+            `Snapshot local (${baseElo.length} clientes) — sem conexão com o Drive`
+          );
+
+        } catch (err2) {
+
+          document.getElementById(
+            'tbElo'
+          ).innerHTML =
+            '<tr><td colspan="9" class="empty-row" style="color:#ef4444;">Não foi possível carregar os dados.</td></tr>';
+
+          setStatus(
+            false,
+            'Erro ao carregar'
+          );
+
+          return;
+        }
+      }
+
+      renderizarTabela(
+        baseElo
+      );
+    }
+
+    function setStatus(
+      ok,
+      texto
+    ) {
+
+      const badge =
+        document.getElementById(
+          'statusBadge'
+        );
+
+      const txt =
+        document.getElementById(
+          'statusText'
+        );
+
+      txt.textContent =
+        texto;
+
+      badge.classList.toggle(
+        'active',
+        ok
+      );
+    }
+
+    function fmtDataCell(v) {
+
+      if (
+        v instanceof Date
+      ) {
+        return v
+          .toISOString()
+          .slice(0,10);
+      }
+
+      if (
+        typeof v === 'string' &&
+        v
+      ) {
+        return v;
+      }
+
+      return '';
+    }
+
+    function extrairDoWorkbook(wb) {
+
+      const aba =
+        wb.Sheets[
+          'Minha Carteira'
+        ];
+
+      const linhas =
+        XLSX.utils.sheet_to_json(
+          aba,
+          {
+            header:1,
+            defval:null
+          }
+        );
+
+      const clientes = [];
+
+      for (
+        let i = 3;
+        i < linhas.length;
+        i++
+      ) {
+
+        const r =
+          linhas[i];
+
+        if (
+          !r ||
+          r.every(
+            c =>
+              c === null ||
+              c === ''
+          )
+        ) {
+          continue;
+        }
+
+        const [
+          cod,
+          cliente,
+          cidade,
+          janAgo25,
+          janAgo26,
+          varPct,
+          pedidos26,
+          grava,
+          ponto,
+          setContato,
+          setAssunto,
+          outContato,
+          outAssunto,
+          novContato,
+          novAssunto,
+          clienteDisse,
+          encaminhado
+        ] = r;
+
+        if (
+          !cod ||
+          !cliente
+        ) {
+          continue;
+        }
+
+        clientes.push({
+
+          codigo:
+            Math.trunc(
+              Number(cod)
+            ),
+
+          cliente:
+            String(
+              cliente
+            ).trim(),
+
+          cidade:
+            cidade
+              ? String(
+                  cidade
+                ).trim()
+              : '',
+
+          janAgo25:
+            Number(
+              janAgo25
+            ) || 0,
+
+          janAgo26:
+            Number(
+              janAgo26
+            ) || 0,
+
+          varPct:
+            typeof varPct === 'number'
+              ? varPct
+              : null,
+
+          pedidos26:
+            Number(
+              pedidos26
+            ) || 0,
+
+          grava:
+            grava || '',
+
+          pontoAtencao:
+            ponto || '',
+
+          setContato:
+            fmtDataCell(
+              setContato
+            ),
+
+          setAssunto:
+            setAssunto || '',
+
+          outContato:
+            fmtDataCell(
+              outContato
+            ),
+
+          outAssunto:
+            outAssunto || '',
+
+          novContato:
+            fmtDataCell(
+              novContato
+            ),
+
+          novAssunto:
+            novAssunto || '',
+
+          clienteDisse:
+            clienteDisse || '',
+
+          encaminhadoPara:
+            encaminhado || ''
+        });
+      }
+
+      return clientes;
+    }
+
+    // ============================================================
+    // PAINEL
+    // ============================================================
+
+    function renderizarPainel(
+      wb
+    ) {
+
+      const grid =
+        document.getElementById(
+          'painelGrid'
+        );
+
+      try {
+
+        const aba =
+          wb.Sheets[
+            'Painel'
+          ];
+
+        const linhas =
+          XLSX.utils.sheet_to_json(
+            aba,
+            {
+              header:1,
+              defval:null
+            }
+          );
+
+        const indicadores =
+          linhas
+            .slice(3,8)
+            .filter(
+              r =>
+                r &&
+                r[0] &&
+                typeof r[1] === 'number'
+            );
+
+        grid.innerHTML =
+          indicadores
+            .map(
+              r => {
+
+                const [
+                  nome,
+                  v25,
+                  v26,
+                  variacao
+                ] = r;
+
+                const ehMoeda =
+                  String(
+                    nome
+                  )
+                  .toLowerCase()
+                  .includes(
+                    'faturamento'
+                  );
+
+                const fmt =
+                  n =>
+                    ehMoeda
+                      ? n.toLocaleString(
+                          'pt-BR',
+                          {
+                            style:'currency',
+                            currency:'BRL',
+                            maximumFractionDigits:0
+                          }
+                        )
+                      : n.toLocaleString(
+                          'pt-BR',
+                          {
+                            maximumFractionDigits:1
+                          }
+                        );
+
+                const corVar =
+                  variacao >= 0
+                    ? '#10b981'
+                    : '#ef4444';
+
+                const varTxt =
+                  typeof variacao === 'number'
+                    ? `${variacao >= 0 ? '+' : ''}${(variacao * 100).toFixed(1)}%`
+                    : '-';
+
+                return `
+                  <div class="elo-panel-card">
+
+                    <div class="lbl">
+                      ${nome}
+                    </div>
+
+                    <div class="val">
+                      ${fmt(v26)}
+                    </div>
+
+                    <div
+                      class="var"
+                      style="color:${corVar};"
+                    >
+                      ${varTxt} vs Jan-Ago/25 (${fmt(v25)})
+                    </div>
+
+                  </div>
+                `;
+              }
+            )
+            .join('');
+
+      } catch (e) {
+
+        grid.innerHTML = '';
+      }
+    }
+
+    function renderizarGuia(
+      wb
+    ) {
+
+      const el =
+        document.getElementById(
+          'guiaConteudo'
+        );
+
+      try {
+
+        const aba =
+          wb.Sheets[
+            'Fluxo de Atendimento'
+          ];
+
+        const linhas =
+          XLSX.utils.sheet_to_json(
+            aba,
+            {
+              header:1,
+              defval:null
+            }
+          );
+
+        const pares =
+          linhas
+            .slice(3)
+            .filter(
+              r =>
+                r &&
+                r[0] &&
+                r[1]
+            );
+
+        el.innerHTML =
+          pares
+            .map(
+              r =>
+                `<div class="elo-guide-row"><b>${r[0]}</b><span>${r[1]}</span></div>`
+            )
+            .join('');
+
+      } catch (e) {
+
+        el.innerHTML =
+          '<p style="color:#64748b;font-size:0.85rem;">Guia não disponível.</p>';
+      }
+    }
+
+    // ============================================================
+    // PROGRESSO DO ATENDIMENTO ELO
+    // ============================================================
+
+    const MESES_ELO = [
+
+      {
+        numero:9,
+        nome:'Setembro',
+        contato:'setContato',
+        assunto:'setAssunto'
+      },
+
+      {
+        numero:10,
+        nome:'Outubro',
+        contato:'outContato',
+        assunto:'outAssunto'
+      },
+
+      {
+        numero:11,
+        nome:'Novembro',
+        contato:'novContato',
+        assunto:'novAssunto'
+      }
+
+    ];
+
+    const FERIADOS_NACIONAIS_ELO_2026 =
+      new Set([
+        '2026-10-12',
+        '2026-11-02',
+        '2026-11-20'
+      ]);
+
+    function dataContatoValidaParaMes(
+      valor,
+      mes
+    ) {
+
+      if (!valor) {
+        return false;
+      }
+
+      const s =
+        String(
+          valor
+        ).trim();
+
+      const m =
+        s.match(
+          /^(\d{4})-(\d{2})-(\d{2})$/
+        );
+
+      if (!m) {
+        return false;
+      }
+
+      const ano =
+        Number(
+          m[1]
+        );
+
+      const mesNumero =
+        Number(
+          m[2]
+        );
+
+      return (
+        ano === 2026 &&
+        mesNumero === mes
+      );
+    }
+
+    function clienteFeitoNoMes(
+      c,
+      cfg
+    ) {
+
+      const temData =
+        dataContatoValidaParaMes(
+          c[cfg.contato],
+          cfg.numero
+        );
+
+      const temAssunto =
+        String(
+          c[cfg.assunto] || ''
+        ).trim() !== '';
+
+      return (
+        temData &&
+        temAssunto
+      );
+    }
+
+    function normalizarAssuntoElo(
+      valor
+    ) {
+
+      return String(
+        valor || ''
+      )
+        .normalize('NFD')
+        .replace(
+          /[\u0300-\u036f]/g,
+          ''
+        )
+        .trim()
+        .toLowerCase();
+    }
+
+    // ============================================================
+    // CLASSIFICAÇÃO DO RODAPÉ
+    //
+    // TIVE RETORNO:
+    // data válida do mês + assunto preenchido,
+    // exceto "Sem retorno" e "Cliente não localizado".
+    //
+    // SEM RETORNO:
+    // data válida do mês + "Sem retorno"
+    // ou "Cliente não localizado".
+    //
+    // NÃO LIGUEI:
+    // não existe data válida para o mês.
+    // ============================================================
+
+    function classificarAtendimentoNoMes(
+      c,
+      cfg
+    ) {
+
+      const temData =
+        dataContatoValidaParaMes(
+          c[cfg.contato],
+          cfg.numero
+        );
+
+      const assunto =
+        normalizarAssuntoElo(
+          c[cfg.assunto]
+        );
+
+      const temAssunto =
+        assunto !== '';
+
+      if (!temData) {
+        return 'naoLigou';
+      }
+
+      if (
+        temAssunto &&
+        (
+          assunto === 'sem retorno' ||
+          assunto === 'cliente nao localizado'
+        )
+      ) {
+        return 'semRetorno';
+      }
+
+      if (
+        temAssunto
+      ) {
+        return 'teveRetorno';
+      }
+
+      return 'naoLigou';
+    }
+
+    function contarStatusAtendimentoMes(
+      cfg
+    ) {
+
+      const status = {
+
+        teveRetorno:0,
+
+        semRetorno:0,
+
+        naoLigou:0
+
+      };
+
+      baseElo.forEach(
+        c => {
+
+          const categoria =
+            classificarAtendimentoNoMes(
+              c,
+              cfg
+            );
+
+          status[
+            categoria
+          ]++;
+        }
+      );
+
+      return status;
+    }
+
+    function contarConcluidosMes(
+      cfg
+    ) {
+
+      return baseElo.filter(
+        c =>
+          clienteFeitoNoMes(
+            c,
+            cfg
+          )
+      ).length;
+    }
+
+    function dataLocalHoje() {
+
+      const agora =
+        new Date();
+
+      return new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate()
+      );
+    }
+
+    function primeiroDiaMes(
+      ano,
+      mesNumero
+    ) {
+
+      return new Date(
+        ano,
+        mesNumero - 1,
+        1
+      );
+    }
+
+    function ultimoDiaMes(
+      ano,
+      mesNumero
+    ) {
+
+      return new Date(
+        ano,
+        mesNumero,
+        0
+      );
+    }
+
+    function formatarDataCurta(
+      data
+    ) {
+
+      return data.toLocaleDateString(
+        'pt-BR',
+        {
+          day:'2-digit',
+          month:'2-digit'
+        }
+      );
+    }
+
+    function ehDiaUtilElo(
+      data
+    ) {
+
+      const diaSemana =
+        data.getDay();
+
+      if (
+        diaSemana === 0 ||
+        diaSemana === 6
+      ) {
+        return false;
+      }
+
+      const iso =
+        `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
+
+      return !FERIADOS_NACIONAIS_ELO_2026.has(
+        iso
+      );
+    }
+
+    function diasUteisRestantesMes(
+      mesNumero
+    ) {
+
+      const hoje =
+        dataLocalHoje();
+
+      const inicioMes =
+        primeiroDiaMes(
+          2026,
+          mesNumero
+        );
+
+      const fimMes =
+        ultimoDiaMes(
+          2026,
+          mesNumero
+        );
+
+      let inicioContagem;
+
+      if (
+        hoje < inicioMes
+      ) {
+
+        inicioContagem =
+          inicioMes;
+
+      } else if (
+        hoje > fimMes
+      ) {
+
+        return 0;
+
+      } else {
+
+        inicioContagem =
+          new Date(
+            hoje
+          );
+
+        inicioContagem.setDate(
+          inicioContagem.getDate() + 1
+        );
+      }
+
+      let total = 0;
+
+      const cursor =
+        new Date(
+          inicioContagem
+        );
+
+      while (
+        cursor <= fimMes
+      ) {
+
+        if (
+          ehDiaUtilElo(
+            cursor
+          )
+        ) {
+          total++;
+        }
+
+        cursor.setDate(
+          cursor.getDate() + 1
+        );
+      }
+
+      return total;
+    }
+
+    function renderizarProgressoAtendimento() {
+
+      const grid =
+        document.getElementById(
+          'eloProgressGrid'
+        );
+
+      if (!grid) {
+        return;
+      }
+
+      const totalClientes =
+        baseElo.length;
+
+      if (!totalClientes) {
+
+        grid.innerHTML =
+          '';
 
         return;
       }
 
+      grid.innerHTML =
+        MESES_ELO
+          .map(
+            cfg => {
 
-      const fragment =
-        document.createDocumentFragment();
+              const feitos =
+                contarConcluidosMes(
+                  cfg
+                );
 
+              const statusAtendimento =
+                contarStatusAtendimentoMes(
+                  cfg
+                );
 
-      dados.forEach(c => {
+              const faltam =
+                Math.max(
+                  totalClientes - feitos,
+                  0
+                );
 
-        const infoSLA =
-          determinarTransportadoraESLA(c);
+              const percentual =
+                totalClientes > 0
+                  ? (
+                      feitos /
+                      totalClientes
+                    ) * 100
+                  : 0;
 
+              const diasRestantes =
+                diasUteisRestantesMes(
+                  cfg.numero
+                );
 
-        const corTransportadora =
-          infoSLA.transportadora === 'Barilog'
-            ? '#f59e0b'
-            : '#10b981';
+              const hoje =
+                dataLocalHoje();
 
+              const primeiro =
+                primeiroDiaMes(
+                  2026,
+                  cfg.numero
+                );
 
-        const tr =
-          document.createElement('tr');
+              const ultimo =
+                ultimoDiaMes(
+                  2026,
+                  cfg.numero
+                );
 
+              let statusTexto =
+                '';
 
-        tr.className =
-          'clickable-row';
+              if (
+                hoje > ultimo
+              ) {
 
+                statusTexto =
+                  faltam === 0
+                    ? '✅ Finalizado — todos os clientes foram feitos.'
+                    : `⚠️ Mês finalizado — ainda faltam ${faltam} clientes.`;
 
-        tr.innerHTML = `
-          <td>${c.codigo}</td>
+              } else if (
+                hoje < primeiro
+              ) {
 
-          <td>
-            <strong>${c.cliente}</strong>
-          </td>
+                statusTexto =
+                  `⏳ Ainda não iniciado — ${diasRestantes} dias úteis no mês.`;
 
-          <td>
-            ${c.fantasia || '-'}
-          </td>
+              } else {
 
-          <td>
-            ${c.cidade} - ${c.uf}
-          </td>
+                statusTexto =
+                  faltam === 0
+                    ? '✅ Atendimento concluído — todos os clientes foram feitos.'
+                    : `🔄 Em andamento — faltam ${faltam} clientes e ${diasRestantes} dias úteis para o fim do mês.`;
+              }
 
-          <td>
+              return `
 
-            <strong
-              style="
-                color:${corTransportadora};
-                font-weight:700;
-              "
-            >
-              ${infoSLA.transportadora}
-            </strong>
+                <div class="elo-progress-card">
 
-            <span
-              style="
-                display:block;
-                margin-top:2px;
-                font-size:.72rem;
-                color:#94a3b8;
-              "
-            >
-              ${infoSLA.regiao}
-            </span>
+                  <div class="elo-progress-head">
 
-            <span
-              style="
-                display:block;
-                margin-top:2px;
-                font-weight:700;
-                color:#f8fafc;
-              "
-            >
-              ${infoSLA.sla}
-            </span>
+                    <div>
 
-          </td>
+                      <div class="elo-progress-month">
+                        Atendimento ELO · ${cfg.nome}/2026
+                      </div>
 
-          <td style="text-align:center;">
+                      <div
+                        style="
+                          margin-top:5px;
+                          font-size:1rem;
+                          font-weight:700;
+                        "
+                      >
+                        ${feitos} de ${totalClientes} clientes
+                      </div>
 
-            <button
-              class="btn-upload"
-              style="
-                padding:4px 10px;
-                font-size:.75rem;
-                margin:0 auto;
-              "
-            >
-              Ver Detalhes
-            </button>
+                    </div>
 
-          </td>
-        `;
+                    <div
+                      class="elo-progress-pct"
+                      style="color:#10b981;"
+                    >
+                      ${percentual.toFixed(1)}%
+                    </div>
 
+                  </div>
 
-        tr
-          .querySelector('button')
-          .addEventListener(
-            'click',
-            () =>
-              abrirModalCliente(
-                c,
-                infoSLA
-              )
-          );
+                  <div class="elo-progress-main">
 
+                    <div class="elo-progress-kpi">
 
-        fragment.appendChild(tr);
-      });
+                      <span class="lbl">
+                        Feitos
+                      </span>
 
+                      <span class="num">
+                        ${feitos}
+                      </span>
 
-      tbody.appendChild(fragment);
+                    </div>
+
+                    <div class="elo-progress-kpi">
+
+                      <span class="lbl">
+                        Faltam
+                      </span>
+
+                      <span class="num">
+                        ${faltam}
+                      </span>
+
+                    </div>
+
+                    <div class="elo-progress-kpi">
+
+                      <span class="lbl">
+                        Dias úteis
+                      </span>
+
+                      <span class="num">
+                        ${diasRestantes}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  <div class="elo-progress-bar">
+
+                    <div
+                      class="elo-progress-fill"
+                      style="width:${Math.min(
+                        percentual,
+                        100
+                      )}%;"
+                    ></div>
+
+                  </div>
+
+                  <div class="elo-progress-status">
+                    ${statusTexto}
+                  </div>
+
+                  <!-- COMPLEMENTO PEDIDO -->
+                  <div
+                    class="elo-progress-footer"
+                    title="Distribuição dos clientes deste mês"
+                  >
+
+                    <div class="elo-progress-footer-item">
+                      Tive retorno
+                      <strong>
+                        ${statusAtendimento.teveRetorno}
+                      </strong>
+                    </div>
+
+                    <div class="elo-progress-footer-item">
+                      Sem retorno
+                      <strong>
+                        ${statusAtendimento.semRetorno}
+                      </strong>
+                    </div>
+
+                    <div class="elo-progress-footer-item">
+                      Não liguei
+                      <strong>
+                        ${statusAtendimento.naoLigou}
+                      </strong>
+                    </div>
+
+                  </div>
+
+                </div>
+              `;
+            }
+          )
+          .join('');
     }
 
+    // ============================================================
+    // TABELA
+    // ============================================================
 
-    // ============================================================
-    // PESQUISA
-    // ============================================================
+    function badgePonto(
+      texto
+    ) {
+
+      if (!texto) {
+        return '-';
+      }
+
+      const t =
+        texto.toLowerCase();
+
+      let cor =
+        '#64748b';
+
+      if (
+        t.includes('caiu')
+      ) {
+        cor =
+          '#f59e0b';
+
+      } else if (
+        t.includes('não comprou') ||
+        t.includes('sem compra')
+      ) {
+
+        cor =
+          '#ef4444';
+
+      } else if (
+        t.includes('nunca gravou')
+      ) {
+
+        cor =
+          '#3b82f6';
+
+      } else if (
+        t.includes('manutenção')
+      ) {
+
+        cor =
+          '#10b981';
+      }
+
+      return `
+        <span
+          class="elo-badge"
+          style="
+            background:${cor}22;
+            color:${cor};
+          "
+        >
+          ${texto}
+        </span>
+      `;
+    }
+
+    function renderizarTabela(
+      dados
+    ) {
+
+      renderizarProgressoAtendimento();
+
+      const tbody =
+        document.getElementById(
+          'tbElo'
+        );
+
+      if (
+        dados.length === 0
+      ) {
+
+        tbody.innerHTML =
+          '<tr><td colspan="9" class="empty-row">Nenhum cliente encontrado.</td></tr>';
+
+        return;
+      }
+
+      tbody.innerHTML =
+        '';
+
+      const frag =
+        document.createDocumentFragment();
+
+      dados.forEach(
+        c => {
+
+          const varTxt =
+            typeof c.varPct === 'number'
+              ? `${(c.varPct * 100).toFixed(0)}%`
+              : '-';
+
+          const corVar =
+            typeof c.varPct === 'number'
+              ? (
+                  c.varPct >= 0
+                    ? '#10b981'
+                    : '#ef4444'
+                )
+              : '#64748b';
+
+          const dots = `
+
+            <span
+              class="elo-dot ${
+                clienteFeitoNoMes(
+                  c,
+                  MESES_ELO[0]
+                )
+                  ? 'on'
+                  : 'off'
+              }"
+              title="Setembro: ${
+                clienteFeitoNoMes(
+                  c,
+                  MESES_ELO[0]
+                )
+                  ? 'Feito'
+                  : 'Pendente'
+              }"
+            ></span>
+
+            <span
+              class="elo-dot ${
+                clienteFeitoNoMes(
+                  c,
+                  MESES_ELO[1]
+                )
+                  ? 'on'
+                  : 'off'
+              }"
+              title="Outubro: ${
+                clienteFeitoNoMes(
+                  c,
+                  MESES_ELO[1]
+                )
+                  ? 'Feito'
+                  : 'Pendente'
+              }"
+            ></span>
+
+            <span
+              class="elo-dot ${
+                clienteFeitoNoMes(
+                  c,
+                  MESES_ELO[2]
+                )
+                  ? 'on'
+                  : 'off'
+              }"
+              title="Novembro: ${
+                clienteFeitoNoMes(
+                  c,
+                  MESES_ELO[2]
+                )
+                  ? 'Feito'
+                  : 'Pendente'
+              }"
+            ></span>
+
+          `;
+
+          const tr =
+            document.createElement(
+              'tr'
+            );
+
+          tr.className =
+            'clickable-row';
+
+          tr.innerHTML = `
+
+            <td>
+              ${c.codigo}
+            </td>
+
+            <td>
+              <strong>
+                ${c.cliente}
+              </strong>
+            </td>
+
+            <td>
+              ${c.cidade}
+            </td>
+
+            <td
+              style="
+                color:${corVar};
+                font-weight:600;
+              "
+            >
+              ${varTxt}
+            </td>
+
+            <td>
+              ${c.pedidos26}
+            </td>
+
+            <td>
+              ${c.grava || '-'}
+            </td>
+
+            <td>
+              ${badgePonto(
+                c.pontoAtencao
+              )}
+            </td>
+
+            <td>
+              ${dots}
+            </td>
+
+            <td
+              style="
+                text-align:center;
+              "
+            >
+              <button
+                class="btn-upload"
+                style="
+                  padding:4px 10px;
+                  font-size:0.75rem;
+                "
+              >
+                Registrar Atendimento
+              </button>
+            </td>
+
+          `;
+
+          tr
+            .querySelector(
+              'button'
+            )
+            .addEventListener(
+              'click',
+              () =>
+                abrirModal(c)
+            );
+
+          frag.appendChild(
+            tr
+          );
+        }
+      );
+
+      tbody.appendChild(
+        frag
+      );
+    }
 
     document
-      .getElementById('searchClientGlobal')
+      .getElementById(
+        'searchElo'
+      )
       .addEventListener(
         'input',
-        function(e) {
+        e => {
 
           const termo =
             e.target.value
               .toLowerCase()
               .trim();
 
-
           const filtrados =
-            baseClientesGlobal.filter(
+            baseElo.filter(
               c =>
-
-                String(c.cliente)
+                c.cliente
                   .toLowerCase()
-                  .includes(termo)
+                  .includes(
+                    termo
+                  ) ||
 
-                ||
-
-                String(c.cidade)
+                c.cidade
                   .toLowerCase()
-                  .includes(termo)
+                  .includes(
+                    termo
+                  ) ||
 
-                ||
-
-                String(c.codigo)
-                  .toLowerCase()
-                  .includes(termo)
-
-                ||
-
-                String(c.fantasia)
-                  .toLowerCase()
-                  .includes(termo)
+                String(
+                  c.codigo
+                ).includes(
+                  termo
+                )
             );
 
-
-          renderizarTabelaClientes(
+          renderizarTabela(
             filtrados
           );
         }
       );
 
-
     // ============================================================
     // MODAL
     // ============================================================
 
-    function abrirModalCliente(
-      c,
-      infoSLA
+    function optionsHtml(
+      lista,
+      selecionado
     ) {
 
-      let modalContainer =
+      return (
+        `<option value="">-</option>` +
+
+        lista
+          .map(
+            op =>
+              `<option value="${op}" ${
+                op === selecionado
+                  ? 'selected'
+                  : ''
+              }>${op}</option>`
+          )
+          .join('')
+      );
+    }
+
+    function abrirModal(
+      c
+    ) {
+
+      let modal =
         document.getElementById(
-          'customClientModal'
+          'eloModal'
         );
 
+      if (!modal) {
 
-      if (!modalContainer) {
-
-        modalContainer =
+        modal =
           document.createElement(
             'div'
           );
 
-        modalContainer.id =
-          'customClientModal';
+        modal.id =
+          'eloModal';
 
-
-        modalContainer.style.cssText =
-          'position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(11,15,25,0.8);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;';
-
+        modal.style.cssText =
+          `
+            position:fixed;
+            top:0;
+            left:0;
+            width:100vw;
+            height:100vh;
+            background:rgba(11,15,25,0.85);
+            backdrop-filter:blur(6px);
+            z-index:99999;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            overflow-y:auto;
+            padding:20px;
+          `;
 
         document.body.appendChild(
-          modalContainer
+          modal
         );
       }
 
-
-      const valorFormatado =
-        typeof c.valor === 'number'
-
-          ? c.valor.toLocaleString(
-              'pt-BR',
-              {
-                style:'currency',
-                currency:'BRL'
-              }
-            )
-
-          : c.valor;
-
-
-      const dadosVivos =
-        buscarDadosVivosCliente(c);
-
-
-      let blocoVivo =
-        '';
-
-
-      if (dadosVivos) {
-
-        const faturamentoVivo =
-          typeof dadosVivos.faturamento === 'number'
-
-            ? dadosVivos.faturamento.toLocaleString(
-                'pt-BR',
-                {
-                  style:'currency',
-                  currency:'BRL'
-                }
-              )
-
-            : '-';
-
-
-        const dias =
-          dadosVivos.diasInativo;
-
-
-        const temDias =
-          typeof dias === 'number' &&
-          !isNaN(dias);
-
-
-        const corAtividade =
-          temDias && dias >= 60
-            ? '#ef4444'
-            : '#10b981';
-
-
-        const textoAtividade =
-          temDias
-            ? `${dias} dias sem comprar`
-            : 'Sem dados de inatividade';
-
-
-        blocoVivo = `
-
-          <div
-            style="
-              background:#0f172a;
-              padding:12px;
-              border-radius:8px;
-              border-left:4px solid #3b82f6;
-            "
-          >
-
-            <span
-              style="
-                color:#94a3b8;
-                font-size:.75rem;
-                text-transform:uppercase;
-                display:block;
-              "
-            >
-              Faturamento (Planilha do Dashboard)
-            </span>
-
-
-            <strong
-              style="
-                color:#3b82f6;
-                font-size:1rem;
-              "
-            >
-              ${faturamentoVivo}
-            </strong>
-
-          </div>
-
-
-          <div
-            style="
-              background:#0f172a;
-              padding:12px;
-              border-radius:8px;
-              border-left:4px solid ${corAtividade};
-            "
-          >
-
-            <span
-              style="
-                color:#94a3b8;
-                font-size:.75rem;
-                text-transform:uppercase;
-                display:block;
-              "
-            >
-              Atividade de Compra
-            </span>
-
-
-            <strong
-              style="
-                color:${corAtividade};
-                font-size:1rem;
-              "
-            >
-              ${textoAtividade}
-            </strong>
-
-
-            ${
-              dadosVivos.ultimaFatura
-                ? `<span style="display:block;margin-top:4px;font-size:.75rem;color:#94a3b8;">Última fatura (planilha): ${dadosVivos.ultimaFatura}</span>`
-                : ''
-            }
-
-          </div>
-        `;
-
-
-      } else {
-
-        blocoVivo = `
-
-          <div
-            style="
-              background:#0f172a;
-              padding:10px;
-              border-radius:8px;
-              border:1px dashed #334155;
-              grid-column:1 / -1;
-            "
-          >
-
-            <span
-              style="
-                color:#64748b;
-                font-size:.75rem;
-              "
-            >
-              💡 Carregue as planilhas no Dashboard
-              (index.html) para ver aqui o faturamento
-              atualizado e a atividade de compra deste cliente.
-            </span>
-
-          </div>
-
-        `;
-      }
-
-
-      const corSLA =
-        infoSLA.transportadora === 'Barilog'
-          ? '#f59e0b'
-          : '#10b981';
-
-
-      const observacaoFonte =
-        infoSLA.fonte === 'Base do cliente (fallback)'
-
-          ? `
-
-            <span
-              style="
-                display:block;
-                margin-top:5px;
-                color:#f59e0b;
-                font-size:.7rem;
-              "
-            >
-              A cidade pertence à rota da ${infoSLA.transportadora},
-              mas não possui linha própria na aba correspondente da
-              planilha de SLA; foi preservado o SLA já cadastrado
-              na base do cliente.
-            </span>
-
-          `
-
-          : '';
-
-
-      modalContainer.innerHTML = `
+      modal.innerHTML = `
 
         <div
           style="
             background:#1e293b;
             border:1px solid #334155;
             border-radius:12px;
-            width:90%;
-            max-width:480px;
+            width:100%;
+            max-width:640px;
             padding:24px;
-            box-shadow:0 20px 25px -5px rgba(0,0,0,.5);
-            font-family:sans-serif;
+            box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);
             color:#f8fafc;
           "
         >
-
 
           <div
             style="
@@ -1172,22 +1821,33 @@
             "
           >
 
-            <h3
-              style="
-                margin:0;
-                font-size:1.1rem;
-                color:#6366f1;
-                display:flex;
-                align-items:center;
-                gap:8px;
-              "
-            >
-              🏢 Detalhes do Cliente (RCA 61)
-            </h3>
+            <div>
 
+              <h3
+                style="
+                  margin:0;
+                  font-size:1.1rem;
+                  color:#6366f1;
+                "
+              >
+                📞 ${c.codigo} - ${c.cliente}
+              </h3>
+
+              <span
+                style="
+                  font-size:0.8rem;
+                  color:#94a3b8;
+                "
+              >
+                ${c.cidade} · ${badgePonto(
+                  c.pontoAtencao
+                )}
+              </span>
+
+            </div>
 
             <button
-              onclick="fecharModalCliente()"
+              id="eloFechar"
               style="
                 background:transparent;
                 border:none;
@@ -1201,397 +1861,488 @@
 
           </div>
 
+          <div
+            style="
+              display:grid;
+              grid-template-columns:repeat(3,1fr);
+              gap:10px;
+              margin-bottom:16px;
+            "
+          >
+
+            <div class="elo-modal-month">
+
+              <h4>
+                Setembro
+              </h4>
+
+              <div class="elo-field">
+
+                <label>
+                  Contato
+                </label>
+
+                <input
+                  type="date"
+                  id="eloSetContato"
+                  value="${c.setContato}"
+                >
+
+              </div>
+
+              <div class="elo-field">
+
+                <label>
+                  Assunto
+                </label>
+
+                <select
+                  id="eloSetAssunto"
+                >
+                  ${optionsHtml(
+                    ASSUNTO_OPCOES,
+                    c.setAssunto
+                  )}
+                </select>
+
+              </div>
+
+            </div>
+
+            <div class="elo-modal-month">
+
+              <h4>
+                Outubro
+              </h4>
+
+              <div class="elo-field">
+
+                <label>
+                  Contato
+                </label>
+
+                <input
+                  type="date"
+                  id="eloOutContato"
+                  value="${c.outContato}"
+                >
+
+              </div>
+
+              <div class="elo-field">
+
+                <label>
+                  Assunto
+                </label>
+
+                <select
+                  id="eloOutAssunto"
+                >
+                  ${optionsHtml(
+                    ASSUNTO_OPCOES,
+                    c.outAssunto
+                  )}
+                </select>
+
+              </div>
+
+            </div>
+
+            <div class="elo-modal-month">
+
+              <h4>
+                Novembro
+              </h4>
+
+              <div class="elo-field">
+
+                <label>
+                  Contato
+                </label>
+
+                <input
+                  type="date"
+                  id="eloNovContato"
+                  value="${c.novContato}"
+                >
+
+              </div>
+
+              <div class="elo-field">
+
+                <label>
+                  Assunto
+                </label>
+
+                <select
+                  id="eloNovAssunto"
+                >
+                  ${optionsHtml(
+                    ASSUNTO_OPCOES,
+                    c.novAssunto
+                  )}
+                </select>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div
+            class="elo-field"
+            style="margin-bottom:12px;"
+          >
+
+            <label>
+              O que o cliente disse
+            </label>
+
+            <textarea
+              id="eloClienteDisse"
+            >${c.clienteDisse}</textarea>
+
+          </div>
+
+          <div
+            class="elo-field"
+            style="margin-bottom:16px;"
+          >
+
+            <label>
+              Encaminhado para
+            </label>
+
+            <select
+              id="eloEncaminhado"
+            >
+              ${optionsHtml(
+                ENCAMINHADO_OPCOES,
+                c.encaminhadoPara
+              )}
+            </select>
+
+          </div>
+
+          <div
+            id="eloAvisoConfig"
+            style="
+              display:${
+                APPS_SCRIPT_URL
+                  ? 'none'
+                  : 'block'
+              };
+              background:rgba(245,158,11,0.1);
+              border:1px solid #f59e0b;
+              color:#f59e0b;
+              padding:10px;
+              border-radius:8px;
+              font-size:0.8rem;
+              margin-bottom:12px;
+            "
+          >
+            ⚠️ Gravação no Drive ainda não configurada (falta a URL do Apps Script). Suas edições não vão ser salvas até isso ser ligado.
+          </div>
 
           <div
             style="
               display:flex;
-              flex-direction:column;
-              gap:12px;
-              font-size:.95rem;
-            "
-          >
-
-
-            <div
-              style="
-                background:#0f172a;
-                padding:12px;
-                border-radius:8px;
-                border-left:4px solid #6366f1;
-              "
-            >
-
-              <span
-                style="
-                  color:#94a3b8;
-                  font-size:.8rem;
-                  text-transform:uppercase;
-                  display:block;
-                "
-              >
-                Cliente
-              </span>
-
-
-              <strong
-                style="
-                  font-size:1.05rem;
-                  color:#ffffff;
-                "
-              >
-                ${c.cliente}
-              </strong>
-
-            </div>
-
-
-            <div
-              style="
-                display:grid;
-                grid-template-columns:1fr 1fr;
-                gap:10px;
-              "
-            >
-
-
-              <div
-                style="
-                  background:#0f172a;
-                  padding:10px;
-                  border-radius:8px;
-                "
-              >
-
-                <span
-                  style="
-                    color:#94a3b8;
-                    font-size:.75rem;
-                    text-transform:uppercase;
-                    display:block;
-                  "
-                >
-                  CNPJ
-                </span>
-
-                <strong
-                  style="
-                    color:#38bdf8;
-                    font-size:.85rem;
-                  "
-                >
-                  ${c.cnpj}
-                </strong>
-
-              </div>
-
-
-              <div
-                style="
-                  background:#0f172a;
-                  padding:10px;
-                  border-radius:8px;
-                "
-              >
-
-                <span
-                  style="
-                    color:#94a3b8;
-                    font-size:.75rem;
-                    text-transform:uppercase;
-                    display:block;
-                  "
-                >
-                  Cidade / UF
-                </span>
-
-                <strong
-                  style="
-                    color:#e2e8f0;
-                  "
-                >
-                  ${c.cidade} - ${c.uf}
-                </strong>
-
-              </div>
-
-
-              <div
-                style="
-                  background:#0f172a;
-                  padding:10px;
-                  border-radius:8px;
-                "
-              >
-
-                <span
-                  style="
-                    color:#94a3b8;
-                    font-size:.75rem;
-                    text-transform:uppercase;
-                    display:block;
-                  "
-                >
-                  Telefone
-                </span>
-
-                <strong
-                  style="
-                    color:#e2e8f0;
-                  "
-                >
-                  ${
-                    c.telefone && c.telefone !== '-'
-                      ? c.telefone
-                      : (
-                          c.celular &&
-                          c.celular !== '-'
-                        )
-                          ? c.celular
-                          : '-'
-                  }
-                </strong>
-
-              </div>
-
-
-              <div
-                style="
-                  background:#0f172a;
-                  padding:10px;
-                  border-radius:8px;
-                "
-              >
-
-                <span
-                  style="
-                    color:#94a3b8;
-                    font-size:.75rem;
-                    text-transform:uppercase;
-                    display:block;
-                  "
-                >
-                  E-mail
-                </span>
-
-                <strong
-                  style="
-                    color:#e2e8f0;
-                    font-size:.85rem;
-                    word-break:break-all;
-                  "
-                >
-                  ${c.email || '-'}
-                </strong>
-
-              </div>
-
-
-              <div
-                style="
-                  background:#0f172a;
-                  padding:10px;
-                  border-radius:8px;
-                "
-              >
-
-                <span
-                  style="
-                    color:#94a3b8;
-                    font-size:.75rem;
-                    text-transform:uppercase;
-                    display:block;
-                  "
-                >
-                  Faturamento Total
-                </span>
-
-                <strong
-                  style="
-                    color:#10b981;
-                  "
-                >
-                  ${valorFormatado}
-                </strong>
-
-              </div>
-
-
-              <div
-                style="
-                  background:#0f172a;
-                  padding:10px;
-                  border-radius:8px;
-                "
-              >
-
-                <span
-                  style="
-                    color:#94a3b8;
-                    font-size:.75rem;
-                    text-transform:uppercase;
-                    display:block;
-                  "
-                >
-                  Última Venda
-                </span>
-
-                <strong
-                  style="
-                    color:#e2e8f0;
-                  "
-                >
-                  ${c.ultimaVenda}
-                </strong>
-
-              </div>
-
-
-              ${blocoVivo}
-
-            </div>
-
-
-            <div
-              style="
-                background:#0f172a;
-                padding:12px;
-                border-radius:8px;
-                border-left:4px solid ${corSLA};
-              "
-            >
-
-              <span
-                style="
-                  color:#94a3b8;
-                  font-size:.75rem;
-                  text-transform:uppercase;
-                  display:block;
-                "
-              >
-                Transportadora
-              </span>
-
-
-              <strong
-                style="
-                  color:${corSLA};
-                  font-size:1.05rem;
-                "
-              >
-                ${infoSLA.transportadora}
-              </strong>
-
-
-              <span
-                style="
-                  display:block;
-                  margin-top:4px;
-                  color:#cbd5e1;
-                  font-size:.8rem;
-                "
-              >
-                Região: ${infoSLA.regiao}
-              </span>
-
-
-              <span
-                style="
-                  display:block;
-                  margin-top:5px;
-                  color:#94a3b8;
-                  font-size:.75rem;
-                "
-              >
-                SLA de entrega
-              </span>
-
-
-              <strong
-                style="
-                  display:block;
-                  margin-top:2px;
-                  color:#ffffff;
-                  font-size:1.05rem;
-                "
-              >
-                ${infoSLA.sla}
-              </strong>
-
-
-              <span
-                style="
-                  display:block;
-                  margin-top:5px;
-                  color:#64748b;
-                  font-size:.7rem;
-                "
-              >
-                Fonte: ${infoSLA.fonte}
-              </span>
-
-
-              ${observacaoFonte}
-
-            </div>
-
-
-          </div>
-
-
-          <div
-            style="
-              margin-top:20px;
-              text-align:right;
+              justify-content:flex-end;
+              gap:10px;
             "
           >
 
             <button
-              onclick="fecharModalCliente()"
+              id="eloCancelar"
               style="
-                background:#6366f1;
-                color:#fff;
-                border:none;
-                padding:8px 18px;
+                background:transparent;
+                border:1px solid #334155;
+                color:#94a3b8;
+                padding:10px 18px;
                 border-radius:6px;
-                font-weight:600;
                 cursor:pointer;
               "
             >
-              Fechar
+              Cancelar
+            </button>
+
+            <button
+              id="eloSalvar"
+              class="elo-btn-save-modal"
+            >
+              Salvar no Drive
             </button>
 
           </div>
 
-
         </div>
-
       `;
 
-
-      modalContainer.style.display =
+      modal.style.display =
         'flex';
+
+      document
+        .getElementById(
+          'eloFechar'
+        )
+        .onclick =
+          () =>
+            modal.style.display =
+              'none';
+
+      document
+        .getElementById(
+          'eloCancelar'
+        )
+        .onclick =
+          () =>
+            modal.style.display =
+              'none';
+
+      document
+        .getElementById(
+          'eloSalvar'
+        )
+        .onclick =
+          () =>
+            salvarAtendimento(
+              c,
+              modal
+            );
     }
 
+    async function salvarAtendimento(
+      c,
+      modal
+    ) {
 
-    // ============================================================
-    // FECHAR MODAL
-    // ============================================================
+      const novo = {
 
-    function fecharModalCliente() {
+        setContato:
+          document.getElementById(
+            'eloSetContato'
+          ).value,
 
-      const modalContainer =
-        document.getElementById(
-          'customClientModal'
+        setAssunto:
+          document.getElementById(
+            'eloSetAssunto'
+          ).value,
+
+        outContato:
+          document.getElementById(
+            'eloOutContato'
+          ).value,
+
+        outAssunto:
+          document.getElementById(
+            'eloOutAssunto'
+          ).value,
+
+        novContato:
+          document.getElementById(
+            'eloNovContato'
+          ).value,
+
+        novAssunto:
+          document.getElementById(
+            'eloNovAssunto'
+          ).value,
+
+        clienteDisse:
+          document.getElementById(
+            'eloClienteDisse'
+          ).value,
+
+        encaminhadoPara:
+          document.getElementById(
+            'eloEncaminhado'
+          ).value
+      };
+
+      if (!APPS_SCRIPT_URL) {
+
+        mostrarToast(
+          'Configure a URL do Apps Script antes de salvar (veja o README).',
+          false
         );
 
+        return;
+      }
 
-      if (modalContainer) {
+      const mapaColunas = {
 
-        modalContainer.style.display =
+        setContato:
+          'SET contato',
+
+        setAssunto:
+          'SET assunto',
+
+        outContato:
+          'OUT contato',
+
+        outAssunto:
+          'OUT assunto',
+
+        novContato:
+          'NOV contato',
+
+        novAssunto:
+          'NOV assunto',
+
+        clienteDisse:
+          'O que o cliente disse',
+
+        encaminhadoPara:
+          'Encaminhado para'
+      };
+
+      const mudancas =
+        Object.keys(
+          novo
+        )
+          .filter(
+            k =>
+              novo[k] !== c[k]
+          )
+          .map(
+            k => ({
+              codigo:c.codigo,
+              coluna:mapaColunas[k],
+              valor:novo[k]
+            })
+          );
+
+      if (
+        mudancas.length === 0
+      ) {
+
+        modal.style.display =
           'none';
 
+        return;
+      }
+
+      const btn =
+        document.getElementById(
+          'eloSalvar'
+        );
+
+      btn.disabled =
+        true;
+
+      btn.textContent =
+        'Salvando...';
+
+      try {
+
+        const res =
+          await fetch(
+            APPS_SCRIPT_URL,
+            {
+              method:'POST',
+              body:JSON.stringify({
+                mudancas
+              })
+            }
+          );
+
+        const json =
+          await res.json();
+
+        if (!json.ok) {
+
+          throw new Error(
+            json.erro ||
+            (
+              json.erros ||
+              []
+            ).join(', ')
+          );
+        }
+
+        Object.assign(
+          c,
+          novo
+        );
+
+        const idx =
+          baseElo.findIndex(
+            x =>
+              x.codigo === c.codigo
+          );
+
+        if (
+          idx > -1
+        ) {
+
+          baseElo[idx] =
+            c;
+        }
+
+        // Recalcula os cards e os contatos
+        // imediatamente após salvar.
+        renderizarTabela(
+          baseElo
+        );
+
+        mostrarToast(
+          'Atendimento salvo no Drive com sucesso!',
+          true
+        );
+
+        modal.style.display =
+          'none';
+
+      } catch (err) {
+
+        console.error(
+          err
+        );
+
+        mostrarToast(
+          'Não consegui salvar no Drive. Suas respostas continuam no formulário — tente de novo.',
+          false
+        );
+
+        btn.disabled =
+          false;
+
+        btn.textContent =
+          'Salvar no Drive';
       }
     }
+
+    function mostrarToast(
+      msg,
+      ok
+    ) {
+
+      const t =
+        document.getElementById(
+          'eloToast'
+        );
+
+      t.textContent =
+        msg;
+
+      t.className =
+        'elo-toast show ' +
+        (
+          ok
+            ? 'ok'
+            : 'err'
+        );
+
+      setTimeout(
+        () => {
+          t.className =
+            'elo-toast';
+        },
+        4000
+      );
+    }
+
+    carregarDados();
 
   </script>
 
