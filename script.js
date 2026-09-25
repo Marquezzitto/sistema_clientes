@@ -1,2350 +1,4479 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atendimento ELO - RCA 61</title>
+// ===== RCA 61 - script.js completo corrigido =====
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+if (typeof lucide !== 'undefined') lucide.createIcons();
 
-  <link rel="stylesheet" href="style.css">
-  <style>
-    .elo-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:0.7rem; font-weight:600; }
-    .elo-cell-locked { color: var(--text-secondary); background: rgba(255,255,255,0.02); }
-    .elo-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
-    .elo-dot.on { background: var(--accent-green); }
-    .elo-dot.off { background: #334155; }
-    .elo-guide { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 16px 20px; }
-    .elo-guide summary { cursor: pointer; font-weight: 600; }
-    .elo-guide-row { display:flex; gap:10px; margin-top:10px; font-size:0.85rem; }
-    .elo-guide-row b { min-width: 120px; color: var(--accent-indigo); flex-shrink:0; }
-    .elo-panel-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:14px; }
-    .elo-panel-card { background: var(--bg-card); border:1px solid var(--border-color); border-radius: var(--radius); padding:14px 16px; }
-    .elo-panel-card .lbl { font-size:0.7rem; color: var(--text-secondary); text-transform:uppercase; }
-    .elo-panel-card .val { font-size:1.3rem; font-weight:700; margin-top:4px; }
-    .elo-panel-card .var { font-size:0.75rem; margin-top:2px; }
+let dataStore = {
+  reportSection: {},
+  analiseCarteira: {}
+};
 
-    .elo-progress-grid {
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:14px;
-      margin-top:14px;
+let dadosFixosMensais = null;
+let sincronizacaoDriveEmAndamento = false;
+let charts = {};
+
+const DRIVE_SHEET_IDS = {
+  cliente: '1AP_60koNw2moYQfoJbiXwepVl0EGgcb0',
+  segmento: '1z2Xt-nouxE5JapG-pGTZTkjjKca1mW7k',
+  produto: '1lHcnnMJHKzlBt7El5GQ-qktMx897o0pR'
+};
+
+const MESES_FIXOS = [1, 2, 3, 4, 5, 6, 7, 8];
+
+const NOMES_MESES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro'
+];
+
+const LABELS_MESES = [
+  'Jan',
+  'Fev',
+  'Mar',
+  'Abr',
+  'Mai',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Set',
+  'Out',
+  'Nov',
+  'Dez'
+];
+
+const fileInput1 = document.getElementById('fileInput1');
+const fileInput2 = document.getElementById('fileInput2');
+const dropZone1 = document.getElementById('dropZone1');
+const dropZone2 = document.getElementById('dropZone2');
+const labelFile1 = document.getElementById('labelFile1');
+const labelFile2 = document.getElementById('labelFile2');
+const statusBadge = document.getElementById('statusBadge');
+const badgeText = document.getElementById('badgeText');
+
+const selectAno = document.getElementById('selectAno');
+const selectMes = document.getElementById('selectMes');
+const selectCliente = document.getElementById('selectCliente');
+const searchInput = document.getElementById('searchClientInput');
+
+function parseCurrency(val) {
+  if (typeof val === 'number') {
+    return Number.isFinite(val) ? val : 0;
+  }
+
+  if (val === null || val === undefined || val === '') {
+    return 0;
+  }
+
+  let s = String(val)
+    .replace(/R\$/g, '')
+    .replace(/\s/g, '')
+    .trim();
+
+  if (s.includes(',')) {
+    s = s
+      .replace(/\./g, '')
+      .replace(',', '.');
+  }
+
+  const n = Number.parseFloat(s);
+
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parsePct(val) {
+  if (
+    val === null ||
+    val === undefined ||
+    val === ''
+  ) {
+    return 0;
+  }
+
+  if (typeof val === 'number') {
+    return val <= 1 ? val * 100 : val;
+  }
+
+  const s = String(val)
+    .replace('%', '')
+    .replace(',', '.')
+    .trim();
+
+  const n = Number.parseFloat(s);
+
+  if (!Number.isFinite(n)) {
+    return 0;
+  }
+
+  return n <= 1 && s.includes('.')
+    ? n * 100
+    : n;
+}
+
+function formatBRL(val) {
+  return Number(val || 0).toLocaleString(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL'
     }
+  );
+}
 
-    .elo-progress-card {
-      background:var(--bg-card);
-      border:1px solid var(--border-color);
-      border-radius:var(--radius);
-      padding:16px;
+function formatCompactBRL(val) {
+  const n = Number(val || 0);
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+
+  if (abs >= 1000000) {
+    return `${sign}R$ ${(abs / 1000000)
+      .toFixed(1)
+      .replace('.', ',')} mi`;
+  }
+
+  if (abs >= 1000) {
+    return `${sign}R$ ${(abs / 1000)
+      .toFixed(1)
+      .replace('.', ',')}k`;
+  }
+
+  return `${sign}R$ ${abs.toFixed(0)}`;
+}
+
+function formatDate(val) {
+  if (!val) return '-';
+
+  if (val instanceof Date) {
+    return val.toISOString().split('T')[0];
+  }
+
+  return String(val).split('T')[0];
+}
+
+function getSheet(dataObj, keywords) {
+  if (!dataObj) return [];
+
+  const names = Object.keys(dataObj);
+
+  for (const kw of keywords) {
+    const found = names.find(
+      n =>
+        n
+          .toLowerCase()
+          .includes(kw.toLowerCase())
+    );
+
+    if (found) {
+      return Array.isArray(dataObj[found])
+        ? dataObj[found]
+        : [];
     }
+  }
 
-    .elo-progress-head {
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-    }
+  return [];
+}
 
-    .elo-progress-month {
-      font-size:0.78rem;
-      color:var(--text-secondary);
-      text-transform:uppercase;
-      letter-spacing:.04em;
-    }
+function algumaPlanilhaCarregada() {
+  return (
+    (
+      dataStore.reportSection &&
+      Object.keys(dataStore.reportSection).length > 0
+    ) ||
+    (
+      dataStore.analiseCarteira &&
+      Object.keys(dataStore.analiseCarteira).length > 0
+    )
+  );
+}
 
-    .elo-progress-pct {
-      font-size:1.45rem;
-      font-weight:700;
-      line-height:1;
-    }
+function sheetTemColunaCliente(sheet) {
+  return !!(
+    sheet &&
+    sheet.length &&
+    (
+      Object.prototype.hasOwnProperty.call(
+        sheet[0],
+        'Cliente_Pai'
+      ) ||
+      Object.prototype.hasOwnProperty.call(
+        sheet[0],
+        'Cliente'
+      )
+    )
+  );
+}
 
-    .elo-progress-main {
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:8px;
-      margin-top:14px;
-    }
+function filtrarPorCliente(
+  sheet,
+  cliente
+) {
+  const rows = Array.isArray(sheet)
+    ? sheet
+    : [];
 
-    .elo-progress-kpi {
-      background:#0f172a;
-      border-radius:8px;
-      padding:10px;
-    }
+  if (!cliente || cliente === 'ALL') {
+    return {
+      linhas: rows,
+      semDetalhePorCliente: false
+    };
+  }
 
-    .elo-progress-kpi .lbl {
-      display:block;
-      font-size:0.68rem;
-      color:#64748b;
-      text-transform:uppercase;
-    }
+  if (!sheetTemColunaCliente(rows)) {
+    return {
+      linhas: [],
+      semDetalhePorCliente: true
+    };
+  }
 
-    .elo-progress-kpi .num {
-      display:block;
-      margin-top:3px;
-      font-size:1rem;
-      font-weight:700;
-      color:#f8fafc;
-    }
+  const alvo = String(cliente).trim();
 
-    .elo-progress-bar {
-      height:8px;
-      background:#1e293b;
-      border-radius:999px;
-      overflow:hidden;
-      margin-top:14px;
-    }
+  return {
+    linhas: rows.filter(r =>
+      String(
+        r['Cliente_Pai'] ||
+        r['Cliente'] ||
+        ''
+      ).trim() === alvo
+    ),
+    semDetalhePorCliente: false
+  };
+}
 
-    .elo-progress-fill {
-      height:100%;
-      border-radius:999px;
-      background:#10b981;
-      transition:width .25s ease;
-    }
+function diasUteisRestantesNoMes(
+  dataRef = new Date()
+) {
+  const ano = dataRef.getFullYear();
+  const mes = dataRef.getMonth();
 
-    .elo-progress-status {
-      margin-top:9px;
-      font-size:0.75rem;
-      color:#94a3b8;
-      line-height:1.35;
-    }
+  const ultimo =
+    new Date(
+      ano,
+      mes + 1,
+      0
+    ).getDate();
 
-    .elo-progress-footer {
-      display:grid !important;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:8px;
-      margin-top:12px;
-      padding-top:11px;
-      border-top:1px solid var(--border-color);
-      min-height:48px;
-      visibility:visible;
-    }
+  let total = 0;
 
-    .elo-progress-footer-item {
-      text-align:center;
-      font-size:0.72rem;
-      color:#94a3b8;
-      line-height:1.25;
-    }
-
-    .elo-progress-footer-item strong {
-      display:block;
-      margin-top:3px;
-      font-size:0.95rem;
-      color:#f8fafc;
-    }
-
-    @media (max-width:900px) {
-      .elo-progress-grid {
-        grid-template-columns:1fr;
-      }
-    }
-
-    .elo-modal-month {
-      background:#0f172a;
-      border-radius:8px;
-      padding:12px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-
-    .elo-modal-month h4 {
-      font-size:0.8rem;
-      color:#94a3b8;
-      text-transform:uppercase;
-    }
-
-    .elo-field label {
-      display:block;
-      font-size:0.7rem;
-      color:#64748b;
-      margin-bottom:3px;
-    }
-
-    .elo-field input,
-    .elo-field select,
-    .elo-field textarea {
-      width:100%;
-      background:#1e293b;
-      border:1px solid #334155;
-      color:#f8fafc;
-      padding:7px 8px;
-      border-radius:6px;
-      font-size:0.85rem;
-      font-family:inherit;
-    }
-
-    .elo-field textarea {
-      resize:vertical;
-      min-height:70px;
-    }
-
-    .elo-dirty {
-      border-color:#f59e0b !important;
-      box-shadow:0 0 0 1px rgba(245,158,11,0.4);
-    }
-
-    .elo-toast {
-      position:fixed;
-      bottom:20px;
-      right:20px;
-      z-index:100000;
-      padding:12px 18px;
-      border-radius:8px;
-      font-size:0.875rem;
-      font-weight:600;
-      color:#fff;
-      opacity:0;
-      transform:translateY(10px);
-      transition:all .25s;
-    }
-
-    .elo-toast.show {
-      opacity:1;
-      transform:translateY(0);
-    }
-
-    .elo-toast.ok {
-      background:#10b981;
-    }
-
-    .elo-toast.err {
-      background:#ef4444;
-    }
-
-    .elo-btn-save-modal {
-      background:#10b981;
-      color:#fff;
-      border:none;
-      padding:10px 20px;
-      border-radius:6px;
-      font-weight:600;
-      cursor:pointer;
-      font-size:0.9rem;
-    }
-
-    .elo-btn-save-modal:disabled {
-      opacity:0.5;
-      cursor:not-allowed;
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="app-container">
-
-    <header class="main-header">
-
-      <div class="header-title">
-        <h1>Atendimento ELO - RCA 61</h1>
-        <p>Registro mensal de contato com a carteira - Set/Out/Nov 2026</p>
-      </div>
-
-      <div class="header-controls">
-
-        <a
-          href="index.html"
-          class="btn-upload"
-          style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;"
-        >
-          <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
-          Dashboard
-        </a>
-
-        <a
-          href="clientes.html"
-          class="btn-upload"
-          style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background-color:var(--accent-indigo);"
-        >
-          <i data-lucide="users" style="width:16px;height:16px;"></i>
-          Base & SLAs
-        </a>
-
-        <div class="status-badge active" id="statusBadge">
-          <span class="status-dot"></span>
-          <span id="statusText">Carregando...</span>
-        </div>
-
-      </div>
-
-    </header>
-
-    <section
-      class="elo-panel-grid"
-      id="painelGrid"
-    ></section>
-
-    <section
-      class="elo-progress-grid"
-      id="eloProgressGrid"
-    ></section>
-
-    <details class="elo-guide">
-
-      <summary>
-        Como funciona esse atendimento (clique para abrir)
-      </summary>
-
-      <div id="guiaConteudo"></div>
-
-    </details>
-
-    <section
-      class="table-card"
-      style="margin-top:10px;"
-    >
-
-      <div class="card-header space-between">
-
-        <h3>
-          Minha Carteira - 270 Clientes
-        </h3>
-
-        <input
-          type="text"
-          id="searchElo"
-          placeholder="Pesquisar por cliente, cidade ou código..."
-          class="table-search"
-          style="width:300px;"
-        >
-
-      </div>
-
-      <div
-        class="table-wrapper"
-        style="max-height:600px;"
-      >
-
-        <table>
-
-          <thead>
-
-            <tr>
-              <th>Código</th>
-              <th>Cliente</th>
-              <th>Cidade</th>
-              <th>Var%</th>
-              <th>Ped. 26</th>
-              <th>Grava?</th>
-              <th>Ponto de Atenção</th>
-              <th>Contatos (S/O/N)</th>
-              <th style="text-align:center;">Ações</th>
-            </tr>
-
-          </thead>
-
-          <tbody id="tbElo">
-
-            <tr>
-              <td
-                colspan="9"
-                class="empty-row"
-              >
-                Carregando planilha do Drive...
-              </td>
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </section>
-
-  </div>
-
-  <div
-    id="eloToast"
-    class="elo-toast"
-  ></div>
-
-  <script>
+  for (
+    let d = dataRef.getDate();
+    d <= ultimo;
+    d++
+  ) {
+    const dow =
+      new Date(
+        ano,
+        mes,
+        d
+      ).getDay();
 
     if (
-      typeof lucide !== 'undefined'
+      dow !== 0 &&
+      dow !== 6
     ) {
-      lucide.createIcons();
+      total++;
     }
+  }
 
-    // ============================================================
-    // CONFIGURAÇÃO
-    // ============================================================
+  return total;
+}
 
-    const DRIVE_FILE_ID =
-      '1yr12JeKO-5ipBrzbqrcWFnYXhkfkQvH7tkRicbcogps';
+function normalizarNome(str) {
+  return String(str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
-    const APPS_SCRIPT_URL =
-      'https://script.google.com/macros/s/AKfycbw-s10eMg-8ajimxH3lK1vwo5dK_o43SLHtQa4H0sN5oHQ8VrewthA-iBxx32_RVfns/exec';
+function normalizarChave(str) {
+  const s =
+    String(str || '')
+      .trim();
 
-    const ASSUNTO_OPCOES = [
-      'Apresentação da carteira',
-      'Oferta de gravação',
-      'Acompanhamento de pedido',
-      'Ocorrência ou devolução',
-      'Cliente sem compra',
-      'entender motivo',
-      'Dúvida de produto ou processo',
-      'Atualização de cadastro',
-      'Sem retorno',
-      'Cliente não localizado'
-    ];
+  const cod =
+    s.match(/^(\d+)\s*-/);
 
-    const ENCAMINHADO_OPCOES = [
-      'Nada a encaminhar',
-      'Reunião com a Aline Almeida',
-      'Mesa de negociação',
-      'Crédito e limite',
-      'Logística',
-      'Fiscal',
-      'Qualidade ou gravação',
-      'Cadastro'
-    ];
+  if (cod) {
+    return cod[1];
+  }
 
-    let baseElo = [];
+  return normalizarNome(s);
+}
 
-    // ============================================================
-    // CARREGAMENTO
-    // ============================================================
+function destruirGrafico(id) {
+  if (charts[id]) {
+    charts[id].destroy();
+    charts[id] = null;
+  }
 
-    async function carregarDados() {
+  const canvas =
+    document.getElementById(id);
 
-      try {
+  if (
+    canvas &&
+    typeof Chart !== 'undefined' &&
+    Chart.getChart
+  ) {
+    const chart =
+      Chart.getChart(canvas);
 
-        const url =
-          `https://docs.google.com/spreadsheets/d/${DRIVE_FILE_ID}/export?format=xlsx`;
-
-        const res =
-          await fetch(url);
-
-        if (!res.ok) {
-          throw new Error(
-            'HTTP ' + res.status
-          );
-        }
-
-        const buf =
-          await res.arrayBuffer();
-
-        const wb =
-          XLSX.read(
-            new Uint8Array(buf),
-            {
-              type:'array',
-              cellDates:true
-            }
-          );
-
-        baseElo =
-          extrairDoWorkbook(wb);
-
-        renderizarPainel(wb);
-        renderizarGuia(wb);
-
-        setStatus(
-          true,
-          `Sincronizado do Drive (${baseElo.length} clientes)`
-        );
-
-      } catch (err) {
-
-        console.warn(
-          '[Atendimento ELO] Não consegui buscar do Drive, usando snapshot local.',
-          err
-        );
-
-        try {
-
-          const r =
-            await fetch(
-              'atendimento_elo.json'
-            );
-
-          baseElo =
-            await r.json();
-
-          setStatus(
-            false,
-            `Snapshot local (${baseElo.length} clientes) — sem conexão com o Drive`
-          );
-
-        } catch (err2) {
-
-          document.getElementById(
-            'tbElo'
-          ).innerHTML =
-            '<tr><td colspan="9" class="empty-row" style="color:#ef4444;">Não foi possível carregar os dados.</td></tr>';
-
-          setStatus(
-            false,
-            'Erro ao carregar'
-          );
-
-          return;
-        }
-      }
-
-      renderizarTabela(
-        baseElo
-      );
+    if (chart) {
+      chart.destroy();
     }
+  }
+}
 
-    function setStatus(
-      ok,
-      texto
-    ) {
+function linhaVazia(row) {
+  return (
+    !row ||
+    row.every(
+      v =>
+        v === null ||
+        v === undefined ||
+        v === ''
+    )
+  );
+}
 
-      const badge =
-        document.getElementById(
-          'statusBadge'
-        );
+function encontrarAbaMes(
+  workbook,
+  mes
+) {
+  const alvo =
+    `MES ${mes}`;
 
-      const txt =
-        document.getElementById(
-          'statusText'
-        );
+  return workbook.SheetNames.includes(
+    alvo
+  )
+    ? alvo
+    : workbook.SheetNames.find(
+        n => n.trim() === alvo
+      ) || null;
+}
 
-      txt.textContent =
-        texto;
+async function buscarWorkbookDrive(
+  fileId
+) {
+  const url =
+    `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
 
-      badge.classList.toggle(
-        'active',
-        ok
-      );
+  const res =
+    await fetch(url);
+
+  if (!res.ok) {
+    throw new Error(
+      `HTTP ${res.status}`
+    );
+  }
+
+  const buf =
+    await res.arrayBuffer();
+
+  return XLSX.read(
+    new Uint8Array(buf),
+    {
+      type: 'array',
+      cellDates: true
     }
+  );
+}
 
-    function fmtDataCell(v) {
+function extrairPorCliente(
+  workbook
+) {
+  const out = {};
 
-      if (
-        v instanceof Date
-      ) {
-        return v
-          .toISOString()
-          .slice(0,10);
-      }
-
-      if (
-        typeof v === 'string' &&
-        v
-      ) {
-        return v;
-      }
-
-      return '';
-    }
-
-    function extrairDoWorkbook(wb) {
-
+  MESES_FIXOS.forEach(
+    mes => {
       const aba =
-        wb.Sheets[
-          'Minha Carteira'
-        ];
+        encontrarAbaMes(
+          workbook,
+          mes
+        );
 
-      const linhas =
+      if (!aba) return;
+
+      const raw =
         XLSX.utils.sheet_to_json(
-          aba,
+          workbook.Sheets[aba],
           {
-            header:1,
-            defval:null
+            header: 1,
+            defval: null
           }
         );
 
-      const clientes = [];
+      let classeAtual = null;
+
+      const linhas = [];
 
       for (
-        let i = 3;
-        i < linhas.length;
+        let i = 1;
+        i < raw.length;
         i++
       ) {
-
-        const r =
-          linhas[i];
+        const row =
+          raw[i];
 
         if (
-          !r ||
-          r.every(
-            c =>
-              c === null ||
-              c === ''
-          )
+          linhaVazia(row)
         ) {
           continue;
         }
 
         const [
+          classe,
           cod,
-          cliente,
-          cidade,
-          janAgo25,
-          janAgo26,
-          varPct,
-          pedidos26,
-          grava,
-          ponto,
-          setContato,
-          setAssunto,
-          outContato,
-          outAssunto,
-          novContato,
-          novAssunto,
-          clienteDisse,
-          encaminhado
-        ] = r;
+          nome
+        ] = row;
+
+        const valor = row[4];
+        const pct = row[5];
+
+        if (classe) {
+          classeAtual =
+            classe;
+        }
 
         if (
-          !cod ||
-          !cliente
+          classeAtual ===
+          'Total'
         ) {
           continue;
         }
 
-        clientes.push({
+        if (
+          cod === null ||
+          cod === undefined ||
+          cod === '' ||
+          !nome
+        ) {
+          continue;
+        }
 
-          codigo:
-            Math.trunc(
+        linhas.push({
+          Classe:
+            classeAtual,
+
+          Cliente_Pai:
+            `${Math.trunc(
               Number(cod)
-            ),
+            )}-${String(nome).trim()}`,
 
-          cliente:
-            String(
-              cliente
-            ).trim(),
+          'Valor de venda (R$)':
+            Number(valor) || 0,
 
-          cidade:
-            cidade
-              ? String(
-                  cidade
-                ).trim()
-              : '',
-
-          janAgo25:
-            Number(
-              janAgo25
-            ) || 0,
-
-          janAgo26:
-            Number(
-              janAgo26
-            ) || 0,
-
-          varPct:
-            typeof varPct === 'number'
-              ? varPct
-              : null,
-
-          pedidos26:
-            Number(
-              pedidos26
-            ) || 0,
-
-          grava:
-            grava || '',
-
-          pontoAtencao:
-            ponto || '',
-
-          setContato:
-            fmtDataCell(
-              setContato
-            ),
-
-          setAssunto:
-            setAssunto || '',
-
-          outContato:
-            fmtDataCell(
-              outContato
-            ),
-
-          outAssunto:
-            outAssunto || '',
-
-          novContato:
-            fmtDataCell(
-              novContato
-            ),
-
-          novAssunto:
-            novAssunto || '',
-
-          clienteDisse:
-            clienteDisse || '',
-
-          encaminhadoPara:
-            encaminhado || ''
+          '% do Total':
+            Number(pct) || 0
         });
       }
 
-      return clientes;
+      out[String(mes)] =
+        linhas;
     }
+  );
 
-    // ============================================================
-    // PAINEL
-    // ============================================================
+  return out;
+}
 
-    function renderizarPainel(
-      wb
-    ) {
+function extrairPorSegmento(
+  workbook
+) {
+  const out = {};
 
-      const grid =
-        document.getElementById(
-          'painelGrid'
+  MESES_FIXOS.forEach(
+    mes => {
+      const aba =
+        encontrarAbaMes(
+          workbook,
+          mes
         );
 
-      try {
+      if (!aba) return;
 
-        const aba =
-          wb.Sheets[
-            'Painel'
-          ];
-
-        const linhas =
-          XLSX.utils.sheet_to_json(
-            aba,
-            {
-              header:1,
-              defval:null
-            }
-          );
-
-        const indicadores =
-          linhas
-            .slice(3,8)
-            .filter(
-              r =>
-                r &&
-                r[0] &&
-                typeof r[1] === 'number'
-            );
-
-        grid.innerHTML =
-          indicadores
-            .map(
-              r => {
-
-                const [
-                  nome,
-                  v25,
-                  v26,
-                  variacao
-                ] = r;
-
-                const ehMoeda =
-                  String(
-                    nome
-                  )
-                  .toLowerCase()
-                  .includes(
-                    'faturamento'
-                  );
-
-                const fmt =
-                  n =>
-                    ehMoeda
-                      ? n.toLocaleString(
-                          'pt-BR',
-                          {
-                            style:'currency',
-                            currency:'BRL',
-                            maximumFractionDigits:0
-                          }
-                        )
-                      : n.toLocaleString(
-                          'pt-BR',
-                          {
-                            maximumFractionDigits:1
-                          }
-                        );
-
-                const corVar =
-                  variacao >= 0
-                    ? '#10b981'
-                    : '#ef4444';
-
-                const varTxt =
-                  typeof variacao === 'number'
-                    ? `${variacao >= 0 ? '+' : ''}${(variacao * 100).toFixed(1)}%`
-                    : '-';
-
-                return `
-                  <div class="elo-panel-card">
-
-                    <div class="lbl">
-                      ${nome}
-                    </div>
-
-                    <div class="val">
-                      ${fmt(v26)}
-                    </div>
-
-                    <div
-                      class="var"
-                      style="color:${corVar};"
-                    >
-                      ${varTxt} vs Jan-Ago/25 (${fmt(v25)})
-                    </div>
-
-                  </div>
-                `;
-              }
-            )
-            .join('');
-
-      } catch (e) {
-
-        grid.innerHTML = '';
-      }
-    }
-
-    function renderizarGuia(
-      wb
-    ) {
-
-      const el =
-        document.getElementById(
-          'guiaConteudo'
+      const raw =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[aba],
+          {
+            header: 1,
+            defval: null
+          }
         );
 
-      try {
+      const linhas = [];
 
-        const aba =
-          wb.Sheets[
-            'Fluxo de Atendimento'
-          ];
+      for (
+        let i = 1;
+        i < raw.length;
+        i++
+      ) {
+        const row =
+          raw[i];
 
-        const linhas =
-          XLSX.utils.sheet_to_json(
-            aba,
-            {
-              header:1,
-              defval:null
-            }
-          );
+        if (
+          linhaVazia(row)
+        ) {
+          continue;
+        }
 
-        const pares =
-          linhas
-            .slice(3)
-            .filter(
-              r =>
-                r &&
-                r[0] &&
-                r[1]
-            );
+        const [
+          segmento,
+          ,
+          ,
+          valor
+        ] = row;
 
-        el.innerHTML =
-          pares
-            .map(
-              r =>
-                `<div class="elo-guide-row"><b>${r[0]}</b><span>${r[1]}</span></div>`
-            )
-            .join('');
+        if (
+          String(
+            segmento || ''
+          )
+            .trim()
+            .toLowerCase() ===
+          'total'
+        ) {
+          continue;
+        }
 
-      } catch (e) {
+        linhas.push({
+          Separador:
+            segmento
+              ? String(segmento).trim()
+              : 'Outros',
 
-        el.innerHTML =
-          '<p style="color:#64748b;font-size:0.85rem;">Guia não disponível.</p>';
+          After_Tax_Amount:
+            Number(valor) || 0
+        });
       }
+
+      out[String(mes)] =
+        linhas;
     }
+  );
 
-    // ============================================================
-    // PROGRESSO DO ATENDIMENTO ELO
-    // ============================================================
+  return out;
+}
 
-    const MESES_ELO = [
+function extrairPorProduto(
+  workbook
+) {
+  const out = {};
 
-      {
-        numero:9,
-        nome:'Setembro',
-        contato:'setContato',
-        assunto:'setAssunto'
-      },
+  MESES_FIXOS.forEach(
+    mes => {
+      const aba =
+        encontrarAbaMes(
+          workbook,
+          mes
+        );
 
-      {
-        numero:10,
-        nome:'Outubro',
-        contato:'outContato',
-        assunto:'outAssunto'
-      },
+      if (!aba) return;
 
-      {
-        numero:11,
-        nome:'Novembro',
-        contato:'novContato',
-        assunto:'novAssunto'
+      const raw =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[aba],
+          {
+            header: 1,
+            defval: null
+          }
+        );
+
+      const linhas = [];
+
+      for (
+        let i = 1;
+        i < raw.length;
+        i++
+      ) {
+        const row =
+          raw[i];
+
+        if (
+          linhaVazia(row)
+        ) {
+          continue;
+        }
+
+        const produto =
+          row[0];
+
+        const valor =
+          row[2];
+
+        if (
+          produto === null ||
+          produto === undefined ||
+          produto === ''
+        ) {
+          continue;
+        }
+
+        if (
+          String(produto)
+            .trim()
+            .toLowerCase() ===
+          'total'
+        ) {
+          continue;
+        }
+
+        linhas.push({
+          Produto:
+            String(
+              produto
+            ).trim(),
+
+          'Valor de Venda':
+            Number(valor) || 0
+        });
       }
 
-    ];
+      linhas.sort(
+        (a, b) =>
+          b[
+            'Valor de Venda'
+          ] -
+          a[
+            'Valor de Venda'
+          ]
+      );
 
-    const FERIADOS_NACIONAIS_ELO_2026 =
-      new Set([
-        '2026-10-12',
-        '2026-11-02',
-        '2026-11-20'
+      out[String(mes)] =
+        linhas.slice(0, 20);
+    }
+  );
+
+  return out;
+}
+
+async function sincronizarPlanilhasDoDrive() {
+  if (
+    sincronizacaoDriveEmAndamento
+  ) {
+    return;
+  }
+
+  sincronizacaoDriveEmAndamento =
+    true;
+
+  try {
+    const [
+      wbCliente,
+      wbSegmento,
+      wbProduto
+    ] =
+      await Promise.all([
+        buscarWorkbookDrive(
+          DRIVE_SHEET_IDS.cliente
+        ),
+
+        buscarWorkbookDrive(
+          DRIVE_SHEET_IDS.segmento
+        ),
+
+        buscarWorkbookDrive(
+          DRIVE_SHEET_IDS.produto
+        )
       ]);
 
-    function dataContatoValidaParaMes(
-      valor,
-      mes
-    ) {
+    dadosFixosMensais = {
+      ano: 2026,
 
-      if (!valor) {
-        return false;
+      meses_disponiveis:
+        MESES_FIXOS,
+
+      porCliente:
+        extrairPorCliente(
+          wbCliente
+        ),
+
+      porSegmento:
+        extrairPorSegmento(
+          wbSegmento
+        ),
+
+      porProduto:
+        extrairPorProduto(
+          wbProduto
+        )
+    };
+
+    try {
+      localStorage.setItem(
+        'rca61_mensalDrive',
+        JSON.stringify({
+          dados:
+            dadosFixosMensais,
+
+          atualizadoEm:
+            new Date()
+              .toISOString()
+        })
+      );
+    } catch (e) {}
+
+    popularSelectClientes();
+    renderDashboard();
+
+  } catch (e) {
+    console.warn(
+      '[RCA 61] Drive mensal indisponível:',
+      e
+    );
+  } finally {
+    sincronizacaoDriveEmAndamento =
+      false;
+  }
+}
+
+async function carregarDadosFixosMensais() {
+  try {
+    const cache =
+      localStorage.getItem(
+        'rca61_mensalDrive'
+      );
+
+    if (cache) {
+      const obj =
+        JSON.parse(cache);
+
+      if (
+        obj &&
+        obj.dados
+      ) {
+        dadosFixosMensais =
+          obj.dados;
+
+        return;
       }
+    }
+  } catch (e) {}
 
-      const s =
+  try {
+    const res =
+      await fetch(
+        'historico_fixo.json'
+      );
+
+    if (!res.ok) {
+      throw new Error(
+        'historico_fixo.json não encontrado'
+      );
+    }
+
+    dadosFixosMensais =
+      await res.json();
+
+  } catch (e) {
+    dadosFixosMensais =
+      null;
+
+    console.warn(
+      '[RCA 61] Não foi possível carregar historico_fixo.json',
+      e
+    );
+  }
+}
+
+function obterLinhasFixas(
+  tipo,
+  mes
+) {
+  if (
+    !dadosFixosMensais ||
+    !dadosFixosMensais[tipo]
+  ) {
+    return null;
+  }
+
+  const rows =
+    dadosFixosMensais[
+      tipo
+    ][String(mes)];
+
+  return (
+    Array.isArray(rows) &&
+    rows.length
+  )
+    ? rows
+    : null;
+}
+
+function montarFatiaMesCorrente(
+  tipo,
+  mes
+) {
+  if (mes !== 9) {
+    return null;
+  }
+
+  const configs = {
+
+    porCliente: {
+      keys: [
+        'Vendas (R$) por Cliente',
+        'Cliente'
+      ],
+
+      key: r =>
         String(
-          valor
-        ).trim();
+          r['Cliente_Pai'] ||
+          r['Cliente'] ||
+          ''
+        ).trim(),
 
-      const m =
-        s.match(
-          /^(\d{4})-(\d{2})-(\d{2})$/
+      value: r =>
+        parseCurrency(
+          r[
+            'Valor de venda (R$)'
+          ] ||
+          r['Valor']
+        ),
+
+      make:
+        (
+          key,
+          value,
+          classe
+        ) => ({
+          Classe:
+            classe ||
+            'Fiel',
+
+          Cliente_Pai:
+            key,
+
+          'Valor de venda (R$)':
+            value
+        })
+    },
+
+    porSegmento: {
+      keys: [
+        'Venda mensal em reais da',
+        'Separador Segmento',
+        'Segmento'
+      ],
+
+      key: r =>
+        String(
+          r['Separador'] ||
+          r['Segmento'] ||
+          ''
+        ).trim(),
+
+      value: r =>
+        parseCurrency(
+          r[
+            'After_Tax_Amount'
+          ] ||
+          r['Valor']
+        ),
+
+      make:
+        (
+          key,
+          value
+        ) => ({
+          Separador:
+            key,
+
+          After_Tax_Amount:
+            value
+        })
+    },
+
+    porProduto: {
+      keys: [
+        'Imagem-7',
+        'Image-7',
+        'Top 20 Produtos Mais Vendidos',
+        'Top 20'
+      ],
+
+      key: r =>
+        String(
+          r['Produto'] ||
+          r['Cod'] ||
+          ''
+        ).trim(),
+
+      value: r =>
+        parseCurrency(
+          r['Valor de Venda'] ||
+          r[
+            'Valor de Venda (R$)'
+          ] ||
+          r['Valor']
+        ),
+
+      make:
+        (
+          key,
+          value
+        ) => ({
+          Produto:
+            key,
+
+          'Valor de Venda':
+            value
+        })
+    }
+  };
+
+  const cfg =
+    configs[tipo];
+
+  if (!cfg) {
+    return null;
+  }
+
+  const live =
+    getSheet(
+      dataStore.reportSection,
+      cfg.keys
+    );
+
+  if (!live.length) {
+    return null;
+  }
+
+  const somaFixa = {};
+
+  for (
+    const m of MESES_FIXOS
+  ) {
+    const rows =
+      obterLinhasFixas(
+        tipo,
+        m
+      );
+
+    if (!rows) {
+      continue;
+    }
+
+    rows.forEach(
+      r => {
+        const k =
+          normalizarChave(
+            cfg.key(r)
+          );
+
+        if (!k) return;
+
+        somaFixa[k] =
+          (
+            somaFixa[k] ||
+            0
+          ) +
+          cfg.value(r);
+      }
+    );
+  }
+
+  let reconhecido = 0;
+  let naoReconhecido = 0;
+
+  const out = [];
+
+  live.forEach(
+    r => {
+      const original =
+        cfg.key(r);
+
+      const k =
+        normalizarChave(
+          original
         );
 
-      if (!m) {
-        return false;
+      if (!k) return;
+
+      const acumulado =
+        cfg.value(r);
+
+      if (
+        Object.prototype.hasOwnProperty.call(
+          somaFixa,
+          k
+        )
+      ) {
+        reconhecido +=
+          acumulado;
+      } else {
+        naoReconhecido +=
+          acumulado;
       }
+
+      const mesValor =
+        acumulado -
+        (
+          somaFixa[k] ||
+          0
+        );
+
+      if (
+        Math.abs(mesValor) >
+        0.005
+      ) {
+        out.push(
+          cfg.make(
+            original,
+            mesValor,
+            r['Classe']
+          )
+        );
+      }
+    }
+  );
+
+  const base =
+    reconhecido +
+    naoReconhecido;
+
+  if (
+    base > 0 &&
+    naoReconhecido >
+      reconhecido
+  ) {
+    return null;
+  }
+
+  return out.length
+    ? out
+    : null;
+}
+
+function obterLinhasDoMes(
+  tipo,
+  mes
+) {
+  return (
+    obterLinhasFixas(
+      tipo,
+      mes
+    ) ||
+    montarFatiaMesCorrente(
+      tipo,
+      mes
+    )
+  );
+}
+
+function usarDadosMensaisFixos(
+  ano
+) {
+  const anoFixo =
+    String(
+      (
+        dadosFixosMensais &&
+        dadosFixosMensais.ano
+      ) ||
+      2026
+    );
+
+  return !!dadosFixosMensais &&
+    (
+      !ano ||
+      ano === 'ALL' ||
+      String(ano) === anoFixo
+    );
+}
+
+function salvarSessaoAtual() {
+  try {
+    sessionStorage.setItem(
+      'rca61_sessaoPlanilhas',
+      JSON.stringify({
+        dataStore,
+
+        nomeArquivo1:
+          labelFile1
+            ? labelFile1.textContent
+            : '',
+
+        nomeArquivo2:
+          labelFile2
+            ? labelFile2.textContent
+            : '',
+
+        carregado1:
+          !!(
+            dropZone1 &&
+            dropZone1.classList.contains(
+              'loaded'
+            )
+          ),
+
+        carregado2:
+          !!(
+            dropZone2 &&
+            dropZone2.classList.contains(
+              'loaded'
+            )
+          )
+      })
+    );
+  } catch (e) {}
+}
+
+function restaurarSessaoAtual() {
+  try {
+    const raw =
+      sessionStorage.getItem(
+        'rca61_sessaoPlanilhas'
+      );
+
+    if (!raw) {
+      return false;
+    }
+
+    const saved =
+      JSON.parse(raw);
+
+    if (
+      !saved ||
+      !saved.dataStore
+    ) {
+      return false;
+    }
+
+    dataStore =
+      saved.dataStore;
+
+    if (
+      saved.carregado1 &&
+      dropZone1
+    ) {
+      dropZone1.classList.add(
+        'loaded'
+      );
+    }
+
+    if (
+      saved.carregado2 &&
+      dropZone2
+    ) {
+      dropZone2.classList.add(
+        'loaded'
+      );
+    }
+
+    if (
+      saved.nomeArquivo1 &&
+      labelFile1
+    ) {
+      labelFile1.textContent =
+        saved.nomeArquivo1;
+    }
+
+    if (
+      saved.nomeArquivo2 &&
+      labelFile2
+    ) {
+      labelFile2.textContent =
+        saved.nomeArquivo2;
+    }
+
+    if (
+      algumaPlanilhaCarregada()
+    ) {
+      if (statusBadge) {
+        statusBadge.classList.add(
+          'active'
+        );
+      }
+
+      if (badgeText) {
+        badgeText.textContent =
+          'Dados Sincronizados';
+      }
+
+      popularSelectClientes();
+
+      requestAnimationFrame(
+        renderDashboard
+      );
+
+      sincronizarPlanilhasDoDrive();
+    }
+
+    return true;
+
+  } catch (e) {
+    console.warn(
+      '[RCA 61] Sessão não restaurada',
+      e
+    );
+
+    return false;
+  }
+}
+
+function readExcelFile(
+  file,
+  fileNum
+) {
+  const reader =
+    new FileReader();
+
+  reader.onload =
+    e => {
+      try {
+        const workbook =
+          XLSX.read(
+            new Uint8Array(
+              e.target.result
+            ),
+            {
+              type: 'array',
+              cellDates: true
+            }
+          );
+
+        const parsed = {};
+
+        workbook.SheetNames.forEach(
+          name => {
+            parsed[name.trim()] =
+              XLSX.utils.sheet_to_json(
+                workbook.Sheets[name],
+                {
+                  defval: ''
+                }
+              );
+          }
+        );
+
+        if (
+          fileNum === 1
+        ) {
+          dataStore.reportSection =
+            parsed;
+
+          if (dropZone1) {
+            dropZone1.classList.add(
+              'loaded'
+            );
+          }
+
+          if (labelFile1) {
+            labelFile1.textContent =
+              `✔ ${file.name}`;
+          }
+
+        } else {
+          dataStore.analiseCarteira =
+            parsed;
+
+          if (dropZone2) {
+            dropZone2.classList.add(
+              'loaded'
+            );
+          }
+
+          if (labelFile2) {
+            labelFile2.textContent =
+              `✔ ${file.name}`;
+          }
+        }
+
+        if (statusBadge) {
+          statusBadge.classList.add(
+            'active'
+          );
+        }
+
+        if (badgeText) {
+          badgeText.textContent =
+            'Dados Sincronizados';
+        }
+
+        popularSelectClientes();
+
+        renderDashboard();
+
+        atualizarDadosVivosLocalStorage();
+
+        salvarSessaoAtual();
+
+        sincronizarPlanilhasDoDrive();
+
+      } catch (err) {
+        console.error(
+          '[RCA 61] Erro ao ler planilha:',
+          err
+        );
+      }
+    };
+
+  reader.readAsArrayBuffer(
+    file
+  );
+}
+
+function popularSelectClientes() {
+  if (!selectCliente) {
+    return;
+  }
+
+  const nomes =
+    new Set();
+
+  const live =
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Vendas (R$) por Cliente',
+        'Cliente'
+      ]
+    );
+
+  live.forEach(
+    r => {
+      const nome =
+        r['Cliente_Pai'] ||
+        r['Cliente'];
+
+      if (nome) {
+        nomes.add(
+          String(nome).trim()
+        );
+      }
+    }
+  );
+
+  if (
+    dadosFixosMensais &&
+    dadosFixosMensais.porCliente
+  ) {
+    Object.values(
+      dadosFixosMensais.porCliente
+    ).forEach(
+      rows => {
+        rows.forEach(
+          r => {
+            if (
+              r.Cliente_Pai
+            ) {
+              nomes.add(
+                String(
+                  r.Cliente_Pai
+                ).trim()
+              );
+            }
+          }
+        );
+      }
+    );
+  }
+
+  const atual =
+    selectCliente.value ||
+    'ALL';
+
+  selectCliente.innerHTML =
+    '<option value="ALL">Todos os Clientes</option>';
+
+  [
+    ...nomes
+  ]
+    .sort()
+    .forEach(
+      nome => {
+        const opt =
+          document.createElement(
+            'option'
+          );
+
+        opt.value =
+          nome;
+
+        opt.textContent =
+          nome;
+
+        selectCliente.appendChild(
+          opt
+        );
+      }
+    );
+
+  selectCliente.value =
+    [
+      ...selectCliente.options
+    ].some(
+      o =>
+        o.value === atual
+    )
+      ? atual
+      : 'ALL';
+}
+
+function atualizarDadosVivosLocalStorage() {
+  try {
+    const mapa = {};
+
+    const vendas =
+      getSheet(
+        dataStore.reportSection,
+        [
+          'Vendas (R$) por Cliente',
+          'Cliente'
+        ]
+      );
+
+    vendas.forEach(
+      r => {
+        const nome =
+          String(
+            r['Cliente_Pai'] ||
+            r['Cliente'] ||
+            ''
+          ).trim();
+
+        if (!nome) return;
+
+        const chave =
+          normalizarNome(
+            nome
+          );
+
+        if (!mapa[chave]) {
+          mapa[chave] = {
+            nome
+          };
+        }
+
+        mapa[chave].faturamento =
+          parseCurrency(
+            r[
+              'Valor de venda (R$)'
+            ] ||
+            r['Valor']
+          );
+
+        if (r['Classe']) {
+          mapa[chave].classe =
+            r['Classe'];
+        }
+      }
+    );
+
+    const inativ =
+      getSheet(
+        dataStore.analiseCarteira,
+        [
+          '#Dias até primeira fatura',
+          'Clientes com ultima fatura',
+          'Ultima Fatura'
+        ]
+      );
+
+    inativ.forEach(
+      r => {
+        const nome =
+          String(
+            r['Cliente_Pai'] ||
+            r['Cliente'] ||
+            ''
+          ).trim();
+
+        if (!nome) return;
+
+        const chave =
+          normalizarNome(
+            nome
+          );
+
+        if (!mapa[chave]) {
+          mapa[chave] = {
+            nome
+          };
+        }
+
+        mapa[chave].diasInativo =
+          parseInt(
+            r[
+              '#dias desde a ultima fat'
+            ] ||
+            r['Dias Inativo'] ||
+            r['Dias'] ||
+            0,
+            10
+          );
+
+        mapa[chave].ultimaFatura =
+          formatDate(
+            r['Ultima fat'] ||
+            r['Última Fatura']
+          );
+
+        if (r['Classe']) {
+          mapa[chave].classe =
+            r['Classe'];
+        }
+      }
+    );
+
+    localStorage.setItem(
+      'rca61_dadosVivos',
+      JSON.stringify({
+        clientes: mapa,
+        atualizadoEm:
+          new Date().toISOString()
+      })
+    );
+
+  } catch (e) {
+    console.warn(
+      '[RCA 61] Não foi possível salvar dados vivos',
+      e
+    );
+  }
+}
+
+function calcularTotalAno2026() {
+  let total = 0;
+
+  const mesesFixos =
+    new Set();
+
+  if (
+    usarDadosMensaisFixos(
+      '2026'
+    )
+  ) {
+    for (
+      let m = 1;
+      m <= 8;
+      m++
+    ) {
+      const rows =
+        obterLinhasFixas(
+          'porCliente',
+          m
+        );
+
+      if (!rows) {
+        continue;
+      }
+
+      total +=
+        rows.reduce(
+          (
+            s,
+            r
+          ) =>
+            s +
+            parseCurrency(
+              r[
+                'Valor de venda (R$)'
+              ] ||
+              r['Valor']
+            ),
+          0
+        );
+
+      mesesFixos.add(m);
+    }
+  }
+
+  const fat =
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Imagem-6',
+        'Image-6',
+        'Venda Mensal em Reais',
+        'Venda Mensal'
+      ]
+    );
+
+  fat.forEach(
+    r => {
+      const mes =
+        Number(
+          r['Mês'] ||
+          r['Mes']
+        );
 
       const ano =
         Number(
-          m[1]
+          r['Ano']
         );
 
-      const mesNumero =
-        Number(
-          m[2]
-        );
-
-      return (
+      if (
         ano === 2026 &&
-        mesNumero === mes
-      );
-    }
-
-    function clienteFeitoNoMes(
-      c,
-      cfg
-    ) {
-
-      const temData =
-        dataContatoValidaParaMes(
-          c[cfg.contato],
-          cfg.numero
-        );
-
-      const temAssunto =
-        String(
-          c[cfg.assunto] || ''
-        ).trim() !== '';
-
-      return (
-        temData &&
-        temAssunto
-      );
-    }
-
-    function normalizarAssuntoElo(
-      valor
-    ) {
-
-      return String(
-        valor || ''
-      )
-        .normalize('NFD')
-        .replace(
-          /[\u0300-\u036f]/g,
-          ''
+        mes &&
+        !mesesFixos.has(
+          mes
         )
-        .trim()
-        .toLowerCase();
+      ) {
+        total +=
+          parseCurrency(
+            r[
+              'Vendas (R$)'
+            ] ||
+            r['Vendas'] ||
+            r['Valor']
+          );
+      }
+    }
+  );
+
+  return total;
+}
+
+function renderYTDBanner() {
+  const elLytd =
+    document.getElementById(
+      'kpiLytd'
+    );
+
+  const elYtd =
+    document.getElementById(
+      'kpiYtd'
+    );
+
+  const elVar =
+    document.getElementById(
+      'kpiVariacao'
+    );
+
+  if (
+    !algumaPlanilhaCarregada()
+  ) {
+    if (elLytd) {
+      elLytd.textContent =
+        formatBRL(
+          6386614.16
+        );
     }
 
-    // ============================================================
-    // CLASSIFICAÇÃO DO RODAPÉ
-    //
-    // TIVE RETORNO:
-    // data válida do mês + assunto preenchido,
-    // exceto "Sem retorno" e "Cliente não localizado".
-    //
-    // SEM RETORNO:
-    // data válida do mês + "Sem retorno"
-    // ou "Cliente não localizado".
-    //
-    // NÃO LIGUEI:
-    // não existe data válida para o mês.
-    // ============================================================
+    if (elYtd) {
+      elYtd.textContent =
+        formatBRL(
+          6636963.60
+        );
+    }
 
-    function classificarAtendimentoNoMes(
-      c,
-      cfg
+    if (elVar) {
+      elVar.textContent =
+        formatBRL(
+          250349.43
+        );
+    }
+
+    return;
+  }
+
+  let ytd =
+    calcularTotalAno2026();
+
+  let lytd =
+    null;
+
+  const sheet =
+    getSheet(
+      dataStore.analiseCarteira,
+      [
+        'Positivação de carteira'
+      ]
+    );
+
+  if (sheet.length) {
+    const row =
+      sheet[0];
+
+    const a =
+      parseCurrency(
+        row['Vendas LYTD']
+      );
+
+    const b =
+      parseCurrency(
+        row['Vendas YTD']
+      );
+
+    if (a > 0) {
+      lytd = a;
+    }
+
+    if (b > 0) {
+      ytd = b;
+    }
+  }
+
+  if (elYtd) {
+    elYtd.textContent =
+      formatBRL(ytd);
+  }
+
+  if (
+    lytd !== null
+  ) {
+    const variacao =
+      ytd - lytd;
+
+    const pct =
+      lytd > 0
+        ? (variacao / lytd) *
+          100
+        : 0;
+
+    if (elLytd) {
+      elLytd.textContent =
+        formatBRL(
+          lytd
+        );
+    }
+
+    if (elVar) {
+      elVar.innerHTML =
+        `<span style="color:${
+          variacao >= 0
+            ? '#10b981'
+            : '#ef4444'
+        };">${
+          variacao >= 0
+            ? '+'
+            : ''
+        }${formatBRL(
+          variacao
+        )} (${
+          pct >= 0
+            ? '+'
+            : ''
+        }${pct.toFixed(
+          1
+        )}%)</span>`;
+    }
+
+  } else {
+
+    if (elLytd) {
+      elLytd.innerHTML =
+        'R$ 0,00<br>' +
+        '<span style="font-size:.7rem;font-weight:400;color:#64748b;">' +
+        'Ainda sem base de 2025 na planilha' +
+        '</span>';
+    }
+
+    if (elVar) {
+      elVar.innerHTML =
+        '<span style="font-size:.9rem;color:#64748b;">N/A</span>';
+    }
+  }
+}
+
+function rw(
+  row,
+  keys
+) {
+  if (!row) {
+    return undefined;
+  }
+
+  for (
+    const key of keys
+  ) {
+    if (
+      row[key] !== undefined &&
+      row[key] !== null &&
+      row[key] !== ''
+    ) {
+      return row[key];
+    }
+  }
+
+  return undefined;
+}
+
+function renderKPIs() {
+  const mesSel =
+    selectMes
+      ? selectMes.value
+      : 'ALL';
+
+  const anoSel =
+    selectAno
+      ? selectAno.value
+      : '2026';
+
+  const clienteSel =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const clienteEspecifico =
+    clienteSel !== 'ALL';
+
+  const carregado =
+    algumaPlanilhaCarregada();
+
+  const mesNum =
+    mesSel !== 'ALL'
+      ? parseInt(
+          mesSel,
+          10
+        )
+      : null;
+
+  const anoTemDados =
+    anoSel === '2026' ||
+    anoSel === 'ALL';
+
+  // ----------------------------------
+  // FATURAMENTO
+  // ----------------------------------
+
+  let totalFat = 0;
+
+  const sheetFaturamento =
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Imagem-6',
+        'Image-6',
+        'Venda Mensal em Reais',
+        'Venda Mensal'
+      ]
+    );
+
+  if (
+    anoTemDados &&
+    mesNum !== null
+  ) {
+
+    if (
+      !clienteEspecifico
     ) {
 
-      const temData =
-        dataContatoValidaParaMes(
-          c[cfg.contato],
-          cfg.numero
+      const rowMes =
+        sheetFaturamento.find(
+          r =>
+            Number(
+              r['Ano']
+            ) ===
+              Number(
+                anoSel
+              ) &&
+            Number(
+              r['Mês'] ||
+              r['Mes']
+            ) ===
+              mesNum
         );
 
-      const assunto =
-        normalizarAssuntoElo(
-          c[cfg.assunto]
-        );
-
-      const temAssunto =
-        assunto !== '';
-
-      if (!temData) {
-        return 'naoLigou';
+      if (rowMes) {
+        totalFat =
+          parseCurrency(
+            rowMes[
+              'Vendas (R$)'
+            ] ||
+            rowMes[
+              'Vendas'
+            ] ||
+            rowMes[
+              'Valor'
+            ]
+          );
       }
 
       if (
-        temAssunto &&
-        (
-          assunto === 'sem retorno' ||
-          assunto === 'cliente nao localizado'
+        totalFat === 0 &&
+        usarDadosMensaisFixos(
+          anoSel
         )
       ) {
-        return 'semRetorno';
-      }
+        const rows =
+          obterLinhasFixas(
+            'porCliente',
+            mesNum
+          );
 
-      if (
-        temAssunto
-      ) {
-        return 'teveRetorno';
-      }
-
-      return 'naoLigou';
-    }
-
-    function contarStatusAtendimentoMes(
-      cfg
-    ) {
-
-      const status = {
-
-        teveRetorno:0,
-
-        semRetorno:0,
-
-        naoLigou:0
-
-      };
-
-      baseElo.forEach(
-        c => {
-
-          const categoria =
-            classificarAtendimentoNoMes(
-              c,
-              cfg
+        if (rows) {
+          totalFat =
+            rows.reduce(
+              (
+                s,
+                r
+              ) =>
+                s +
+                parseCurrency(
+                  r[
+                    'Valor de venda (R$)'
+                  ] ||
+                  r['Valor']
+                ),
+              0
             );
-
-          status[
-            categoria
-          ]++;
         }
-      );
+      }
 
-      return status;
-    }
+    } else {
 
-    function contarConcluidosMes(
-      cfg
-    ) {
+      const rows =
+        obterLinhasDoMes(
+          'porCliente',
+          mesNum
+        ) || [];
 
-      return baseElo.filter(
-        c =>
-          clienteFeitoNoMes(
-            c,
-            cfg
+      totalFat =
+        rows
+          .filter(
+            r =>
+              String(
+                r[
+                  'Cliente_Pai'
+                ] ||
+                r[
+                  'Cliente'
+                ] ||
+                ''
+              ).trim() ===
+              String(
+                clienteSel
+              ).trim()
           )
-      ).length;
+          .reduce(
+            (
+              s,
+              r
+            ) =>
+              s +
+              parseCurrency(
+                r[
+                  'Valor de venda (R$)'
+                ] ||
+                r['Valor']
+              ),
+            0
+          );
     }
 
-    function dataLocalHoje() {
+  } else if (
+    anoTemDados
+  ) {
 
-      const agora =
-        new Date();
+    totalFat =
+      calcularTotalAno2026();
+  }
 
-      return new Date(
-        agora.getFullYear(),
-        agora.getMonth(),
-        agora.getDate()
-      );
-    }
+  const elFat =
+    document.getElementById(
+      'kpiValorMensal'
+    );
 
-    function primeiroDiaMes(
-      ano,
-      mesNumero
+  const elFatSub =
+    elFat
+      ? elFat.parentElement.querySelector(
+          '.kpi-sub'
+        )
+      : null;
+
+  if (elFat) {
+    elFat.textContent =
+      (
+        carregado ||
+        totalFat > 0
+      ) &&
+      anoTemDados
+        ? formatBRL(
+            totalFat
+          )
+        : 'R$ 0,00';
+  }
+
+  if (elFatSub) {
+    elFatSub.textContent =
+      mesNum !== null &&
+      anoTemDados
+        ? `Faturamento de ${
+            NOMES_MESES[
+              mesNum - 1
+            ]
+          }/${anoSel}`
+        : 'Total acumulado 2026';
+  }
+
+  // ----------------------------------
+  // BUDGET
+  // ----------------------------------
+
+  const budget =
+    getSheet(
+      dataStore.reportSection,
+      [
+        '% do Budget atingida por',
+        '% Budget Atingida',
+        'Budget'
+      ]
+    );
+
+  const budgetFiltrado =
+    filtrarPorCliente(
+      budget,
+      clienteSel
+    );
+
+  let budgetPct = 0;
+
+  if (
+    !budgetFiltrado.semDetalhePorCliente &&
+    budgetFiltrado.linhas.length
+  ) {
+
+    if (
+      mesNum !== null
     ) {
 
-      return new Date(
-        ano,
-        mesNumero - 1,
+      const row =
+        budgetFiltrado.linhas.find(
+          r =>
+            Number(
+              r['Mês'] ||
+              r['Mes']
+            ) ===
+              mesNum
+        );
+
+      if (row) {
+        budgetPct =
+          parsePct(
+            rw(
+              row,
+              [
+                '% do Budget',
+                'Budget'
+              ]
+            )
+          );
+      }
+
+    } else {
+
+      const vals =
+        budgetFiltrado.linhas
+          .map(
+            r =>
+              parsePct(
+                rw(
+                  r,
+                  [
+                    '% do Budget',
+                    'Budget'
+                  ]
+                )
+              )
+          )
+          .filter(
+            v =>
+              v > 0
+          );
+
+      if (vals.length) {
+        budgetPct =
+          vals.reduce(
+            (
+              a,
+              b
+            ) =>
+              a + b,
+            0
+          ) /
+          vals.length;
+      }
+    }
+  }
+
+  const elBudget =
+    document.getElementById(
+      'kpiBudgetAtingido'
+    );
+
+  if (elBudget) {
+    elBudget.textContent =
+      `${budgetPct.toFixed(
         1
-      );
+      )}%`;
+  }
+
+  // ----------------------------------
+  // POSITIVAÇÃO
+  // ----------------------------------
+
+  const elPos =
+    document.getElementById(
+      'kpiPositivacao'
+    );
+
+  const elPosSub =
+    document.getElementById(
+      'kpiPositivacaoSub'
+    );
+
+  const posCard =
+    elPosSub
+      ? elPosSub.closest(
+          '.kpi-card'
+        )
+      : null;
+
+  if (
+    clienteEspecifico
+  ) {
+
+    if (elPos) {
+      elPos.textContent =
+        '—';
     }
 
-    function ultimoDiaMes(
-      ano,
-      mesNumero
-    ) {
+    if (elPosSub) {
+      elPosSub.innerHTML =
+        'Indicador de carteira — ' +
+        'selecione "Todos os Clientes" ' +
+        'para ver a positivação.';
+    }
 
-      return new Date(
-        ano,
-        mesNumero,
+    if (posCard) {
+      posCard.style.borderColor =
+        '';
+
+      posCard.style.boxShadow =
+        '';
+    }
+
+  } else {
+
+    const ultima =
+      getSheet(
+        dataStore.analiseCarteira,
+        [
+          'Ultima fatura',
+          'Última fatura'
+        ]
+      );
+
+    const rowPos =
+      ultima[0] ||
+      {};
+
+    const positivados =
+      parseCurrency(
+        rw(
+          rowPos,
+          [
+            'Qtd_Positivados',
+            'Qtd_Positivado'
+          ]
+        )
+      ) ||
+      (
+        carregado
+          ? 0
+          : 82
+      );
+
+    const carteira =
+      parseCurrency(
+        rowPos[
+          'Carteira'
+        ]
+      ) ||
+      (
+        carregado
+          ? 0
+          : 271
+      );
+
+    const metaOficial =
+      parseCurrency(
+        rowPos[
+          'Meta'
+        ]
+      );
+
+    const faltaOficial =
+      parseCurrency(
+        rowPos[
+          'Qtd_Falta'
+        ]
+      );
+
+    const pctOficial =
+      parsePct(
+        rowPos[
+          '%Positivados'
+        ]
+      );
+
+    const meta =
+      metaOficial > 0
+        ? metaOficial
+        : Math.round(
+            carteira *
+              0.60
+          );
+
+    const metaPct =
+      carteira > 0
+        ? (
+            meta /
+            carteira
+          ) *
+          100
+        : 60;
+
+    const realPct =
+      pctOficial > 0
+        ? pctOficial
+        : (
+            carteira > 0
+              ? (
+                  positivados /
+                  carteira
+                ) *
+                100
+              : 0
+          );
+
+    const falta =
+      faltaOficial >= 0
+        ? faltaOficial
+        : Math.max(
+            meta -
+              positivados,
+            0
+          );
+
+    const faltaPct =
+      Math.max(
+        metaPct -
+          realPct,
         0
       );
+
+    const alerta =
+      falta > 0 &&
+      diasUteisRestantesNoMes() <=
+        10;
+
+    if (elPos) {
+      elPos.textContent =
+        `${positivados} / ${carteira}`;
+
+      elPos.style.color =
+        alerta
+          ? '#ef4444'
+          : '';
     }
 
-    function formatarDataCurta(
-      data
-    ) {
+    if (elPosSub) {
 
-      return data.toLocaleDateString(
-        'pt-BR',
-        {
-          day:'2-digit',
-          month:'2-digit'
-        }
-      );
-    }
+      if (falta <= 0) {
 
-    function ehDiaUtilElo(
-      data
-    ) {
-
-      const diaSemana =
-        data.getDay();
-
-      if (
-        diaSemana === 0 ||
-        diaSemana === 6
-      ) {
-        return false;
-      }
-
-      const iso =
-        `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
-
-      return !FERIADOS_NACIONAIS_ELO_2026.has(
-        iso
-      );
-    }
-
-    function diasUteisRestantesMes(
-      mesNumero
-    ) {
-
-      const hoje =
-        dataLocalHoje();
-
-      const inicioMes =
-        primeiroDiaMes(
-          2026,
-          mesNumero
-        );
-
-      const fimMes =
-        ultimoDiaMes(
-          2026,
-          mesNumero
-        );
-
-      let inicioContagem;
-
-      if (
-        hoje < inicioMes
-      ) {
-
-        inicioContagem =
-          inicioMes;
-
-      } else if (
-        hoje > fimMes
-      ) {
-
-        return 0;
+        elPosSub.innerHTML =
+          `Real: <strong>${realPct.toFixed(
+            2
+          )}%</strong> | ` +
+          `Meta: <strong>${meta} clientes (${metaPct.toFixed(
+            1
+          )}%)</strong> | ` +
+          `<span style="color:#10b981;font-weight:bold;">Meta Atingida!</span>`;
 
       } else {
 
-        inicioContagem =
-          new Date(
-            hoje
+        elPosSub.innerHTML =
+          `Real: <strong>${realPct.toFixed(
+            2
+          )}%</strong> | ` +
+          `Meta: <strong>${meta} clientes (${metaPct.toFixed(
+            1
+          )}%)</strong> | ` +
+          `Falta: <span style="color:#ef4444;font-weight:bold;">${falta} clientes (${faltaPct.toFixed(
+            2
+          )}%)</span>` +
+          (
+            alerta
+              ? `<br><span style="display:inline-block;margin-top:6px;padding:4px 8px;border-radius:6px;background:rgba(239,68,68,.15);color:#ef4444;font-weight:700;">🚨 Faltam ${diasUteisRestantesNoMes()} dias úteis para o fim do mês</span>`
+              : ''
           );
-
-        inicioContagem.setDate(
-          inicioContagem.getDate() + 1
-        );
       }
-
-      let total = 0;
-
-      const cursor =
-        new Date(
-          inicioContagem
-        );
-
-      while (
-        cursor <= fimMes
-      ) {
-
-        if (
-          ehDiaUtilElo(
-            cursor
-          )
-        ) {
-          total++;
-        }
-
-        cursor.setDate(
-          cursor.getDate() + 1
-        );
-      }
-
-      return total;
     }
 
-    function renderizarProgressoAtendimento() {
+    if (posCard) {
+      posCard.style.borderColor =
+        alerta
+          ? '#ef4444'
+          : '';
 
-      const grid =
-        document.getElementById(
-          'eloProgressGrid'
-        );
+      posCard.style.boxShadow =
+        alerta
+          ? '0 0 0 1px rgba(239,68,68,.45)'
+          : '';
+    }
+  }
 
-      if (!grid) {
-        return;
-      }
+  // ----------------------------------
+  // ENCOMENDAS GRAVADAS
+  // ----------------------------------
 
-      const totalClientes =
-        baseElo.length;
+  const gravSheet =
+    getSheet(
+      dataStore.analiseCarteira,
+      [
+        '% de encomendas gravadas',
+        'Encomendas Gravadas',
+        'Gravado'
+      ]
+    );
 
-      if (!totalClientes) {
+  const grav =
+    filtrarPorCliente(
+      gravSheet,
+      clienteSel
+    );
 
-        grid.innerHTML =
-          '';
+  let pctGrav =
+    carregado
+      ? 0
+      : 44.72;
 
-        return;
-      }
+  if (
+    !grav.semDetalhePorCliente &&
+    grav.linhas.length
+  ) {
 
-      grid.innerHTML =
-        MESES_ELO
-          .map(
-            cfg => {
+    const row =
+      mesNum !== null
 
-              const feitos =
-                contarConcluidosMes(
-                  cfg
+        ? grav.linhas.find(
+            r =>
+              Number(
+                r['Ano']
+              ) ===
+                Number(
+                  anoSel
+                ) &&
+              Number(
+                r['Mes']
+              ) ===
+                mesNum &&
+              String(
+                r['Tipo'] ||
+                  ''
+              )
+                .toLowerCase() ===
+                'gravado'
+          )
+
+        : null;
+
+    const alvo =
+      row ||
+      grav.linhas.find(
+        r =>
+          String(
+            r['Ano'] ||
+              r['Tipo']
+          )
+            .toLowerCase()
+            .includes(
+              'total'
+            )
+      ) ||
+      grav.linhas[0];
+
+    pctGrav =
+      parsePct(
+        rw(
+          alvo,
+          [
+            '% gravação',
+            '% Gravado',
+            'Total',
+            'Gravado'
+          ]
+        )
+      );
+  }
+
+  const elGrav =
+    document.getElementById(
+      'kpiPctGravadas'
+    );
+
+  const elGravSub =
+    document.getElementById(
+      'kpiPctGravadasSub'
+    );
+
+  if (elGrav) {
+    elGrav.textContent =
+      `${pctGrav.toFixed(
+        2
+      )}%`;
+  }
+
+  if (elGravSub) {
+
+    const diff =
+      40 -
+      pctGrav;
+
+    elGravSub.innerHTML =
+      grav.semDetalhePorCliente &&
+      clienteEspecifico
+        ? 'Indicador de carteira — selecione "Todos os Clientes".'
+
+        : diff <= 0
+          ? 'Meta: 40% | ' +
+            '<span style="color:#10b981;font-weight:bold;">' +
+            'Meta Atingida!' +
+            '</span>'
+
+          : `Meta: 40% | ` +
+            `Falta: <span style="color:#f59e0b;font-weight:bold;">${diff.toFixed(
+              2
+            )}%</span> p/ a meta`;
+  }
+}
+
+const pluginValoresNativos = {
+  id: 'pluginValoresNativos',
+
+  afterDatasetsDraw(
+    chart
+  ) {
+    if (
+      !chart ||
+      !chart.data ||
+      !chart.data.datasets
+    ) {
+      return;
+    }
+
+    chart.data.datasets.forEach(
+      (
+        dataset,
+        dsIndex
+      ) => {
+
+        const meta =
+          chart.getDatasetMeta(
+            dsIndex
+          );
+
+        if (meta.hidden) {
+          return;
+        }
+
+        if (
+          chart.config.type !==
+            'doughnut' &&
+          meta.data.length >
+            24
+        ) {
+          return;
+        }
+
+        meta.data.forEach(
+          (
+            element,
+            index
+          ) => {
+
+            const value =
+              dataset.data[
+                index
+              ];
+
+            if (
+              value === null ||
+              value === undefined ||
+              value === 0
+            ) {
+              return;
+            }
+
+            const ctx =
+              chart.ctx;
+
+            ctx.save();
+
+            const horizontal =
+              chart.options
+                .indexAxis ===
+              'y';
+
+            if (
+              chart.config.type ===
+              'doughnut'
+            ) {
+
+              const nums =
+                dataset.data.filter(
+                  v =>
+                    typeof v ===
+                    'number'
                 );
 
-              const statusAtendimento =
-                contarStatusAtendimentoMes(
-                  cfg
-                );
-
-              const faltam =
-                Math.max(
-                  totalClientes - feitos,
+              const total =
+                nums.reduce(
+                  (
+                    a,
+                    b
+                  ) =>
+                    a + b,
                   0
                 );
 
-              const percentual =
-                totalClientes > 0
-                  ? (
-                      feitos /
-                      totalClientes
-                    ) * 100
-                  : 0;
+              const pct =
+                total > 0
+                  ? `${(
+                      (
+                        value /
+                        total
+                      ) *
+                      100
+                    ).toFixed(
+                      1
+                    )}%`
+                  : '';
 
-              const diasRestantes =
-                diasUteisRestantesMes(
-                  cfg.numero
+              const p =
+                element.tooltipPosition();
+
+              ctx.font =
+                'bold 10px sans-serif';
+
+              ctx.fillStyle =
+                '#fff';
+
+              ctx.textAlign =
+                'center';
+
+              ctx.fillText(
+                `${value} (${pct})`,
+                p.x,
+                p.y
+              );
+
+            } else {
+
+              const isPct =
+                String(
+                  dataset.label ||
+                    ''
+                )
+                  .includes('%') ||
+                String(
+                  dataset.label ||
+                    ''
+                )
+                  .toLowerCase()
+                  .includes(
+                    'budget'
+                  );
+
+              const text =
+                isPct
+                  ? `${Number(
+                      value
+                    ).toFixed(
+                      1
+                    )}%`
+                  : formatCompactBRL(
+                      value
+                    );
+
+              ctx.font =
+                `bold ${
+                  meta.data
+                    .length >
+                    12
+                    ? 8
+                    : 10
+                }px sans-serif`;
+
+              ctx.fillStyle =
+                '#fff';
+
+              const p =
+                element.tooltipPosition
+                  ? element.tooltipPosition()
+                  : {
+                      x: element.x,
+                      y: element.y
+                    };
+
+              const w =
+                ctx.measureText(
+                  text
+                ).width;
+
+              ctx.fillStyle =
+                'rgba(15,23,42,.85)';
+
+              if (horizontal) {
+
+                ctx.fillRect(
+                  p.x + 2,
+                  p.y - 7,
+                  w + 8,
+                  14
                 );
 
-              const hoje =
-                dataLocalHoje();
+                ctx.fillStyle =
+                  '#fff';
 
-              const primeiro =
-                primeiroDiaMes(
-                  2026,
-                  cfg.numero
+                ctx.textAlign =
+                  'left';
+
+                ctx.fillText(
+                  text,
+                  p.x + 6,
+                  p.y
                 );
-
-              const ultimo =
-                ultimoDiaMes(
-                  2026,
-                  cfg.numero
-                );
-
-              let statusTexto =
-                '';
-
-              if (
-                hoje > ultimo
-              ) {
-
-                statusTexto =
-                  faltam === 0
-                    ? '✅ Finalizado — todos os clientes foram feitos.'
-                    : `⚠️ Mês finalizado — ainda faltam ${faltam} clientes.`;
-
-              } else if (
-                hoje < primeiro
-              ) {
-
-                statusTexto =
-                  `⏳ Ainda não iniciado — ${diasRestantes} dias úteis no mês.`;
 
               } else {
 
-                statusTexto =
-                  faltam === 0
-                    ? '✅ Atendimento concluído — todos os clientes foram feitos.'
-                    : `🔄 Em andamento — faltam ${faltam} clientes e ${diasRestantes} dias úteis para o fim do mês.`;
+                ctx.fillRect(
+                  p.x -
+                    w / 2 -
+                    4,
+                  p.y -
+                    16,
+                  w + 8,
+                  14
+                );
+
+                ctx.fillStyle =
+                  '#fff';
+
+                ctx.textAlign =
+                  'center';
+
+                ctx.fillText(
+                  text,
+                  p.x,
+                  p.y - 6
+                );
               }
-
-              return `
-
-                <div class="elo-progress-card">
-
-                  <div class="elo-progress-head">
-
-                    <div>
-
-                      <div class="elo-progress-month">
-                        Atendimento ELO · ${cfg.nome}/2026
-                      </div>
-
-                      <div
-                        style="
-                          margin-top:5px;
-                          font-size:1rem;
-                          font-weight:700;
-                        "
-                      >
-                        ${feitos} de ${totalClientes} clientes
-                      </div>
-
-                    </div>
-
-                    <div
-                      class="elo-progress-pct"
-                      style="color:#10b981;"
-                    >
-                      ${percentual.toFixed(1)}%
-                    </div>
-
-                  </div>
-
-                  <div class="elo-progress-main">
-
-                    <div class="elo-progress-kpi">
-
-                      <span class="lbl">
-                        Feitos
-                      </span>
-
-                      <span class="num">
-                        ${feitos}
-                      </span>
-
-                    </div>
-
-                    <div class="elo-progress-kpi">
-
-                      <span class="lbl">
-                        Faltam
-                      </span>
-
-                      <span class="num">
-                        ${faltam}
-                      </span>
-
-                    </div>
-
-                    <div class="elo-progress-kpi">
-
-                      <span class="lbl">
-                        Dias úteis
-                      </span>
-
-                      <span class="num">
-                        ${diasRestantes}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                  <div class="elo-progress-bar">
-
-                    <div
-                      class="elo-progress-fill"
-                      style="width:${Math.min(
-                        percentual,
-                        100
-                      )}%;"
-                    ></div>
-
-                  </div>
-
-                  <div class="elo-progress-status">
-                    ${statusTexto}
-                  </div>
-
-                  <!-- COMPLEMENTO PEDIDO -->
-                  <div
-                    class="elo-progress-footer"
-                    title="Distribuição dos clientes deste mês"
-                  >
-
-                    <div class="elo-progress-footer-item">
-                      Tive retorno
-                      <strong>
-                        ${statusAtendimento.teveRetorno}
-                      </strong>
-                    </div>
-
-                    <div class="elo-progress-footer-item">
-                      Sem retorno
-                      <strong>
-                        ${statusAtendimento.semRetorno}
-                      </strong>
-                    </div>
-
-                    <div class="elo-progress-footer-item">
-                      Não liguei
-                      <strong>
-                        ${statusAtendimento.naoLigou}
-                      </strong>
-                    </div>
-
-                  </div>
-
-                </div>
-              `;
             }
-          )
-          .join('');
-    }
 
-    // ============================================================
-    // TABELA
-    // ============================================================
-
-    function badgePonto(
-      texto
-    ) {
-
-      if (!texto) {
-        return '-';
-      }
-
-      const t =
-        texto.toLowerCase();
-
-      let cor =
-        '#64748b';
-
-      if (
-        t.includes('caiu')
-      ) {
-        cor =
-          '#f59e0b';
-
-      } else if (
-        t.includes('não comprou') ||
-        t.includes('sem compra')
-      ) {
-
-        cor =
-          '#ef4444';
-
-      } else if (
-        t.includes('nunca gravou')
-      ) {
-
-        cor =
-          '#3b82f6';
-
-      } else if (
-        t.includes('manutenção')
-      ) {
-
-        cor =
-          '#10b981';
-      }
-
-      return `
-        <span
-          class="elo-badge"
-          style="
-            background:${cor}22;
-            color:${cor};
-          "
-        >
-          ${texto}
-        </span>
-      `;
-    }
-
-    function renderizarTabela(
-      dados
-    ) {
-
-      renderizarProgressoAtendimento();
-
-      const tbody =
-        document.getElementById(
-          'tbElo'
+            ctx.restore();
+          }
         );
-
-      if (
-        dados.length === 0
-      ) {
-
-        tbody.innerHTML =
-          '<tr><td colspan="9" class="empty-row">Nenhum cliente encontrado.</td></tr>';
-
-        return;
       }
+    );
+  }
+};
 
-      tbody.innerHTML =
-        '';
+function renderChartHistorico() {
+  const ctx =
+    document.getElementById(
+      'chartHistoricoFaturamento'
+    );
 
-      const frag =
-        document.createDocumentFragment();
+  if (!ctx) {
+    return;
+  }
 
-      dados.forEach(
-        c => {
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
 
-          const varTxt =
-            typeof c.varPct === 'number'
-              ? `${(c.varPct * 100).toFixed(0)}%`
-              : '-';
+  const fat =
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Imagem-6',
+        'Image-6',
+        'Venda Mensal em Reais',
+        'Venda Mensal'
+      ]
+    );
 
-          const corVar =
-            typeof c.varPct === 'number'
-              ? (
-                  c.varPct >= 0
-                    ? '#10b981'
-                    : '#ef4444'
-                )
-              : '#64748b';
+  const serie2026 =
+    new Array(
+      12
+    ).fill(null);
 
-          const dots = `
+  for (
+    let m = 1;
+    m <= 8;
+    m++
+  ) {
 
-            <span
-              class="elo-dot ${
-                clienteFeitoNoMes(
-                  c,
-                  MESES_ELO[0]
-                )
-                  ? 'on'
-                  : 'off'
-              }"
-              title="Setembro: ${
-                clienteFeitoNoMes(
-                  c,
-                  MESES_ELO[0]
-                )
-                  ? 'Feito'
-                  : 'Pendente'
-              }"
-            ></span>
-
-            <span
-              class="elo-dot ${
-                clienteFeitoNoMes(
-                  c,
-                  MESES_ELO[1]
-                )
-                  ? 'on'
-                  : 'off'
-              }"
-              title="Outubro: ${
-                clienteFeitoNoMes(
-                  c,
-                  MESES_ELO[1]
-                )
-                  ? 'Feito'
-                  : 'Pendente'
-              }"
-            ></span>
-
-            <span
-              class="elo-dot ${
-                clienteFeitoNoMes(
-                  c,
-                  MESES_ELO[2]
-                )
-                  ? 'on'
-                  : 'off'
-              }"
-              title="Novembro: ${
-                clienteFeitoNoMes(
-                  c,
-                  MESES_ELO[2]
-                )
-                  ? 'Feito'
-                  : 'Pendente'
-              }"
-            ></span>
-
-          `;
-
-          const tr =
-            document.createElement(
-              'tr'
-            );
-
-          tr.className =
-            'clickable-row';
-
-          tr.innerHTML = `
-
-            <td>
-              ${c.codigo}
-            </td>
-
-            <td>
-              <strong>
-                ${c.cliente}
-              </strong>
-            </td>
-
-            <td>
-              ${c.cidade}
-            </td>
-
-            <td
-              style="
-                color:${corVar};
-                font-weight:600;
-              "
-            >
-              ${varTxt}
-            </td>
-
-            <td>
-              ${c.pedidos26}
-            </td>
-
-            <td>
-              ${c.grava || '-'}
-            </td>
-
-            <td>
-              ${badgePonto(
-                c.pontoAtencao
-              )}
-            </td>
-
-            <td>
-              ${dots}
-            </td>
-
-            <td
-              style="
-                text-align:center;
-              "
-            >
-              <button
-                class="btn-upload"
-                style="
-                  padding:4px 10px;
-                  font-size:0.75rem;
-                "
-              >
-                Registrar Atendimento
-              </button>
-            </td>
-
-          `;
-
-          tr
-            .querySelector(
-              'button'
-            )
-            .addEventListener(
-              'click',
-              () =>
-                abrirModal(c)
-            );
-
-          frag.appendChild(
-            tr
-          );
-        }
-      );
-
-      tbody.appendChild(
-        frag
-      );
-    }
-
-    document
-      .getElementById(
-        'searchElo'
+    const rows =
+      usarDadosMensaisFixos(
+        '2026'
       )
-      .addEventListener(
-        'input',
-        e => {
-
-          const termo =
-            e.target.value
-              .toLowerCase()
-              .trim();
-
-          const filtrados =
-            baseElo.filter(
-              c =>
-                c.cliente
-                  .toLowerCase()
-                  .includes(
-                    termo
-                  ) ||
-
-                c.cidade
-                  .toLowerCase()
-                  .includes(
-                    termo
-                  ) ||
-
-                String(
-                  c.codigo
-                ).includes(
-                  termo
-                )
-            );
-
-          renderizarTabela(
-            filtrados
-          );
-        }
-      );
-
-    // ============================================================
-    // MODAL
-    // ============================================================
-
-    function optionsHtml(
-      lista,
-      selecionado
-    ) {
-
-      return (
-        `<option value="">-</option>` +
-
-        lista
-          .map(
-            op =>
-              `<option value="${op}" ${
-                op === selecionado
-                  ? 'selected'
-                  : ''
-              }>${op}</option>`
+        ? obterLinhasFixas(
+            'porCliente',
+            m
           )
-          .join('')
-      );
+        : null;
+
+    if (!rows) {
+      continue;
     }
 
-    function abrirModal(
-      c
-    ) {
-
-      let modal =
-        document.getElementById(
-          'eloModal'
-        );
-
-      if (!modal) {
-
-        modal =
-          document.createElement(
-            'div'
-          );
-
-        modal.id =
-          'eloModal';
-
-        modal.style.cssText =
-          `
-            position:fixed;
-            top:0;
-            left:0;
-            width:100vw;
-            height:100vh;
-            background:rgba(11,15,25,0.85);
-            backdrop-filter:blur(6px);
-            z-index:99999;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            overflow-y:auto;
-            padding:20px;
-          `;
-
-        document.body.appendChild(
-          modal
-        );
-      }
-
-      modal.innerHTML = `
-
-        <div
-          style="
-            background:#1e293b;
-            border:1px solid #334155;
-            border-radius:12px;
-            width:100%;
-            max-width:640px;
-            padding:24px;
-            box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);
-            color:#f8fafc;
-          "
-        >
-
-          <div
-            style="
-              display:flex;
-              justify-content:space-between;
-              align-items:center;
-              border-bottom:1px solid #334155;
-              padding-bottom:12px;
-              margin-bottom:16px;
-            "
-          >
-
-            <div>
-
-              <h3
-                style="
-                  margin:0;
-                  font-size:1.1rem;
-                  color:#6366f1;
-                "
-              >
-                📞 ${c.codigo} - ${c.cliente}
-              </h3>
-
-              <span
-                style="
-                  font-size:0.8rem;
-                  color:#94a3b8;
-                "
-              >
-                ${c.cidade} · ${badgePonto(
-                  c.pontoAtencao
-                )}
-              </span>
-
-            </div>
-
-            <button
-              id="eloFechar"
-              style="
-                background:transparent;
-                border:none;
-                color:#94a3b8;
-                font-size:1.5rem;
-                cursor:pointer;
-              "
-            >
-              &times;
-            </button>
-
-          </div>
-
-          <div
-            style="
-              display:grid;
-              grid-template-columns:repeat(3,1fr);
-              gap:10px;
-              margin-bottom:16px;
-            "
-          >
-
-            <div class="elo-modal-month">
-
-              <h4>
-                Setembro
-              </h4>
-
-              <div class="elo-field">
-
-                <label>
-                  Contato
-                </label>
-
-                <input
-                  type="date"
-                  id="eloSetContato"
-                  value="${c.setContato}"
-                >
-
-              </div>
-
-              <div class="elo-field">
-
-                <label>
-                  Assunto
-                </label>
-
-                <select
-                  id="eloSetAssunto"
-                >
-                  ${optionsHtml(
-                    ASSUNTO_OPCOES,
-                    c.setAssunto
-                  )}
-                </select>
-
-              </div>
-
-            </div>
-
-            <div class="elo-modal-month">
-
-              <h4>
-                Outubro
-              </h4>
-
-              <div class="elo-field">
-
-                <label>
-                  Contato
-                </label>
-
-                <input
-                  type="date"
-                  id="eloOutContato"
-                  value="${c.outContato}"
-                >
-
-              </div>
-
-              <div class="elo-field">
-
-                <label>
-                  Assunto
-                </label>
-
-                <select
-                  id="eloOutAssunto"
-                >
-                  ${optionsHtml(
-                    ASSUNTO_OPCOES,
-                    c.outAssunto
-                  )}
-                </select>
-
-              </div>
-
-            </div>
-
-            <div class="elo-modal-month">
-
-              <h4>
-                Novembro
-              </h4>
-
-              <div class="elo-field">
-
-                <label>
-                  Contato
-                </label>
-
-                <input
-                  type="date"
-                  id="eloNovContato"
-                  value="${c.novContato}"
-                >
-
-              </div>
-
-              <div class="elo-field">
-
-                <label>
-                  Assunto
-                </label>
-
-                <select
-                  id="eloNovAssunto"
-                >
-                  ${optionsHtml(
-                    ASSUNTO_OPCOES,
-                    c.novAssunto
-                  )}
-                </select>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <div
-            class="elo-field"
-            style="margin-bottom:12px;"
-          >
-
-            <label>
-              O que o cliente disse
-            </label>
-
-            <textarea
-              id="eloClienteDisse"
-            >${c.clienteDisse}</textarea>
-
-          </div>
-
-          <div
-            class="elo-field"
-            style="margin-bottom:16px;"
-          >
-
-            <label>
-              Encaminhado para
-            </label>
-
-            <select
-              id="eloEncaminhado"
-            >
-              ${optionsHtml(
-                ENCAMINHADO_OPCOES,
-                c.encaminhadoPara
-              )}
-            </select>
-
-          </div>
-
-          <div
-            id="eloAvisoConfig"
-            style="
-              display:${
-                APPS_SCRIPT_URL
-                  ? 'none'
-                  : 'block'
-              };
-              background:rgba(245,158,11,0.1);
-              border:1px solid #f59e0b;
-              color:#f59e0b;
-              padding:10px;
-              border-radius:8px;
-              font-size:0.8rem;
-              margin-bottom:12px;
-            "
-          >
-            ⚠️ Gravação no Drive ainda não configurada (falta a URL do Apps Script). Suas edições não vão ser salvas até isso ser ligado.
-          </div>
-
-          <div
-            style="
-              display:flex;
-              justify-content:flex-end;
-              gap:10px;
-            "
-          >
-
-            <button
-              id="eloCancelar"
-              style="
-                background:transparent;
-                border:1px solid #334155;
-                color:#94a3b8;
-                padding:10px 18px;
-                border-radius:6px;
-                cursor:pointer;
-              "
-            >
-              Cancelar
-            </button>
-
-            <button
-              id="eloSalvar"
-              class="elo-btn-save-modal"
-            >
-              Salvar no Drive
-            </button>
-
-          </div>
-
-        </div>
-      `;
-
-      modal.style.display =
-        'flex';
-
-      document
-        .getElementById(
-          'eloFechar'
-        )
-        .onclick =
-          () =>
-            modal.style.display =
-              'none';
-
-      document
-        .getElementById(
-          'eloCancelar'
-        )
-        .onclick =
-          () =>
-            modal.style.display =
-              'none';
-
-      document
-        .getElementById(
-          'eloSalvar'
-        )
-        .onclick =
-          () =>
-            salvarAtendimento(
-              c,
-              modal
-            );
+    const flt =
+      filtrarPorCliente(
+        rows,
+        cliente
+      ).linhas;
+
+    const total =
+      flt.reduce(
+        (
+          s,
+          r
+        ) =>
+          s +
+          parseCurrency(
+            r[
+              'Valor de venda (R$)'
+            ] ||
+            r['Valor']
+          ),
+        0
+      );
+
+    if (total > 0) {
+      serie2026[m - 1] =
+        total;
     }
+  }
 
-    async function salvarAtendimento(
-      c,
-      modal
-    ) {
-
-      const novo = {
-
-        setContato:
-          document.getElementById(
-            'eloSetContato'
-          ).value,
-
-        setAssunto:
-          document.getElementById(
-            'eloSetAssunto'
-          ).value,
-
-        outContato:
-          document.getElementById(
-            'eloOutContato'
-          ).value,
-
-        outAssunto:
-          document.getElementById(
-            'eloOutAssunto'
-          ).value,
-
-        novContato:
-          document.getElementById(
-            'eloNovContato'
-          ).value,
-
-        novAssunto:
-          document.getElementById(
-            'eloNovAssunto'
-          ).value,
-
-        clienteDisse:
-          document.getElementById(
-            'eloClienteDisse'
-          ).value,
-
-        encaminhadoPara:
-          document.getElementById(
-            'eloEncaminhado'
-          ).value
-      };
-
-      if (!APPS_SCRIPT_URL) {
-
-        mostrarToast(
-          'Configure a URL do Apps Script antes de salvar (veja o README).',
-          false
+  fat.forEach(
+    r => {
+      const m =
+        Number(
+          r['Mês'] ||
+          r['Mes']
         );
 
-        return;
-      }
+      const a =
+        Number(
+          r['Ano']
+        );
 
-      const mapaColunas = {
-
-        setContato:
-          'SET contato',
-
-        setAssunto:
-          'SET assunto',
-
-        outContato:
-          'OUT contato',
-
-        outAssunto:
-          'OUT assunto',
-
-        novContato:
-          'NOV contato',
-
-        novAssunto:
-          'NOV assunto',
-
-        clienteDisse:
-          'O que o cliente disse',
-
-        encaminhadoPara:
-          'Encaminhado para'
-      };
-
-      const mudancas =
-        Object.keys(
-          novo
-        )
-          .filter(
-            k =>
-              novo[k] !== c[k]
-          )
-          .map(
-            k => ({
-              codigo:c.codigo,
-              coluna:mapaColunas[k],
-              valor:novo[k]
-            })
-          );
+      const v =
+        parseCurrency(
+          r[
+            'Vendas (R$)'
+          ] ||
+          r['Vendas'] ||
+          r['Valor']
+        );
 
       if (
-        mudancas.length === 0
+        a === 2026 &&
+        m >= 9 &&
+        m <= 12 &&
+        v > 0 &&
+        serie2026[
+          m - 1
+        ] === null
       ) {
+        serie2026[
+          m - 1
+        ] = v;
+      }
+    }
+  );
 
-        modal.style.display =
-          'none';
+  if (
+    cliente !== 'ALL'
+  ) {
 
-        return;
+    for (
+      let m = 9;
+      m <= 12;
+      m++
+    ) {
+
+      if (
+        serie2026[
+          m - 1
+        ] !== null
+      ) {
+        continue;
       }
 
-      const btn =
-        document.getElementById(
-          'eloSalvar'
+      const rows =
+        obterLinhasDoMes(
+          'porCliente',
+          m
         );
 
-      btn.disabled =
-        true;
+      if (!rows) {
+        continue;
+      }
 
-      btn.textContent =
-        'Salvando...';
-
-      try {
-
-        const res =
-          await fetch(
-            APPS_SCRIPT_URL,
-            {
-              method:'POST',
-              body:JSON.stringify({
-                mudancas
-              })
-            }
-          );
-
-        const json =
-          await res.json();
-
-        if (!json.ok) {
-
-          throw new Error(
-            json.erro ||
-            (
-              json.erros ||
-              []
-            ).join(', ')
-          );
-        }
-
-        Object.assign(
-          c,
-          novo
+      const total =
+        filtrarPorCliente(
+          rows,
+          cliente
+        ).linhas.reduce(
+          (
+            s,
+            r
+          ) =>
+            s +
+            parseCurrency(
+              r[
+                'Valor de venda (R$)'
+              ] ||
+              r['Valor']
+            ),
+          0
         );
 
-        const idx =
-          baseElo.findIndex(
-            x =>
-              x.codigo === c.codigo
+      if (total > 0) {
+        serie2026[
+          m - 1
+        ] = total;
+      }
+    }
+  }
+
+  const series = {
+    2023:
+      new Array(
+        12
+      ).fill(null),
+
+    2024:
+      new Array(
+        12
+      ).fill(null),
+
+    2025:
+      new Array(
+        12
+      ).fill(null),
+
+    2026:
+      serie2026
+  };
+
+  if (
+    cliente === 'ALL'
+  ) {
+
+    fat.forEach(
+      r => {
+
+        const m =
+          Number(
+            r['Mês'] ||
+            r['Mes']
+          );
+
+        const a =
+          Number(
+            r['Ano']
+          );
+
+        const v =
+          parseCurrency(
+            r[
+              'Vendas (R$)'
+            ] ||
+            r['Vendas'] ||
+            r['Valor']
           );
 
         if (
-          idx > -1
+          m < 1 ||
+          m > 12 ||
+          !series[a] ||
+          v < 0
         ) {
-
-          baseElo[idx] =
-            c;
+          return;
         }
 
-        // Recalcula os cards e os contatos
-        // imediatamente após salvar.
-        renderizarTabela(
-          baseElo
-        );
+        if (
+          a === 2026 &&
+          series[2026][
+            m - 1
+          ] !== null
+        ) {
+          return;
+        }
 
-        mostrarToast(
-          'Atendimento salvo no Drive com sucesso!',
-          true
-        );
+        series[a][
+          m - 1
+        ] = v;
+      }
+    );
+  }
 
-        modal.style.display =
-          'none';
+  destruirGrafico(
+    'chartHistoricoFaturamento'
+  );
 
-      } catch (err) {
+  charts.chartHistoricoFaturamento =
+    new Chart(
+      ctx.getContext(
+        '2d'
+      ),
+      {
+        type:
+          'line',
 
-        console.error(
-          err
-        );
+        data: {
+          labels:
+            LABELS_MESES,
 
-        mostrarToast(
-          'Não consegui salvar no Drive. Suas respostas continuam no formulário — tente de novo.',
-          false
-        );
+          datasets:
+            Object.keys(
+              series
+            ).map(
+              ano => ({
+                label:
+                  ano,
 
-        btn.disabled =
-          false;
+                data:
+                  series[
+                    ano
+                  ],
 
-        btn.textContent =
-          'Salvar no Drive';
+                borderColor:
+                  ano === '2026'
+                    ? '#facc15'
+                    : ano === '2025'
+                      ? '#f59e0b'
+                      : ano === '2024'
+                        ? '#ec4899'
+                        : '#64748b',
+
+                backgroundColor:
+                  'transparent',
+
+                borderWidth:
+                  ano ===
+                  '2026'
+                    ? 3.5
+                    : 2,
+
+                pointRadius:
+                  ano ===
+                  '2026'
+                    ? 3
+                    : 2,
+
+                tension:
+                  0.25,
+
+                spanGaps:
+                  true
+              })
+            )
+        },
+
+        options: {
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          interaction: {
+            mode:
+              'index',
+
+            intersect:
+              false
+          },
+
+          plugins: {
+
+            legend: {
+              position:
+                'top',
+
+              labels: {
+                color:
+                  '#cbd5e1',
+
+                usePointStyle:
+                  true,
+
+                padding:
+                  16
+              }
+            },
+
+            title: {
+              display:
+                true,
+
+              text:
+                'Passe o mouse sobre cada mês para ver os valores',
+
+              color:
+                '#94a3b8',
+
+              font: {
+                size:
+                  10,
+
+                weight:
+                  'normal'
+              }
+            },
+
+            tooltip: {
+
+              callbacks: {
+
+                label:
+                  c =>
+                    `${c.dataset.label}: ${formatBRL(
+                      c.parsed.y
+                    )}`
+              }
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              grid: {
+                color:
+                  'rgba(148,163,184,.08)'
+              },
+
+              ticks: {
+                color:
+                  '#94a3b8'
+              }
+            },
+
+            y: {
+
+              beginAtZero:
+                false,
+
+              grid: {
+                color:
+                  'rgba(148,163,184,.08)'
+              },
+
+              ticks: {
+                color:
+                  '#94a3b8',
+
+                callback:
+                  v =>
+                    formatCompactBRL(
+                      v
+                    )
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function renderChartBudget() {
+  const ctx =
+    document.getElementById(
+      'chartBudget'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const sheet =
+    filtrarPorCliente(
+      getSheet(
+        dataStore.reportSection,
+        [
+          '% do Budget atingida por',
+          '% Budget Atingida',
+          'Budget'
+        ]
+      ),
+      cliente
+    );
+
+  const vals =
+    new Array(
+      12
+    ).fill(0);
+
+  sheet.linhas.forEach(
+    r => {
+
+      const idx =
+        Number(
+          r['Mês'] ||
+          r['Mes']
+        ) - 1;
+
+      if (
+        idx >= 0 &&
+        idx < 12
+      ) {
+        vals[idx] =
+          parsePct(
+            rw(
+              r,
+              [
+                '% do Budget',
+                'Budget'
+              ]
+            )
+          );
       }
     }
+  );
 
-    function mostrarToast(
-      msg,
-      ok
-    ) {
+  destruirGrafico(
+    'chartBudget'
+  );
 
-      const t =
-        document.getElementById(
-          'eloToast'
-        );
+  ctx.parentElement.style.height =
+    '280px';
 
-      t.textContent =
-        msg;
+  charts.chartBudget =
+    new Chart(
+      ctx.getContext('2d'),
+      {
+        type:
+          'bar',
 
-      t.className =
-        'elo-toast show ' +
-        (
-          ok
-            ? 'ok'
-            : 'err'
-        );
+        data: {
+          labels:
+            LABELS_MESES,
 
-      setTimeout(
-        () => {
-          t.className =
-            'elo-toast';
+          datasets: [
+            {
+              label:
+                '% Budget Atingido',
+
+              data:
+                vals,
+
+              backgroundColor:
+                '#6366f1',
+
+              borderRadius:
+                4
+            }
+          ]
         },
-        4000
+
+        plugins: [
+          pluginValoresNativos
+        ],
+
+        options: {
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          indexAxis:
+            'y',
+
+          plugins: {
+
+            legend: {
+              display:
+                true,
+
+              labels: {
+                color:
+                  '#94a3b8'
+              }
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              beginAtZero:
+                true,
+
+              grid: {
+                color:
+                  '#1f293d'
+              },
+
+              ticks: {
+
+                color:
+                  '#94a3b8',
+
+                callback:
+                  v =>
+                    `${v}%`
+              }
+            },
+
+            y: {
+
+              grid: {
+                display:
+                  false
+              },
+
+              ticks: {
+                color:
+                  '#94a3b8'
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function renderChartTipoEncomenda() {
+  const ctx =
+    document.getElementById(
+      'chartTipoEncomenda'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const sheet =
+    filtrarPorCliente(
+      getSheet(
+        dataStore.analiseCarteira,
+        [
+          'Clientes recentes que já',
+          '% de encomendas gravadas',
+          'Encomenda por Tipo'
+        ]
+      ),
+      cliente
+    ).linhas;
+
+  let gravado =
+    algumaPlanilhaCarregada()
+      ? 0
+      : 89;
+
+  let normal =
+    algumaPlanilhaCarregada()
+      ? 0
+      : 110;
+
+  const rg =
+    sheet.find(
+      r =>
+        String(
+          r.Tipo ||
+            ''
+        )
+          .toLowerCase()
+          .includes(
+            'gravado'
+          )
+    );
+
+  const rn =
+    sheet.find(
+      r =>
+        String(
+          r.Tipo ||
+            ''
+        )
+          .toLowerCase()
+          .includes(
+            'normal'
+          )
+    );
+
+  if (rg) {
+    gravado =
+      parseCurrency(
+        rg[
+          'Sum of Valor'
+        ] ??
+        rg[
+          'Valor'
+        ] ??
+        rg[
+          '% gravação'
+        ]
+      );
+  }
+
+  if (rn) {
+    normal =
+      parseCurrency(
+        rn[
+          'Sum of Valor'
+        ] ??
+        rn[
+          'Valor'
+        ] ??
+        rn[
+          '% gravação'
+        ]
+      );
+  }
+
+  destruirGrafico(
+    'chartTipoEncomenda'
+  );
+
+  charts.chartTipoEncomenda =
+    new Chart(
+      ctx.getContext(
+        '2d'
+      ),
+      {
+        type:
+          'doughnut',
+
+        data: {
+          labels: [
+            'Gravado',
+            'Normal'
+          ],
+
+          datasets: [
+            {
+              data: [
+                gravado,
+                normal
+              ],
+
+              backgroundColor: [
+                '#10b981',
+                '#ef4444'
+              ],
+
+              borderWidth:
+                0
+            }
+          ]
+        },
+
+        plugins: [
+          pluginValoresNativos
+        ],
+
+        options: {
+
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          plugins: {
+
+            legend: {
+              display:
+                true,
+
+              labels: {
+                color:
+                  '#94a3b8'
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function renderChartSegmentos() {
+  const ctx =
+    document.getElementById(
+      'chartSegmentos'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const mes =
+    selectMes &&
+    selectMes.value !==
+      'ALL'
+      ? parseInt(
+          selectMes.value,
+          10
+        )
+      : null;
+
+  const ano =
+    selectAno
+      ? selectAno.value
+      : '2026';
+
+  const rowsFixos =
+    mes !== null &&
+    usarDadosMensaisFixos(
+      ano
+    )
+      ? obterLinhasDoMes(
+          'porSegmento',
+          mes
+        )
+      : null;
+
+  const sheet =
+    filtrarPorCliente(
+      rowsFixos ||
+      getSheet(
+        dataStore.reportSection,
+        [
+          'Venda mensal em reais da',
+          'Separador Segmento',
+          'Segmento'
+        ]
+      ),
+      cliente
+    ).linhas;
+
+  const data =
+    [
+      ...sheet
+    ]
+      .map(
+        r => ({
+          label:
+            String(
+              r[
+                'Separador'
+              ] ||
+              r[
+                'Segmento'
+              ] ||
+              'Outros'
+            ),
+
+          value:
+            parseCurrency(
+              r[
+                'After_Tax_Amount'
+              ] ||
+              r['Valor']
+            )
+        })
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          b.value -
+          a.value
+      );
+
+  destruirGrafico(
+    'chartSegmentos'
+  );
+
+  ctx.parentElement.style.height =
+    Math.max(
+      300,
+      data.length * 26
+    ) + 'px';
+
+  charts.chartSegmentos =
+    new Chart(
+      ctx.getContext(
+        '2d'
+      ),
+      {
+
+        type:
+          'bar',
+
+        data: {
+
+          labels:
+            data.length
+              ? data.map(
+                  x =>
+                    x.label
+                )
+              : [
+                  'Sem Dados'
+                ],
+
+          datasets: [
+            {
+              label:
+                'Vendas (R$)',
+
+              data:
+                data.length
+                  ? data.map(
+                      x =>
+                        x.value
+                    )
+                  : [0],
+
+              backgroundColor:
+                '#10b981',
+
+              borderRadius:
+                4
+            }
+          ]
+        },
+
+        plugins: [
+          pluginValoresNativos
+        ],
+
+        options: {
+
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          indexAxis:
+            'y',
+
+          plugins: {
+
+            legend: {
+              display:
+                true,
+
+              labels: {
+                color:
+                  '#94a3b8'
+              }
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              beginAtZero:
+                true,
+
+              grid: {
+                color:
+                  '#1f293d'
+              },
+
+              ticks: {
+
+                color:
+                  '#94a3b8',
+
+                callback:
+                  v =>
+                    formatCompactBRL(
+                      v
+                    )
+              }
+            },
+
+            y: {
+
+              grid: {
+                display:
+                  false
+              },
+
+              ticks: {
+
+                color:
+                  '#94a3b8',
+
+                autoSkip:
+                  false,
+
+                font: {
+                  size:
+                    9
+                }
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function renderChartTopProdutos() {
+  const ctx =
+    document.getElementById(
+      'chartTopProdutos'
+    );
+
+  if (!ctx) {
+    return;
+  }
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const mes =
+    selectMes &&
+    selectMes.value !==
+      'ALL'
+      ? parseInt(
+          selectMes.value,
+          10
+        )
+      : null;
+
+  const ano =
+    selectAno
+      ? selectAno.value
+      : '2026';
+
+  const rowsFixos =
+    mes !== null &&
+    mes <= 8 &&
+    usarDadosMensaisFixos(
+      ano
+    )
+      ? obterLinhasFixas(
+          'porProduto',
+          mes
+        )
+      : null;
+
+  const raw =
+    rowsFixos ||
+    getSheet(
+      dataStore.reportSection,
+      [
+        'Imagem-7',
+        'Image-7',
+        'Top 20 Produtos Mais Vendidos',
+        'Top 20'
+      ]
+    );
+
+  const filtrado =
+    filtrarPorCliente(
+      raw,
+      cliente
+    );
+
+  const data =
+    filtrado.linhas
+      .map(
+        r => ({
+          label:
+            String(
+              r[
+                'Produto'
+              ] ||
+              r[
+                'Descrição'
+              ] ||
+              r[
+                'Descricao'
+              ] ||
+              r[
+                'Cod'
+              ] ||
+              ''
+            ).trim(),
+
+          value:
+            parseCurrency(
+              r[
+                'Valor de Venda'
+              ] ||
+              r[
+                'Valor de Venda (R$)'
+              ] ||
+              r[
+                'Valor'
+              ] ||
+              r[
+                'Vendas (R$)'
+              ]
+            )
+        })
+      )
+      .filter(
+        x =>
+          x.label &&
+          Number.isFinite(
+            x.value
+          )
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          b.value -
+          a.value
+      )
+      .slice(
+        0,
+        20
+      );
+
+  destruirGrafico(
+    'chartTopProdutos'
+  );
+
+  ctx.parentElement.style.height =
+    '430px';
+
+  charts.chartTopProdutos =
+    new Chart(
+      ctx.getContext(
+        '2d'
+      ),
+      {
+
+        type:
+          'bar',
+
+        data: {
+
+          labels:
+            data.length
+              ? data.map(
+                  x =>
+                    x.label
+                )
+              : [
+                  'Sem Dados'
+                ],
+
+          datasets: [
+            {
+              label:
+                'Valor de Venda (R$)',
+
+              data:
+                data.length
+                  ? data.map(
+                      x =>
+                        x.value
+                    )
+                  : [0],
+
+              backgroundColor:
+                '#3b82f6',
+
+              borderRadius:
+                4,
+
+              barPercentage:
+                0.72,
+
+              categoryPercentage:
+                0.82
+            }
+          ]
+        },
+
+        plugins: [
+          pluginValoresNativos
+        ],
+
+        options: {
+
+          responsive:
+            true,
+
+          maintainAspectRatio:
+            false,
+
+          indexAxis:
+            'y',
+
+          plugins: {
+
+            legend: {
+              display:
+                true,
+
+              labels: {
+                color:
+                  '#94a3b8'
+              }
+            },
+
+            tooltip: {
+
+              callbacks: {
+
+                label:
+                  c =>
+                    formatBRL(
+                      c.parsed.x
+                    )
+              }
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              beginAtZero:
+                true,
+
+              grid: {
+                color:
+                  'rgba(148,163,184,.08)'
+              },
+
+              ticks: {
+
+                color:
+                  '#94a3b8',
+
+                callback:
+                  v =>
+                    formatCompactBRL(
+                      v
+                    )
+              }
+            },
+
+            y: {
+
+              grid: {
+                display:
+                  false
+              },
+
+              ticks: {
+
+                color:
+                  '#cbd5e1',
+
+                autoSkip:
+                  false,
+
+                font: {
+                  size:
+                    8.5
+                }
+              }
+            }
+          }
+        }
+      }
+    );
+}
+
+function formatPctCell(
+  val
+) {
+  if (
+    val === undefined ||
+    val === null ||
+    val === ''
+  ) {
+    return '-';
+  }
+
+  if (
+    typeof val ===
+      'string' &&
+    val.includes('%')
+  ) {
+    return val;
+  }
+
+  return `${parsePct(
+    val
+  ).toFixed(
+    2
+  )}%`;
+}
+
+function renderVendasClienteTable() {
+  const tbody =
+    document.getElementById(
+      'tbVendasCliente'
+    );
+
+  if (!tbody) {
+    return;
+  }
+
+  const mes =
+    selectMes &&
+    selectMes.value !==
+      'ALL'
+      ? parseInt(
+          selectMes.value,
+          10
+        )
+      : null;
+
+  const ano =
+    selectAno
+      ? selectAno.value
+      : '2026';
+
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const query =
+    searchInput
+      ? searchInput.value
+          .toLowerCase()
+          .trim()
+      : '';
+
+  const rows =
+    mes !== null &&
+    usarDadosMensaisFixos(
+      ano
+    )
+      ? obterLinhasDoMes(
+          'porCliente',
+          mes
+        )
+      : getSheet(
+          dataStore.reportSection,
+          [
+            'Vendas (R$) por Cliente',
+            'Cliente'
+          ]
+        );
+
+  const filtered =
+    rows
+      .filter(
+        r => {
+
+          const nome =
+            String(
+              r[
+                'Cliente_Pai'
+              ] ||
+              r[
+                'Cliente'
+              ] ||
+              ''
+            ).trim();
+
+          return (
+            nome
+              .toLowerCase()
+              .includes(
+                query
+              ) &&
+            (
+              cliente ===
+                'ALL' ||
+              nome ===
+                cliente
+            )
+          );
+        }
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          parseCurrency(
+            b[
+              'Valor de venda (R$)'
+            ] ||
+            b['Valor']
+          ) -
+          parseCurrency(
+            a[
+              'Valor de venda (R$)'
+            ] ||
+            a['Valor']
+          )
+      );
+
+  tbody.innerHTML =
+    '';
+
+  if (!filtered.length) {
+
+    tbody.innerHTML =
+      '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
+
+    return;
+  }
+
+  filtered.forEach(
+    r => {
+
+      const nome =
+        r[
+          'Cliente_Pai'
+        ] ||
+        r[
+          'Cliente'
+        ] ||
+        '-';
+
+      const valor =
+        parseCurrency(
+          r[
+            'Valor de venda (R$)'
+          ] ||
+          r['Valor']
+        );
+
+      const tr =
+        document.createElement(
+          'tr'
+        );
+
+      tr.className =
+        'clickable-row';
+
+      tr.style.cursor =
+        'pointer';
+
+      tr.innerHTML =
+        `<td>${
+          r['Classe'] ||
+          'Fiel'
+        }</td>` +
+
+        `<td><strong>${nome}</strong></td>` +
+
+        `<td>${formatBRL(
+          valor
+        )}</td>` +
+
+        `<td>${formatPctCell(
+          r[
+            '% do Total'
+          ]
+        )}</td>`;
+
+      tbody.appendChild(
+        tr
       );
     }
+  );
+}
 
-    carregarDados();
+function renderInatividadeTable() {
+  const tbody =
+    document.getElementById(
+      'tbInatividade'
+    );
 
-  </script>
+  if (!tbody) {
+    return;
+  }
 
-</body>
-</html>
+  const cliente =
+    selectCliente
+      ? selectCliente.value
+      : 'ALL';
+
+  const query =
+    searchInput
+      ? searchInput.value
+          .toLowerCase()
+          .trim()
+      : '';
+
+  const rows =
+    getSheet(
+      dataStore.analiseCarteira,
+      [
+        '#Dias até primeira fatura',
+        'Clientes com ultima fatura',
+        'Ultima Fatura'
+      ]
+    );
+
+  const filtered =
+    rows.filter(
+      r => {
+
+        const nome =
+          String(
+            r[
+              'Cliente_Pai'
+            ] ||
+            r[
+              'Cliente'
+            ] ||
+            ''
+          ).trim();
+
+        return (
+          nome
+            .toLowerCase()
+            .includes(
+              query
+            ) &&
+          (
+            cliente ===
+              'ALL' ||
+            nome ===
+              cliente
+          )
+        );
+      }
+    );
+
+  tbody.innerHTML =
+    '';
+
+  if (!filtered.length) {
+
+    tbody.innerHTML =
+      '<tr><td colspan="4" class="empty-row">Nenhum registro localizado.</td></tr>';
+
+    return;
+  }
+
+  filtered.forEach(
+    r => {
+
+      const nome =
+        r[
+          'Cliente_Pai'
+        ] ||
+        r[
+          'Cliente'
+        ] ||
+        '-';
+
+      const dias =
+        parseInt(
+          r[
+            '#dias desde a ultima fat'
+          ] ||
+          r[
+            'Dias Inativo'
+          ] ||
+          r[
+            'Dias'
+          ] ||
+          0,
+          10
+        );
+
+      const data =
+        formatDate(
+          r[
+            'Ultima fat'
+          ] ||
+          r[
+            'Última Fatura'
+          ]
+        );
+
+      const tr =
+        document.createElement(
+          'tr'
+        );
+
+      tr.className =
+        'clickable-row';
+
+      tr.style.cursor =
+        'pointer';
+
+      tr.innerHTML =
+        `<td>${
+          r['Classe'] ||
+          'Pontual'
+        }</td>` +
+
+        `<td><strong>${nome}</strong></td>` +
+
+        `<td>${data}</td>` +
+
+        `<td><span style="color:${
+          dias >= 60
+            ? '#ef4444'
+            : '#10b981'
+        };font-weight:700;">${dias} dias</span></td>`;
+
+      tbody.appendChild(
+        tr
+      );
+    }
+  );
+}
+
+function renderDashboard() {
+  renderYTDBanner();
+  renderKPIs();
+  renderChartHistorico();
+  renderChartBudget();
+  renderChartTipoEncomenda();
+  renderChartSegmentos();
+  renderChartTopProdutos();
+  renderVendasClienteTable();
+  renderInatividadeTable();
+}
+
+if (fileInput1) {
+  fileInput1.addEventListener(
+    'change',
+    e =>
+      e.target.files.length &&
+      readExcelFile(
+        e.target.files[0],
+        1
+      )
+  );
+}
+
+if (fileInput2) {
+  fileInput2.addEventListener(
+    'change',
+    e =>
+      e.target.files.length &&
+      readExcelFile(
+        e.target.files[0],
+        2
+      )
+  );
+}
+
+if (selectAno) {
+  selectAno.addEventListener(
+    'change',
+    renderDashboard
+  );
+}
+
+if (selectMes) {
+  selectMes.addEventListener(
+    'change',
+    renderDashboard
+  );
+}
+
+if (selectCliente) {
+  selectCliente.addEventListener(
+    'change',
+    renderDashboard
+  );
+}
+
+if (searchInput) {
+  searchInput.addEventListener(
+    'input',
+    () => {
+      renderVendasClienteTable();
+      renderInatividadeTable();
+    }
+  );
+}
+
+carregarDadosFixosMensais()
+  .then(
+    () => {
+      popularSelectClientes();
+      renderDashboard();
+      restaurarSessaoAtual();
+    }
+  );
+
+window.addEventListener(
+  'pageshow',
+  e => {
+    if (e.persisted) {
+      requestAnimationFrame(
+        renderDashboard
+      );
+    }
+  }
+);
+
+if (
+  typeof Chart !==
+  'undefined'
+) {
+
+  Chart.defaults.plugins =
+    Chart.defaults.plugins ||
+    {};
+
+  Chart.defaults.plugins.tooltip =
+    Chart.defaults.plugins.tooltip ||
+    {};
+
+  Chart.defaults.plugins.tooltip.callbacks =
+    Chart.defaults.plugins.tooltip.callbacks ||
+    {};
+
+  Chart.defaults.plugins.tooltip.callbacks.label =
+    function (
+      context
+    ) {
+
+      const label =
+        context.dataset?.label ||
+        context.label ||
+        '';
+
+      let val =
+        context.parsed;
+
+      if (
+        val &&
+        typeof val ===
+          'object'
+      ) {
+        val =
+          val.y ??
+          val.x ??
+          val.r;
+      }
+
+      if (
+        typeof val !==
+          'number'
+      ) {
+        return label;
+      }
+
+      return label
+        ? `${label}: ${formatBRL(
+            val
+          )}`
+        : formatBRL(
+            val
+          );
+    };
+}
+
+function abrirModalCliente(
+  dados
+) {
+  let modal =
+    document.getElementById(
+      'customClientModal'
+    );
+
+  if (!modal) {
+
+    modal =
+      document.createElement(
+        'div'
+      );
+
+    modal.id =
+      'customClientModal';
+
+    modal.style.cssText =
+      'position:fixed;inset:0;background:rgba(11,15,25,.8);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+    document.body.appendChild(
+      modal
+    );
+  }
+
+  modal.innerHTML =
+    `<div style="background:#1e293b;border:1px solid #334155;border-radius:12px;width:90%;max-width:480px;padding:24px;color:#f8fafc;font-family:sans-serif;">` +
+
+    `<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155;padding-bottom:12px;margin-bottom:16px;">` +
+
+    `<h3 style="margin:0;color:#6366f1;">🏢 Detalhes do Cliente</h3>` +
+
+    `<button onclick="fecharModalCliente()" style="background:transparent;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">&times;</button>` +
+
+    `</div>` +
+
+    `<div style="display:grid;gap:10px;">` +
+
+    `<div><span style="color:#94a3b8;font-size:.75rem;display:block;">Cliente</span><strong>${dados.nome || '-'}</strong></div>` +
+
+    (
+      dados.faturamento
+        ? `<div><span style="color:#94a3b8;font-size:.75rem;display:block;">Faturamento</span><strong>${dados.faturamento}</strong></div>`
+        : ''
+    ) +
+
+    (
+      dados.ultimaFatura
+        ? `<div><span style="color:#94a3b8;font-size:.75rem;display:block;">Última Fatura</span><strong>${dados.ultimaFatura}</strong></div>`
+        : ''
+    ) +
+
+    (
+      dados.inatividade
+        ? `<div><span style="color:#94a3b8;font-size:.75rem;display:block;">Inatividade</span><strong>${dados.inatividade}</strong></div>`
+        : ''
+    ) +
+
+    `</div>` +
+
+    `<div style="margin-top:20px;text-align:right;">` +
+
+    `<button onclick="fecharModalCliente()" style="background:#6366f1;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer;">Fechar</button>` +
+
+    `</div>` +
+
+    `</div>`;
+
+  modal.style.display =
+    'flex';
+}
+
+function fecharModalCliente() {
+  const modal =
+    document.getElementById(
+      'customClientModal'
+    );
+
+  if (modal) {
+    modal.style.display =
+      'none';
+  }
+}
