@@ -880,9 +880,10 @@
         .map(k => ({ codigo: c.codigo, coluna: mapaColunas[k], valor: novo[k] }));
 
       if (mudancas.length === 0) {
-        modal.style.display = 'none';
+        mostrarToast('Nenhuma alteração detectada — nada foi enviado.', false);
         return;
       }
+      console.log('[ELO] enviando', mudancas, 'para', APPS_SCRIPT_URL);
 
       const btn = document.getElementById('eloSalvar');
       btn.disabled = true;
@@ -893,8 +894,15 @@
         // como "text/plain", o que evita o preflight de CORS que o Apps
         // Script não responde bem.
         const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ mudancas }) });
-        const json = await res.json();
-        if (!json.ok) throw new Error(json.erro || (json.erros || []).join(', '));
+        const texto = await res.text();
+        console.log('[ELO] resposta do Apps Script:', texto);
+        let json;
+        try { json = JSON.parse(texto); }
+        catch (e) { throw new Error('Resposta inválida do Apps Script (veja o Console). Provável URL /exec errada ou sem acesso "Qualquer pessoa".'); }
+        if (!json.ok) throw new Error(json.erro || (json.erros || []).join(', ') || 'Falha desconhecida');
+        if (json.aplicadas !== undefined && json.aplicadas !== mudancas.length) {
+          throw new Error('Só ' + json.aplicadas + ' de ' + mudancas.length + ' campos foram gravados.');
+        }
 
         Object.assign(c, novo);
         const idx = baseElo.findIndex(x => x.codigo === c.codigo);
@@ -904,7 +912,7 @@
         modal.style.display = 'none';
       } catch (err) {
         console.error(err);
-        mostrarToast('Não consegui salvar no Drive. Suas respostas continuam no formulário — tente de novo.', false);
+        mostrarToast('Não salvou: ' + String(err.message || err).slice(0, 250), false);
         btn.disabled = false;
         btn.textContent = 'Salvar no Drive';
       }
@@ -914,7 +922,7 @@
       const t = document.getElementById('eloToast');
       t.textContent = msg;
       t.className = 'elo-toast show ' + (ok ? 'ok' : 'err');
-      setTimeout(() => { t.className = 'elo-toast'; }, 4000);
+      setTimeout(() => { t.className = 'elo-toast'; }, ok ? 4000 : 9000);
     }
 
     carregarDados();
